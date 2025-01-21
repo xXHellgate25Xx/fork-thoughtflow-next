@@ -25,6 +25,8 @@ module.exports = {
    * 2 ~ 'error'
    */
   rules: {
+    'react/prop-types': 'off',
+    'react-hooks/exhaustive-deps': 'off',
     // general
     'no-alert': 0,
     camelcase: 0,

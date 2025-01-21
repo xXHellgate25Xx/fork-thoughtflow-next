@@ -123,41 +123,40 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     signUpWithEmailAndPassword: builder.mutation<AuthResponse, SignUpRequest>({
       query: ({ email, password }) => ({
-        url: 'functions/api/auth',
+        url: 'functions/v1/api/auth/signUpWithPassword',
         method: 'POST',
         body: {
-          authen_type: 'signUpWithPassword',
-          params: { email, password },
+          email,
+          password,
         },
       }),
     }),
     signInWithEmailAndPassword: builder.mutation<AuthResponse, SignInRequest>({
       query: ({ email, password }) => ({
-        url: 'functions/api/auth',
+        url: 'functions/v1/api/auth/signInWithPassword',
         method: 'POST',
         body: {
-          authen_type: 'signInWithPassword',
-          params: { email, password },
+          email,
+          password,
         },
       }),
     }),
     sendOtp: builder.mutation<void, SendOtpRequest>({
       query: ({ email }) => ({
-        url: 'functions/api/auth',
+        url: 'functions/v1/api/auth/signInWithOtp',
         method: 'POST',
         body: {
-          authen_type: 'signInWithOtp',
-          params: { email },
+          email,
         },
       }),
     }),
     verifyOtp: builder.mutation<AuthResponse, VerifyOtpRequest>({
       query: ({ email, otp }) => ({
-        url: 'functions/api/auth',
+        url: 'functions/v1/api/auth/verifyOtp',
         method: 'POST',
         body: {
-          authen_type: 'verifyOtp',
-          params: { email, otp },
+          email,
+          otp,
         },
       }),
     }),

@@ -1,13 +1,12 @@
-import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-
+import { fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const baseQuery = fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_BASE_URL, // Base URL for all API routes
+  baseUrl: import.meta.env.VITE_PUBLIC_BASE_URL, // Supabase Edge Function URL
+  credentials: "same-origin", 
   prepareHeaders: (headers) => {
-    // Add custom headers if needed, like Authorization
-    const token = localStorage?.getItem("jwt") || "";
-    headers.set("Content-Type", "application/json");
-    headers.set("Authorization", `Bearer ${token}`);
+    const token = localStorage?.getItem('jwt') || import.meta.env.VITE_VITE_APP_SUPABASE_ANON_KEY;
+    headers.set('Content-Type', 'application/json');
+    headers.set('Authorization', `Bearer ${token}`);
     return headers;
   },
 });

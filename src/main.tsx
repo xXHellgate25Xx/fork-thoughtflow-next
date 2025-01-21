@@ -5,6 +5,8 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Provider } from 'react-redux';
 import App from './app';
 import store from './libs/stores';
+import { GlobalContextProvider } from './GlobalContextProvider';
+import AuthWrapper from './layouts/auth/authWrapper';
 
 // ----------------------------------------------------------------------
 
@@ -15,8 +17,12 @@ root.render(
     <HelmetProvider>
       <BrowserRouter>
         <Suspense>
-          <Provider store={store} >
-            <App />
+          <Provider store={store}>
+            <GlobalContextProvider>
+              <AuthWrapper>
+                <App />
+              </AuthWrapper>
+            </GlobalContextProvider>
           </Provider>
         </Suspense>
       </BrowserRouter>

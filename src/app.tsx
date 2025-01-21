@@ -19,8 +19,6 @@ export default function App() {
   const dispatch = useDispatch();
   useScrollToTop();
 
-
-  console.log(value)
   const githubButton = (
     <Fab
       size="medium"
