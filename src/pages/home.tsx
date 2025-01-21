@@ -1,7 +1,5 @@
 import { Helmet } from 'react-helmet-async';
 import { CONFIG } from 'src/config-global';
-import { OverviewAnalyticsView } from 'src/sections/overview/view';
-import { ProductItem } from 'src/sections/product/product-item';
 import { PillarCardItem } from 'src/sections/pillar/pillar-card-item';
 import { _products } from 'src/_mock';
 
@@ -11,10 +9,25 @@ import { Iconify } from 'src/components/iconify';
 import Typography from '@mui/material/Typography';
 import { DashboardContent } from 'src/layouts/dashboard';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useRouter } from 'src/routes/hooks';
+
+
+import { 
+  useGetAllPillarQuery
+} from '../libs/service/home';
 
 // ----------------------------------------------------------------------
 
 export default function Page() {
+  const { data, error, isLoading } = useGetAllPillarQuery();
+  const router = useRouter();
+  const handleWhatsOnMyMind = () => {
+    router.push("/ideas/create");
+  };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {JSON.stringify(error)}</div>;
+
   return (
     <>
       <Helmet>
@@ -33,6 +46,7 @@ export default function Page() {
             color="primary"
             startIcon={<Iconify icon="mingcute:add-line" />}
             sx={{ fontSize: '1.5rem', padding: '1rem 2rem' }}
+            onClick={handleWhatsOnMyMind}
           >
             What&apos;s on your mind?
           </Button>
@@ -54,15 +68,20 @@ export default function Page() {
         </Box>
 
         <Grid container spacing={3}>
-          {_products.map((product) => (
-            <Grid key={product.id} xs={12} sm={6} md={3}>
-              <PillarCardItem product={product} />
+          {data?.data?.length ? (
+            data.data.map((pillar: any) => (
+              <Grid key={pillar.id} xs={12} sm={6} md={3}>
+                <PillarCardItem product={pillar} />
+              </Grid>
+            ))
+          ) : (
+            <Grid xs={12}>
+              <Typography>No pillars found</Typography>
             </Grid>
-          ))}
+          )}
         </Grid>
 
       </DashboardContent>
-      {/* <OverviewAnalyticsView /> */}
     </>
   );
 }
