@@ -1,24 +1,29 @@
-import type { ButtonProps } from '@mui/material/Button';
-
 import { useState, useCallback } from 'react';
 
-import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
 import Popover from '@mui/material/Popover';
+import TableRow from '@mui/material/TableRow';
 import MenuList from '@mui/material/MenuList';
-import Typography from '@mui/material/Typography';
+import TableCell from '@mui/material/TableCell';
+import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 
 import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-type PillarSelectProps = ButtonProps & {
-  pillarName: string;
-  onSort: (newSort: string) => void;
-  options: { id: string; name: string }[] | undefined;
+export type IdeaProps = {
+  id: string;
+  title: string;
+  text: string;
+  createdAt: string;
 };
 
-export function PillarSelect({ options, pillarName, onSort, sx, ...other }: PillarSelectProps) {
+type IdeaTableRowProps = {
+  row: IdeaProps;
+};
+
+export function IdeaTableRow({ row }: IdeaTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -31,25 +36,29 @@ export function PillarSelect({ options, pillarName, onSort, sx, ...other }: Pill
 
   return (
     <>
-      <Button
-        disableRipple
-        color="inherit"
-        onClick={handleOpenPopover}
-        endIcon={<Iconify icon={openPopover ? 'eva:chevron-up-fill' : 'eva:chevron-down-fill'} />}
-        sx={sx}
-        {...other}
-      >
-        Content Pillar:&nbsp;
-        <Typography component="span" variant="subtitle2" sx={{ color: 'text.secondary' }}>
-          {options?.find((option) => option.id === pillarName)?.name}
-        </Typography>
-      </Button>
+      <TableRow hover tabIndex={-1} role="checkbox">
+        <TableCell component="th" scope="row">
+          <Box gap={2} display="flex" alignItems="center">
+            {row.title}
+          </Box>
+        </TableCell>
+
+        <TableCell>{row.text}</TableCell>
+
+        <TableCell>{row.createdAt}</TableCell>
+
+        <TableCell align="right">
+          <IconButton onClick={handleOpenPopover}>
+            <Iconify icon="eva:more-vertical-fill" />
+          </IconButton>
+        </TableCell>
+      </TableRow>
 
       <Popover
         open={!!openPopover}
         anchorEl={openPopover}
         onClose={handleClosePopover}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuList
@@ -57,7 +66,7 @@ export function PillarSelect({ options, pillarName, onSort, sx, ...other }: Pill
           sx={{
             p: 0.5,
             gap: 0.5,
-            width: 160,
+            width: 140,
             display: 'flex',
             flexDirection: 'column',
             [`& .${menuItemClasses.root}`]: {
@@ -68,18 +77,15 @@ export function PillarSelect({ options, pillarName, onSort, sx, ...other }: Pill
             },
           }}
         >
-          {options?.map((option) => (
-            <MenuItem
-              key={option.id}
-              selected={option.id === pillarName}
-              onClick={() => {
-                onSort(option.id);
-                handleClosePopover();
-              }}
-            >
-              {option.name}
-            </MenuItem>
-          ))}
+          <MenuItem onClick={handleClosePopover}>
+            <Iconify icon="solar:pen-bold" />
+            Edit
+          </MenuItem>
+
+          <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
+            <Iconify icon="solar:trash-bin-trash-bold" />
+            Delete
+          </MenuItem>
         </MenuList>
       </Popover>
     </>

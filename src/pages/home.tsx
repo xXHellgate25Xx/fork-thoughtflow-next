@@ -10,23 +10,36 @@ import Typography from '@mui/material/Typography';
 import { DashboardContent } from 'src/layouts/dashboard';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useRouter } from 'src/routes/hooks';
-
-
+import { useState } from 'react';
+import { BasicModal } from 'src/components/modal/add-pillar-modal';
 import { 
-  useGetAllPillarQuery
+  useGetAllPillarQuery,
+  useCreatePillarMutation
 } from '../libs/service/home';
 
 // ----------------------------------------------------------------------
 
 export default function Page() {
-  const { data, error, isLoading } = useGetAllPillarQuery();
+  const { data, error, isLoading, refetch } = useGetAllPillarQuery();
   const router = useRouter();
   const handleWhatsOnMyMind = () => {
     router.push("/ideas/create");
   };
-
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {JSON.stringify(error)}</div>;
+  const [createPillar, { isLoading : createPillarIsLoading }] = useCreatePillarMutation();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmClicked, setIsConfirmClicked] = useState(true);
+  const handleAddItem = async (pillar_name: string) => {
+    try {
+      setIsConfirmClicked(true);
+      await createPillar({pillar_name}).unwrap();
+      setIsModalOpen(false);
+      refetch(); // refresh the useGetAllPillarQuery() automatically
+    } catch (addItemError) {
+      console.error('Error creating pillar:', addItemError);
+    } finally {
+      setIsConfirmClicked(false);
+    }
+  };
 
   return (
     <>
@@ -62,21 +75,35 @@ export default function Page() {
             color="inherit"
             startIcon={<Iconify icon="mingcute:add-line" />}
             sx={{ fontSize: '1rem' }}
+            onClick={() => {
+              setIsModalOpen(true);
+              setIsConfirmClicked(false);
+            }}
           >
             New Pillar
           </Button>
+          <BasicModal 
+            open={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onAddItem={handleAddItem}
+            isLoading={isConfirmClicked}
+          />
         </Box>
 
         <Grid container spacing={3}>
           {data?.data?.length ? (
-            data.data.map((pillar: any) => (
+            [...data.data]
+            .sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )
+            .map((pillar: any) => (
               <Grid key={pillar.id} xs={12} sm={6} md={3}>
                 <PillarCardItem product={pillar} />
               </Grid>
             ))
           ) : (
             <Grid xs={12}>
-              <Typography>No pillars found</Typography>
+              <Typography>Fetching pillars...</Typography>
             </Grid>
           )}
         </Grid>

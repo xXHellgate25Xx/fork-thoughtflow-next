@@ -2,18 +2,24 @@ import { configureStore } from '@reduxjs/toolkit';
 import { authApi } from './service/auth/auth';
 import { HomePageApi } from './service/home';
 import exampleSlice from './service/example/exampleSlice';
+import { IdeaApi } from './service/idea/idea';
+import { uploadToStorageApi } from './service/storage/api-storage';
 
 
 const store = configureStore({
   reducer: {
-    example: exampleSlice,
+    example: exampleSlice, // Add your reducers here
     [authApi.reducerPath]: authApi.reducer,
     [HomePageApi.reducerPath]: HomePageApi.reducer,
+    [IdeaApi.reducerPath]: IdeaApi.reducer,
+    [uploadToStorageApi.reducerPath]: uploadToStorageApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware()
-      .concat(authApi.middleware)
-      .concat(HomePageApi.middleware),
+    getDefaultMiddleware().concat(authApi.middleware)
+                          .concat(IdeaApi.middleware)
+                          .concat(HomePageApi.middleware)
+                          .concat(uploadToStorageApi.middleware),
 });
+
 
 export default store;
