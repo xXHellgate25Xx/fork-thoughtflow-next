@@ -12,91 +12,30 @@ import InputAdornment from '@mui/material/InputAdornment';
 import { useRouter } from 'src/routes/hooks';
 
 import { Iconify } from 'src/components/iconify';
-import { useSignInWithEmailAndPasswordMutation } from 'src/libs/service/auth/auth';
-import { setToken } from 'src/utils/auth';
-import { Snackbar, Alert, AlertColor } from '@mui/material';
+
+// ----------------------------------------------------------------------
 
 export function SignInView() {
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: AlertColor;
-  }>({
-    open: false,
-    message: '',
-    severity: 'error',
-  });
 
-  const [signIn, { isLoading }] = useSignInWithEmailAndPasswordMutation();
-
-  const handleSignIn = useCallback(async () => {
-    try {
-      const result = await signIn({ email, password }).unwrap();
-
-      if (result.error) {
-        setSnackbar({
-          open: true,
-          message: `Sign-in failed: ${result.error.code} - ${result.error.name}`,
-          severity: 'error',
-        });
-      } else if (result.data) {
-        const { session } = result.data;
-        if (session?.access_token) {
-          setToken(session.access_token);
-          router.push('/');
-        } else {
-          console.warn('Sign-in successful but no session data found.');
-        }
-      } else {
-        console.warn('Unexpected response format:', result);
-      }
-    } catch (err) {
-      setSnackbar({
-        open: true,
-        message: 'An unexpected error occurred. Please try again.',
-        severity: 'error',
-      });
-      console.error('An unexpected error occurred:', err);
-    }
-  }, [email, password, signIn, router]);
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
+  const handleSignIn = useCallback(() => {
+    router.push('/');
+  }, [router]);
 
   const renderForm = (
-    <Box
-      component="form"
-      display="flex"
-      flexDirection="column"
-      alignItems="flex-end"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSignIn();
-      }}
-    >
+    <Box display="flex" flexDirection="column" alignItems="flex-end">
       <TextField
         fullWidth
         name="email"
-        label="Email Address"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        label="Email address"
+        defaultValue="hello@gmail.com"
         InputLabelProps={{ shrink: true }}
         sx={{ mb: 3 }}
-        required
       />
 
-      <Link
-        href="/forgot-password"
-        variant="body2"
-        color="inherit"
-        sx={{ alignSelf: 'start', mb: 1.5 }}
-      >
+      <Link variant="body2" color="inherit" sx={{ mb: 1.5 }}>
         Forgot password?
       </Link>
 
@@ -104,8 +43,7 @@ export function SignInView() {
         fullWidth
         name="password"
         label="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        defaultValue="@demo1234"
         InputLabelProps={{ shrink: true }}
         type={showPassword ? 'text' : 'password'}
         InputProps={{
@@ -118,29 +56,28 @@ export function SignInView() {
           ),
         }}
         sx={{ mb: 3 }}
-        required
       />
 
       <LoadingButton
         fullWidth
         size="large"
         type="submit"
-        color="primary"
+        color="inherit"
         variant="contained"
-        loading={isLoading}
+        onClick={handleSignIn}
       >
-        Sign In
+        Sign in
       </LoadingButton>
     </Box>
   );
 
   return (
-    <Box>
+    <>
       <Box gap={1.5} display="flex" flexDirection="column" alignItems="center" sx={{ mb: 5 }}>
-        <Typography variant="h5">Sign In</Typography>
+        <Typography variant="h5">Sign in</Typography>
         <Typography variant="body2" color="text.secondary">
           Don’t have an account?
-          <Link href="/sign-up" variant="subtitle2" sx={{ ml: 0.5 }}>
+          <Link variant="subtitle2" sx={{ ml: 0.5 }}>
             Get started
           </Link>
         </Typography>
@@ -158,27 +95,16 @@ export function SignInView() {
       </Divider>
 
       <Box gap={1} display="flex" justifyContent="center">
-        <IconButton color="inherit" aria-label="Sign in with Google">
+        <IconButton color="inherit">
           <Iconify icon="logos:google-icon" />
         </IconButton>
-        <IconButton color="inherit" aria-label="Sign in with GitHub">
+        <IconButton color="inherit">
           <Iconify icon="eva:github-fill" />
         </IconButton>
-        <IconButton color="inherit" aria-label="Sign in with Twitter">
+        <IconButton color="inherit">
           <Iconify icon="ri:twitter-x-fill" />
         </IconButton>
       </Box>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+    </>
   );
 }

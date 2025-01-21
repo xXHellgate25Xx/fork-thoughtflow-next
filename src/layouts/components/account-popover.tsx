@@ -15,7 +15,6 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { _myAccount } from 'src/_mock';
-import { removeToken } from 'src/utils/auth';
 
 // ----------------------------------------------------------------------
 
@@ -50,11 +49,6 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
     },
     [handleClosePopover, router]
   );
-
-  const handleLogout = useCallback(() => {
-    removeToken();
-    router.push('/sign-in')
-  }, []);
 
   return (
     <>
@@ -135,7 +129,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <Box sx={{ p: 1 }}>
-          <Button  onClick={handleLogout} fullWidth color="error" size="medium" variant="text">
+          <Button fullWidth color="error" size="medium" variant="text">
             Logout
           </Button>
         </Box>

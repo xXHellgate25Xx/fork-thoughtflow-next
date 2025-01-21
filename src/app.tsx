@@ -19,6 +19,8 @@ export default function App() {
   const dispatch = useDispatch();
   useScrollToTop();
 
+
+  console.log(value)
   const githubButton = (
     <Fab
       size="medium"
@@ -42,11 +44,9 @@ export default function App() {
   );
 
   return (
-
-      <ThemeProvider>
-        <Router />
-        {githubButton}
-      </ThemeProvider>
-
+    <ThemeProvider>
+      <Router />
+      {/* {githubButton} */}
+    </ThemeProvider>
   );
 }
