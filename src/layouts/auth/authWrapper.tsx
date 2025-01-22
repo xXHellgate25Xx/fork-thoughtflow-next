@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useGlobalContext } from 'src/GlobalContextProvider';
 import { useRouter } from 'src/routes/hooks';
-import { getToken, isTokenValid } from 'src/utils/auth';
+import { getToken, isTokenValid, removeToken } from 'src/utils/auth';
 
 interface JWTAuthWrapperProps {
   children: ReactNode;
@@ -16,6 +16,7 @@ const JWTAuthWrapper: React.FC<JWTAuthWrapperProps> = ({ children }) => {
     if (token && isTokenValid(token)) {
       setJwtToken(token);
     } else {
+      removeToken();
       router.push('/sign-in');
     }
   }, [router,setJwtToken]);

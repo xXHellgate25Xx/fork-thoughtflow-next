@@ -5,6 +5,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { useCreateIdeaMutation } from 'src/libs/service/idea/idea';
 import IdeaForm from 'src/components/text-voice-input/IdeaForm'
 import { IdeaFormat } from "src/interfaces/Idea";
+import { useRouter } from 'src/routes/hooks';
 
 import {
   Button,
@@ -22,6 +23,7 @@ import { useGetAllPillarQuery } from 'src/libs/service/home';
 // ----------------------------------------------------------------------
 
 export default function Page() {
+  const router = useRouter();
   let pillarIdAndName;
   const {
     data: pillarData,
@@ -45,7 +47,6 @@ export default function Page() {
     severity: "success",
   });
 
-  const [progress, setProgress] = useState(0);
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -71,9 +72,8 @@ export default function Page() {
         voice_input: ideaToSubmit.voice_input || null,
         pillar_id: ideaToSubmit.pillar_id || "",
       });
-
       setIsGenerating(false);
-
+      router.push("/contents");
     } catch (error: any) {
       setIsGenerating(false);
       console.error("Error during creating content:", error);
