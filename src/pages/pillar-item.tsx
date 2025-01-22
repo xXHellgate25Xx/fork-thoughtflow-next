@@ -95,6 +95,7 @@ export default function Page() {
       status: 'published',
       views: 1234,
       updatedAt: '2025-01-21 06:52PM',
+      updatedAtFormatted: '21 Jan 2025 06:52 pm',
     },
     {
       id: '2',
@@ -103,6 +104,7 @@ export default function Page() {
       status: 'draft',
       views: 2345,
       updatedAt: '2025-01-21 06:52PM',
+      updatedAtFormatted: '21 Jan 2025 06:52 pm',
     },
     {
       id: '3',
@@ -111,6 +113,7 @@ export default function Page() {
       status: 'archived',
       views: 2345,
       updatedAt: '2025-01-21 06:52PM',
+      updatedAtFormatted: '21 Jan 2025 06:52 pm',
     },
   ]
   const router = useRouter();

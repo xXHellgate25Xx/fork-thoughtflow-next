@@ -1,4 +1,3 @@
-import "./init"
 import ReactDOM from 'react-dom/client';
 import { Suspense, StrictMode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
@@ -14,17 +13,19 @@ import AuthWrapper from './layouts/auth/authWrapper';
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
 root.render(
-  <HelmetProvider>
-    <BrowserRouter>
-      <Suspense>
-        <Provider store={store}>
-          <GlobalContextProvider>
-            <AuthWrapper>
-              <App />
-            </AuthWrapper>
-          </GlobalContextProvider>
-        </Provider>
-      </Suspense>
-    </BrowserRouter>
-  </HelmetProvider>
+  <StrictMode>
+    <HelmetProvider>
+      <BrowserRouter>
+        <Suspense>
+          <Provider store={store}>
+            <GlobalContextProvider>
+              <AuthWrapper>
+                <App />
+              </AuthWrapper>
+            </GlobalContextProvider>
+          </Provider>
+        </Suspense>
+      </BrowserRouter>
+    </HelmetProvider>
+  </StrictMode>
 );

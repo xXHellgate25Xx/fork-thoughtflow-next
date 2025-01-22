@@ -20,6 +20,7 @@ export type ContentProps = {
   status: string;
   views: number;
   updatedAt: string;
+  updatedAtFormatted: string | null;
 };
 
 type ContentTableRowProps = {
@@ -61,7 +62,7 @@ export function ContentTableRow({ row }: ContentTableRowProps) {
             </Label>
         </TableCell>
         <TableCell>{row.views}</TableCell>
-        <TableCell>{row.updatedAt}</TableCell>
+        <TableCell>{row.updatedAtFormatted}</TableCell>
 
         <TableCell align="right">
           <IconButton onClick={handleOpenPopover}>

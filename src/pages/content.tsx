@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { CONFIG } from 'src/config-global';
 import { Scrollbar } from 'src/components/scrollbar';
 import TableContainer from '@mui/material/TableContainer';
@@ -14,6 +14,14 @@ import { Label } from 'src/components/label';
 import { Box, Button, Card, Typography, Table, TableBody } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
+import { 
+  useGetAllContentsOfUserQuery,
+  useGetAllStatsOfUserQuery,
+  ContentApiRes
+} from 'src/libs/service/content';
+import { fDateTime } from 'src/utils/format-time';
+import { useRouter } from 'src/routes/hooks';
+
 // ----------------------------------------------------------------------
 
 export function useTable() {
@@ -61,38 +69,65 @@ export function useTable() {
 
 
 export default function Page() {
-  const [numContent, setNumContent] = useState(123);
-  const [numPublished, setNumPublished] = useState(123);
-  const [numDraft, setNumDraft] = useState(123);
-  const [numArchived, setNumArchived] = useState(123);
+  const [numContent, setNumContent] = useState(0);
+  const [numPublished, setNumPublished] = useState(0);
+  const [numDraft, setNumDraft] = useState(0);
+  const [numArchived, setNumArchived] = useState(0);
 
   const table = useTable();  
-  const data: ContentProps[] = [
-    {
-      id: '1',
-      title: 'Title of content 1',
-      pillar: 'Pillar 1',
-      status: 'published',
-      views: 1234,
-      updatedAt: '2025-01-21 06:52PM',
-    },
-    {
-      id: '2',
-      title: 'Title of content 2',
-      pillar: 'Pillar 2',
-      status: 'draft',
-      views: 2345,
-      updatedAt: '2025-01-21 06:52PM',
-    },
-    {
-      id: '3',
-      title: 'Title of content 3',
-      pillar: 'Pillar 2',
-      status: 'archived',
-      views: 2345,
-      updatedAt: '2025-01-21 06:52PM',
-    },
-  ]
+
+  const {data : allContentsData} = useGetAllContentsOfUserQuery();
+
+  const mapContentArray = (inputs: ContentApiRes[]): ContentProps[] =>
+    inputs.map((input) => ({
+      id: input.content_id,
+      title: input.title,
+      pillar: input.pillar,
+      status: input.status,
+      views: input.pageviews,
+      updatedAt: input.last_modified,
+      updatedAtFormatted: fDateTime(input.last_modified, "DD MMM YYYY h:mm a"),
+    }));
+  
+  const data = allContentsData?.data ? mapContentArray(allContentsData.data) : [];
+  const {data : allStatsApiData} = useGetAllStatsOfUserQuery();
+  const userStatData = allStatsApiData?.data[0];
+  useEffect(() => {
+    if (userStatData) {
+      setNumPublished(userStatData.published);
+      setNumDraft(userStatData.draft);
+      setNumArchived(userStatData.archived);
+      setNumContent(userStatData.published + userStatData.draft + userStatData.archived);
+    }
+  }, [userStatData]);
+
+  const router = useRouter();
+  // const data: ContentProps[] = [
+  //   {
+  //     id: '1',
+  //     title: 'Title of content 1',
+  //     pillar: 'Pillar 1',
+  //     status: 'published',
+  //     views: 1234,
+  //     updatedAt: '2025-01-21 06:52PM',
+  //   },
+  //   {
+  //     id: '2',
+  //     title: 'Title of content 2',
+  //     pillar: 'Pillar 2',
+  //     status: 'draft',
+  //     views: 2345,
+  //     updatedAt: '2025-01-21 06:52PM',
+  //   },
+  //   {
+  //     id: '3',
+  //     title: 'Title of content 3',
+  //     pillar: 'Pillar 2',
+  //     status: 'archived',
+  //     views: 2345,
+  //     updatedAt: '2025-01-21 06:52PM',
+  //   },
+  // ]
 
   const dataFiltered = applyFilter({
     inputData: data,
@@ -121,6 +156,7 @@ export default function Page() {
             variant='contained' 
             color='primary'
             startIcon={<Icon icon='hugeicons:idea-01'/>}
+            onClick={() => router.replace(`/ideas/create`)}
           >What&apos;s on your mind?
           </Button>
           <Button 
@@ -128,6 +164,7 @@ export default function Page() {
             variant='contained' 
             color='inherit'
             startIcon={<Icon icon='ri:import-line'/>}
+            disabled
           >Import Content
           </Button>
         </Box>
@@ -166,7 +203,7 @@ export default function Page() {
                     { id: 'pillar', label: 'Pillar' },
                     { id: 'status', label: 'Status' },
                     { id: 'views', label: 'Views' },
-                    { id: 'updatedAt', label: 'Last Modified' },
+                    { id: 'updatedAtFormatted', label: 'Last Modified' },
                     { id: '' },
                   ]}
                 />

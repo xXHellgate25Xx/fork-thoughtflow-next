@@ -44,17 +44,7 @@
     "react-helmet-async": "^2.0.5",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.26.1",
-    "ricos-content": "^10.102.0",
-    "ricos-editor": "^10.102.0",
-    "ricos-viewer": "^9.18.4",
-    "simplebar-react": "^3.2.6",
-    "wix-rich-content-editor": "^9.18.4",
-    "wix-rich-content-plugin-divider": "^10.102.0",
-    "wix-rich-content-plugin-headings": "^10.102.0",
-    "wix-rich-content-plugin-image": "^10.102.0",
-    "wix-rich-content-plugin-text-color": "^10.102.0",
-    "wix-rich-content-plugin-video": "^10.102.0",
-    "wix-rich-content-viewer": "^9.18.4"
+    "simplebar-react": "^3.2.6"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
