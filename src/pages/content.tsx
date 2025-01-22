@@ -102,32 +102,6 @@ export default function Page() {
   }, [userStatData]);
 
   const router = useRouter();
-  // const data: ContentProps[] = [
-  //   {
-  //     id: '1',
-  //     title: 'Title of content 1',
-  //     pillar: 'Pillar 1',
-  //     status: 'published',
-  //     views: 1234,
-  //     updatedAt: '2025-01-21 06:52PM',
-  //   },
-  //   {
-  //     id: '2',
-  //     title: 'Title of content 2',
-  //     pillar: 'Pillar 2',
-  //     status: 'draft',
-  //     views: 2345,
-  //     updatedAt: '2025-01-21 06:52PM',
-  //   },
-  //   {
-  //     id: '3',
-  //     title: 'Title of content 3',
-  //     pillar: 'Pillar 2',
-  //     status: 'archived',
-  //     views: 2345,
-  //     updatedAt: '2025-01-21 06:52PM',
-  //   },
-  // ]
 
   const dataFiltered = applyFilter({
     inputData: data,
