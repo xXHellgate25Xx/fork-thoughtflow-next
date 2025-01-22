@@ -17,7 +17,7 @@ export type PillarItemProps = {
   status?: string;
 };
 
-export function PillarCardItem({ product }: { product: PillarItemProps }) {
+export function PillarCardItem({ product, onClick }: { product: PillarItemProps, onClick?: () => void }) {
   const renderStatus = (
     <Label
       variant="inverted"
@@ -35,7 +35,16 @@ export function PillarCardItem({ product }: { product: PillarItemProps }) {
   );
   
   return (
-    <Card>
+    <Card
+      onClick={onClick} 
+      sx={{ 
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'box-shadow 0.3s ease',
+        '&:hover': onClick && {
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+        }
+      }}
+    >
       <Stack spacing={2} sx={{ p: 3 }}>
         <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
           {product.name}

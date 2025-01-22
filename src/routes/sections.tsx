@@ -52,7 +52,7 @@ export function Router() {
         { path: 'blog', element: <BlogPage /> },
         { path: 'ideas/create', element: <CreateIdeaPage /> },
         { path: 'content/content-id', element: <ContentItemPage /> },
-        { path: 'pillar/pillar-id', element: <PillarItemPage /> },
+        { path: 'pillar/:pillar-id', element: <PillarItemPage /> },
       ],
     },
     {

@@ -14,7 +14,8 @@ import { Label } from 'src/components/label';
 import { Box, Button, Card, Typography, Table, TableBody } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
-
+import { useParams } from 'react-router-dom';
+import { useGetPillarByIdQuery, useGetIdeasOfPillarQuery } from 'src/libs/service/pillar-item';
 // ----------------------------------------------------------------------
 
 export function useTable() {
@@ -62,26 +63,37 @@ export function useTable() {
 
 
 export default function Page() {
+  const { 'pillar-id': pillarId } = useParams();
+  const { data: pillarData, isLoading: getPillarIsLoading } = useGetPillarByIdQuery({ pillarId });
+  const pillar = pillarData?.data[0];
+  const pillarIsActive = pillar?.is_active;
   const [pillarName, setPillarName] = useState('Title of content pillar');
   const [isActive, setIsActive] = useState(true);
+  const { data: ideasOfPillar, isLoading: getIdeasOfPillarIsLoading } = useGetIdeasOfPillarQuery({ pillarId });
 
   const table = useTable();  
-  const data: IdeaProps[] = [
-    {
-      id: '1',
-      title: 'Title of idea 1',
-      text: 'Full text of idea Full text of idea Full text of idea Full text of idea',
-      createdAt: '2025-01-21 06:52PM',
-    },
-    {
-      id: '2',
-      title: 'Title of idea 2',
-      text: 'Full text of idea Full text of idea Full text of idea Full text of idea',
-      createdAt: '2025-01-21 06:59PM',
-    }
-  ]
+  const data: IdeaProps[] = ideasOfPillar?.data.map(idea => ({
+    id: idea.id,
+    title: idea.title,
+    text: idea.text,
+    createdAt: idea.created_at,
+  })) ?? [];
+  // const data: IdeaProps[] = [
+  //   {
+  //     id: '1',
+  //     title: 'Title of idea 1',
+  //     text: 'Full text of idea Full text of idea Full text of idea Full text of idea',
+  //     createdAt: '2025-01-21 06:52PM',
+  //   },
+  //   {
+  //     id: '2',
+  //     title: 'Title of idea 2',
+  //     text: 'Full text of idea Full text of idea Full text of idea Full text of idea',
+  //     createdAt: '2025-01-21 06:59PM',
+  //   }
+  // ]
 
-  const dataFiltered: IdeaProps[] = applyFilter({
+  const dataFiltered = applyFilter({
     inputData: data,
     comparator: getComparator(table.order, table.orderBy),
   });
@@ -104,12 +116,12 @@ export default function Page() {
             <Icon icon='ep:back' width={30}/>
           </Button>
           <Label 
-            color={isActive ? 'success' : 'info'}
+            color={pillarIsActive ? 'success' : 'info'}
           >
-            {isActive ? 'Active' : 'Inactive'}
+            {pillarIsActive ? 'Active' : 'Inactive'}
           </Label>
           <Typography variant='h4'>
-            Title of content pillar
+            {pillar?.name}
           </Typography>
         </Box>
 
@@ -138,7 +150,7 @@ export default function Page() {
                 <CustomTableHead
                   order={table.order}
                   orderBy={table.orderBy}
-                  rowCount={data.length}
+                  rowCount={data?.length ?? 0}
                   onSort={table.onSort}
                   headLabel={[
                     { id: 'title', label: 'Title' },
@@ -162,7 +174,7 @@ export default function Page() {
 
                   <TableEmptyRows
                     height={68}
-                    emptyRows={emptyRows(table.page, table.rowsPerPage, data.length)}
+                    emptyRows={emptyRows(table.page, table.rowsPerPage, (data?.length ?? 0))}
                   />
 
                 </TableBody>

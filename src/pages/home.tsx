@@ -98,7 +98,10 @@ export default function Page() {
             )
             .map((pillar: any) => (
               <Grid key={pillar.id} xs={12} sm={6} md={3}>
-                <PillarCardItem product={pillar} />
+                <PillarCardItem 
+                  product={pillar}
+                  onClick={() => router.push(`/pillar/${pillar.id}`)}
+                />
               </Grid>
             ))
           ) : (
