@@ -13,12 +13,12 @@ import { Iconify } from 'src/components/iconify';
 // ----------------------------------------------------------------------
 
 type PillarSelectProps = ButtonProps & {
-  pillarName: string;
+  pillarId: string;
   onSort: (newSort: string) => void;
   options: { id: string; name: string }[] | undefined;
 };
 
-export function PillarSelect({ options, pillarName, onSort, sx, ...other }: PillarSelectProps) {
+export function PillarSelect({ options, pillarId, onSort, sx, ...other }: PillarSelectProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -41,7 +41,7 @@ export function PillarSelect({ options, pillarName, onSort, sx, ...other }: Pill
       >
         Content Pillar:&nbsp;
         <Typography component="span" variant="subtitle2" sx={{ color: 'text.secondary' }}>
-          {options?.find((option) => option.id === pillarName)?.name}
+          {options?.find((option) => option.id === pillarId)?.name}
         </Typography>
       </Button>
 
@@ -71,7 +71,7 @@ export function PillarSelect({ options, pillarName, onSort, sx, ...other }: Pill
           {options?.map((option) => (
             <MenuItem
               key={option.id}
-              selected={option.id === pillarName}
+              selected={option.id === pillarId}
               onClick={() => {
                 onSort(option.id);
                 handleClosePopover();

@@ -1,4 +1,5 @@
 import type { IdeaProps } from 'src/sections/tables/idea-table-row';
+import type { ContentProps } from 'src/sections/tables/content-table-row';
 
 // ----------------------------------------------------------------------
 
@@ -53,7 +54,7 @@ export function getComparator<Key extends keyof any>(
 // ----------------------------------------------------------------------
 
 type ApplyFilterProps = {
-  inputData: IdeaProps[];
+  inputData: ContentProps[];
   filterName?: string;
   comparator: (a: any, b: any) => number;
 };

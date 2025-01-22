@@ -10,6 +10,7 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import { useUploadToStorageMutation } from "src/libs/service/storage/api-storage";
+import { processingFilePath } from "src/utils/file-path-with-hash";
 import { IdeaFormat } from "../../interfaces/Idea";
 
 interface IdeaFormProps {
@@ -34,6 +35,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   currentPillarId
 }) => {
   
+  const [isButtonClicked, setIsButtonClicked] = useState(false);
   const [ uploadToStorage ] = useUploadToStorageMutation();
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,17 +47,17 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
       ...editedIdea,
       pillar_id: currentPillarId,
     });
-  },[]);
+  },[currentPillarId]);
 
   const handleSubmit = async () => {
     try {
+      const path = audioBlob ? await processingFilePath(audioBlob, "voice_inputs", "voice") : null;
       const audio = audioBlob
         ? await uploadToStorage(
           {
             file: audioBlob,
             bucketName: "media",
-            folderName: "voice_inputs",
-            fileName: "voice"
+            pathName: path || ""
           }    
           )
         : null;
@@ -90,7 +92,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
 
       <Box sx={{ position: "relative" }}>
         <TextField
-          label="Idea Text"
+          placeholder="Idea Text"
           multiline
           rows={10}
           value={editedIdea?.text || idea?.text}

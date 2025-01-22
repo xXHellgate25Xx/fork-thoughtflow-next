@@ -2,26 +2,21 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-
-import { fCurrency } from 'src/utils/format-number';
-
 import { Label } from 'src/components/label';
-import { ColorPreview } from 'src/components/color-utils';
 
 // ----------------------------------------------------------------------
 
-export type PillarItemProps = {
+export type PillarItem = {
   id: string;
   name: string;
-  status?: string;
+  is_active?: boolean;
 };
 
-export function PillarCardItem({ product, onClick }: { product: PillarItemProps, onClick?: () => void }) {
+export function PillarCardItem({ product, onClick }: { product: PillarItem, onClick?: () => void }) {
   const renderStatus = (
     <Label
       variant="inverted"
-      color={(product.status === 'sale' && 'error') || 'info'}
+      color={(product.is_active && 'error') || 'info'}
       sx={{
         zIndex: 9,
         top: 16,
@@ -30,7 +25,7 @@ export function PillarCardItem({ product, onClick }: { product: PillarItemProps,
         textTransform: 'uppercase',
       }}
     >
-      {product.status === 'sale' ? 'inactive' : 'active'}
+      {!product.is_active ? 'inactive' : 'active'}
     </Label>
   );
   

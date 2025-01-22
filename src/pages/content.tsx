@@ -4,27 +4,16 @@ import { CONFIG } from 'src/config-global';
 import { Scrollbar } from 'src/components/scrollbar';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
-import { IdeaTableRow } from 'src/sections/tables/idea-table-row';
 import { ContentTableRow } from 'src/sections/tables/content-table-row';
 import { CustomTableHead } from 'src/sections/tables/idea-table-head';
 import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
 import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
-import type { IdeaProps } from 'src/sections/tables/idea-table-row';
 import type { ContentProps } from 'src/sections/tables/content-table-row';
 import { Label } from 'src/components/label';
 
 import { Box, Button, Card, Typography, Table, TableBody } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
-import { useParams } from 'react-router-dom';
-import {
-  useGetPillarByIdQuery,
-  useGetIdeasOfPillarQuery,
-  useUpdatePillarNameMutation,
-  useDeactivatePillarMutation,
-} from 'src/libs/service/pillar-item';
-import { useRouter } from 'src/routes/hooks';
-import { GenericModal } from 'src/components/modal/generic-modal';
 // ----------------------------------------------------------------------
 
 export function useTable() {
@@ -72,21 +61,12 @@ export function useTable() {
 
 
 export default function Page() {
-  const { 'pillar-id': pillarId } = useParams();
-  const { data: pillarData, isLoading: getPillarIsLoading, refetch: getPillarRefetch } = useGetPillarByIdQuery({ pillarId });
-  const pillar = pillarData?.data[0];
-  const pillarIsActive = getPillarIsLoading ? null : pillar?.is_active;
-  const [pillarName, setPillarName] = useState('Title of content pillar');
-  const [isActive, setIsActive] = useState(true);
-  const { data: ideasOfPillar, isLoading: getIdeasOfPillarIsLoading } = useGetIdeasOfPillarQuery({ pillarId });
+  const [numContent, setNumContent] = useState(123);
+  const [numPublished, setNumPublished] = useState(123);
+  const [numDraft, setNumDraft] = useState(123);
+  const [numArchived, setNumArchived] = useState(123);
 
   const table = useTable();  
-  // const data_: IdeaProps[] = ideasOfPillar?.data.map(idea => ({
-  //   id: idea.id,
-  //   title: idea.title,
-  //   text: idea.text,
-  //   createdAt: idea.created_at,
-  // })) ?? [];
   const data: ContentProps[] = [
     {
       id: '1',
@@ -113,45 +93,16 @@ export default function Page() {
       updatedAt: '2025-01-21 06:52PM',
     },
   ]
-  const router = useRouter();
-  const handleGoBack = () => {
-    router.back();
-  }
 
   const dataFiltered = applyFilter({
     inputData: data,
     comparator: getComparator(table.order, table.orderBy),
   });
 
-  const [ isModalOpen, setIsModalOpen ] = useState(false);
-  const [ isConfirmClicked ,setIsConfirmClicked ] = useState(false);
-
-  const [UpdatePillarNameMutation, _] = useUpdatePillarNameMutation();
-
-  const handleAddItem = async (newName: string) => {
-    try {
-      setIsConfirmClicked(true);
-      await UpdatePillarNameMutation({pillarId, newName}).unwrap();
-      getPillarRefetch();
-      setIsModalOpen(false);
-    } catch (addItemError) {
-      console.error('Error creating pillar:', addItemError);
-    } finally {
-      setIsConfirmClicked(false);
-    }
-  };
-
-  const [DeactivatePillarMutation, _2] = useDeactivatePillarMutation();
-
-  const handleDeactivateButton = async () => {
-    await DeactivatePillarMutation({pillarId});
-    getPillarRefetch();
-  }
-
   return (
     <>
       <Helmet>
-        <title> {`${pillarName} - ${CONFIG.appName}`}</title>
+        <title> {`Contents - ${CONFIG.appName}`}</title>
         <meta
           name="description"
           content="Details of a content pillar"
@@ -161,54 +112,45 @@ export default function Page() {
 
       <DashboardContent>
         {/* Navigation and title */}
-        <Box display="flex" alignItems="center" mb='1rem' gap='1rem'>
-          <Button color='inherit'>
-            <Icon icon='ep:back' width={30} onClick={(handleGoBack)}/>
-          </Button>
-          <Label 
-            color={pillarIsActive === null ? 'default' : (pillarIsActive ? 'success' : 'info')}
-          >
-            {pillarIsActive === null ? 'Loading...' : (pillarIsActive ? 'Active' : 'Inactive')}
-          </Label>
-          <Typography variant='h4'>
-            {pillar?.name}
+        <Box display="flex" alignItems="center" mb='2rem' gap='1rem'>
+          <Typography variant='h4' flexGrow={1}>
+            Contents
           </Typography>
-        </Box>
-
-        {/* Buttons to edit and deactivate */}
-        <Box display="flex" alignItems="center" gap='0.5rem' mb='1rem'>
-          <Button
-            variant="outlined"
-            color="inherit"
-            startIcon={<Icon icon="akar-icons:edit" />}
-            onClick={() => {
-              setIsModalOpen(true);
-            }}
-          >
-            Edit
+          <Button 
+            size='large'
+            variant='contained' 
+            color='primary'
+            startIcon={<Icon icon='hugeicons:idea-01'/>}
+          >What&apos;s on your mind?
           </Button>
-          <GenericModal 
-            open={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onAddItem={handleAddItem}
-            isLoading={isConfirmClicked}
-            modalTitle="Change Pillar Name"
-            textFieldText="New Name"
-            buttonText="Change"
-          />
-          <Button
-            variant="outlined"
-            color={pillarIsActive ? 'error' : 'inherit'}
-            startIcon={pillarIsActive ? <Icon icon="solar:archive-bold" /> : null}
-            onClick={handleDeactivateButton}
-          >
-            {pillarIsActive ? 'Deactivate' : 'Currently Not Active'}
+          <Button 
+            size='large'
+            variant='contained' 
+            color='inherit'
+            startIcon={<Icon icon='ri:import-line'/>}
+          >Import Content
           </Button>
         </Box>
 
-        <Typography variant='h5' mb='1rem'>
-          Contents
-        </Typography>
+        {/* Basic stats */}
+        <Box display="flex" alignItems="center" mb='2rem' gap='1rem'>
+          <Card sx={{ padding: '2rem', width: '25%' }}>
+            <Typography >Total Contents</Typography>
+            <Typography variant='h6'>{numContent}</Typography>
+          </Card>
+          <Card sx={{ padding: '2rem', width: '25%' }}>
+            <Label color='success'>PUBLISHED</Label>
+            <Typography variant='h6'>{numPublished}</Typography>
+          </Card>
+          <Card sx={{ padding: '2rem', width: '25%' }}>
+            <Label color='info'>DRAFT</Label>
+            <Typography variant='h6'>{numDraft}</Typography>
+          </Card>
+          <Card sx={{ padding: '2rem', width: '25%' }}>
+            <Label color='default'>ARCHIVED</Label>
+            <Typography variant='h6'>{numArchived}</Typography>
+          </Card>
+        </Box>
 
         <Card>
           <Scrollbar>

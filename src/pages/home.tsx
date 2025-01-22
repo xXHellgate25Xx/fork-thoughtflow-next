@@ -11,7 +11,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useRouter } from 'src/routes/hooks';
 import { useState } from 'react';
-import { BasicModal } from 'src/components/modal/add-pillar-modal';
+import { GenericModal } from 'src/components/modal/generic-modal';
 import { 
   useGetAllPillarQuery,
   useCreatePillarMutation
@@ -82,20 +82,28 @@ export default function Page() {
           >
             New Pillar
           </Button>
-          <BasicModal 
+          <GenericModal 
             open={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onAddItem={handleAddItem}
             isLoading={isConfirmClicked}
+            modalTitle="Add Pillar"
+            textFieldText="Pillar Name"
+            buttonText="Add"
           />
         </Box>
 
         <Grid container spacing={3}>
           {data?.data?.length ? (
             [...data.data]
-            .sort((a, b) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )
+            .sort((a, b) => {
+              // First, sort by is_active (active pillars first)
+              if (a.is_active !== b.is_active) {
+                return a.is_active === true ? -1 : 1;
+              }
+              // Then, sort by created_at if is_active is the same
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            })
             .map((pillar: any) => (
               <Grid key={pillar.id} xs={12} sm={6} md={3}>
                 <PillarCardItem 

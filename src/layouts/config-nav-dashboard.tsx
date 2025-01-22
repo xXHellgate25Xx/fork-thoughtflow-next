@@ -13,11 +13,6 @@ export const navData = [
     icon: icon('solar:home-bold-duotone'),
   },
   {
-    title: 'Ideas',
-    path: '/ideas',
-    icon: icon('el:idea'),
-  },
-  {
     title: 'Contents',
     path: '/contents',
     icon: icon('bxs:book-content')
@@ -26,5 +21,10 @@ export const navData = [
     title: 'Analytics',
     path: '/analytics',
     icon: icon('hugeicons:analytics-up'),
+  },
+  {
+    title: 'Settings',
+    path: '/settings',
+    icon: icon('icon-park-twotone:setting'),
   }
 ];

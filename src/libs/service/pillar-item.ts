@@ -1,7 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./supabase/baseQuery";
 
-interface getPillarByIdReq {
+interface pillarIdReq {
     pillarId: string | undefined;
 }
 
@@ -21,11 +21,6 @@ interface getPillarByIdRes {
     statusText: string;
 }
 
-interface getIdeasOfPillarReq {
-    pillarId: string | undefined;
-}
-
-
 interface getIdeasOfPillarRes {
     error: string | null;
     data: Array<{
@@ -44,20 +39,25 @@ interface getIdeasOfPillarRes {
     statusText: string;
 }
 
+interface updatePillarReq {
+    pillarId: string | undefined;
+    newName: string;
+}
+
 
 const PillarPageApi = createApi({
     reducerPath: "pillarPageApi",
     baseQuery,
     endpoints: (builder) => ({
       // ------------------GET PILLAR BY ID--------------------------
-      getPillarById: builder.query<getPillarByIdRes, getPillarByIdReq>({
+      getPillarById: builder.query<getPillarByIdRes, pillarIdReq>({
           query: ({pillarId}) => ({        
               url: `/functions/v1/api/content-pillars/${pillarId}`,
               method: 'GET'
           }),
       }),
       // ------------------GET ALL ACTIVE IDEAS BY PILLAR ID--------------------------
-      getIdeasOfPillar: builder.query<getIdeasOfPillarRes, getIdeasOfPillarReq>({
+      getIdeasOfPillar: builder.query<getIdeasOfPillarRes, pillarIdReq>({
         query: ({pillarId}) => ({        
             url: `/functions/v1/crud-idea`,
             method: 'POST',
@@ -67,14 +67,33 @@ const PillarPageApi = createApi({
                   pillar_id: pillarId
                 }
             }
-        }),
+        })
+      }),
+      // ------------------UPDATE PILLAR NAME--------------------------
+      updatePillarName: builder.mutation<any, updatePillarReq>({
+        query: ({pillarId, newName}) => ({
+            url: `functions/v1/api/content-pillars/${pillarId}`,
+            method: 'PUT',
+            body: {
+                name : newName
+            }
+        })
+      }),
+      // ------------------DEACTIVATE PILLAR--------------------------
+      deactivatePillar: builder.mutation<any, pillarIdReq>({
+        query: ({pillarId}) => ({
+            url: `functions/v1/api/content-pillars/${pillarId}`,
+            method: 'DELETE'
+        })
+      }),
     }),
-  })
 });
   
   export const {
     useGetPillarByIdQuery,
-    useGetIdeasOfPillarQuery
+    useGetIdeasOfPillarQuery,
+    useUpdatePillarNameMutation,
+    useDeactivatePillarMutation
   } = PillarPageApi;
   export { PillarPageApi };
   

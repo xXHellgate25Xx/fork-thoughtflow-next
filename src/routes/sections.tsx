@@ -19,6 +19,7 @@ export const Page404 = lazy(() => import('src/pages/page-not-found'));
 export const CreateIdeaPage = lazy(() => import('src/pages/create-idea'));
 export const ContentItemPage = lazy(() => import('src/pages/content-item'));
 export const PillarItemPage = lazy(() => import('src/pages/pillar-item'));
+export const ContentPage = lazy(() => import('src/pages/content'));
 
 // ----------------------------------------------------------------------
 
@@ -51,6 +52,7 @@ export function Router() {
         { path: 'products', element: <ProductsPage /> },
         { path: 'blog', element: <BlogPage /> },
         { path: 'ideas/create', element: <CreateIdeaPage /> },
+        { path: 'contents', element: <ContentPage /> },
         { path: 'content/content-id', element: <ContentItemPage /> },
         { path: 'pillar/:pillar-id', element: <PillarItemPage /> },
       ],
