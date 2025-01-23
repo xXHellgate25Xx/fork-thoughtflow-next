@@ -1,14 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { authApi } from './service/auth/auth';
-import { HomePageApi } from './service/home';
+import { HomePageApi } from './service/pillar/home';
 import exampleSlice from './service/example/exampleSlice';
 import { IdeaApi } from './service/idea/idea';
 import { uploadToStorageApi } from './service/storage/api-storage';
-import { PillarPageApi } from './service/pillar-item';
-import { ContentPageApi } from './service/content';
+import { PillarPageApi } from './service/pillar/pillar-item';
+import { ContentPageApi } from './service/content/content';
+import { generateContentApi } from './service/content/generate';
 
 
 const store = configureStore({
+
   reducer: {
     example: exampleSlice, // Add your reducers here
     [authApi.reducerPath]: authApi.reducer,
@@ -17,14 +19,18 @@ const store = configureStore({
     [uploadToStorageApi.reducerPath]: uploadToStorageApi.reducer,
     [PillarPageApi.reducerPath]: PillarPageApi.reducer,
     [ContentPageApi.reducerPath]: ContentPageApi.reducer,
+    [generateContentApi.reducerPath]: generateContentApi.reducer,
   },
+
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(authApi.middleware)
-                          .concat(IdeaApi.middleware)
-                          .concat(HomePageApi.middleware)
-                          .concat(uploadToStorageApi.middleware)
-                          .concat(PillarPageApi.middleware)
-                          .concat(ContentPageApi.middleware),
+    getDefaultMiddleware()
+      .concat(authApi.middleware)
+      .concat(IdeaApi.middleware)
+      .concat(HomePageApi.middleware)
+      .concat(uploadToStorageApi.middleware)
+      .concat(PillarPageApi.middleware)
+      .concat(ContentPageApi.middleware)
+      .concat(generateContentApi.middleware),
 });
 
 

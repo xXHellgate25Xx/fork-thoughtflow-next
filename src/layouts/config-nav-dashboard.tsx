@@ -13,8 +13,8 @@ export const navData = [
     icon: icon('solar:home-bold-duotone'),
   },
   {
-    title: 'Contents',
-    path: '/contents',
+    title: 'Content',
+    path: '/content',
     icon: icon('bxs:book-content')
   },
   {

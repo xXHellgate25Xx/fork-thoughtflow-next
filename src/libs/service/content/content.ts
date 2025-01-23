@@ -1,0 +1,101 @@
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQuery } from "../supabase/baseQuery";
+
+export interface ContentApiRes{
+    content_id: string;
+    title: string;
+    pillar_id: string;
+    pillar: string;
+    status: string;
+    pageviews: number;
+    last_modified: string;
+}
+
+export interface AnalyticsApiRes{
+  user_id: string,
+  published: number,
+  archived: number,
+  draft: number,
+}
+
+interface getAllContentsOfUserRes {
+    data: ContentApiRes[];
+    error?: string;
+}
+
+interface getAllStatsOfUserRes {
+  data: AnalyticsApiRes[];
+  error?: string;
+}
+
+interface ContentUpdatePayload {
+  content_body: string;
+  title: string;
+  excerpt: string;
+  status: 'draft' | 'published';
+  content_type: string;
+  published_url?: string;
+  media_id: string[];
+  pillar_id?: string;
+}
+
+const ContentPageApi = createApi({
+    reducerPath: "contentPageApi",
+    baseQuery,
+    endpoints: (builder) => ({
+      // ------------------GET ALL CONTENTS OF USER--------------------------
+      getAllContentsOfUser: builder.query<getAllContentsOfUserRes, void>({
+          query: () => ({        
+              url: `/functions/v1/api/content/`,
+              method: 'GET'
+          }),
+      }),
+      // ------------------GET ALL STATS OF USER--------------------------
+      getAllStatsOfUser: builder.query<getAllStatsOfUserRes, void>({
+        query: () => ({        
+            url: `/functions/v1/api/analytics/user`,
+            method: 'GET'
+        }),
+      }),
+      // ------------------GET CONTENT BY ID--------------------------
+      getContent: builder.query<getAllContentsOfUserRes, string>({
+        query: (contentId) => ({        
+            url: `/functions/v1/api/content/${contentId}`,
+            method: 'GET'
+        }),
+      }),
+      // ------------------GET CONTENT REVISIONS--------------------------
+      getContentRevisions: builder.query<getAllContentsOfUserRes, string>({
+        query: (contentId) => ({        
+            url: `/functions/v1/api/content/${contentId}/revisions`,
+            method: 'GET'
+        }),
+      }),
+      // ------------------GET CONTENT REVISIONS--------------------------
+      updateContent: builder.mutation<getAllContentsOfUserRes, {contentId: string; content: ContentUpdatePayload}>({
+        query: ({contentId, content}) => ({        
+            url: `/functions/v1/api/content/${contentId}`,
+            method: 'PUT',
+            body: content
+        }),
+      }),
+      // ------------------DELETE CONTENT--------------------------
+      deleteContent: builder.mutation<getAllContentsOfUserRes, string>({
+        query: (contentId) => ({        
+            url: `/functions/v1/api/content/${contentId}`,
+            method: 'DELETE'
+        }),
+      }),
+    })
+});
+  
+  export const {
+    useGetAllContentsOfUserQuery,
+    useGetAllStatsOfUserQuery,
+    useGetContentQuery,
+    useGetContentRevisionsQuery,
+    useUpdateContentMutation,
+    useDeleteContentMutation,
+  } = ContentPageApi;
+  export { ContentPageApi };
+  

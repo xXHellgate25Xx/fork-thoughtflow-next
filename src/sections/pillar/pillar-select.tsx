@@ -57,7 +57,7 @@ export function PillarSelect({ options, pillarId, onSort, sx, ...other }: Pillar
           sx={{
             p: 0.5,
             gap: 0.5,
-            width: 160,
+            width: 'auto',
             display: 'flex',
             flexDirection: 'column',
             [`& .${menuItemClasses.root}`]: {

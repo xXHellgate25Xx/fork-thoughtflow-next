@@ -9,13 +9,14 @@ import { Iconify } from 'src/components/iconify';
 import Typography from '@mui/material/Typography';
 import { DashboardContent } from 'src/layouts/dashboard';
 import Grid from '@mui/material/Unstable_Grid2';
+import { CircularProgress } from '@mui/material';
 import { useRouter } from 'src/routes/hooks';
 import { useState } from 'react';
 import { GenericModal } from 'src/components/modal/generic-modal';
 import { 
   useGetAllPillarQuery,
   useCreatePillarMutation
-} from '../libs/service/home';
+} from '../libs/service/pillar/home';
 
 // ----------------------------------------------------------------------
 
@@ -23,7 +24,7 @@ export default function Page() {
   const { data, error, isLoading, refetch } = useGetAllPillarQuery();
   const router = useRouter();
   const handleWhatsOnMyMind = () => {
-    router.push("/ideas/create");
+    router.push("/create");
   };
   const [createPillar, { isLoading : createPillarIsLoading }] = useCreatePillarMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,7 +114,8 @@ export default function Page() {
               </Grid>
             ))
           ) : (
-            <Grid xs={12}>
+            <Grid xs={12} flex={1} display="flex" alignItems="center" justifyContent="center" gap='2rem'>
+              <CircularProgress color='inherit'/>
               <Typography>Fetching pillars...</Typography>
             </Grid>
           )}

@@ -22,9 +22,13 @@ import {
   useGetIdeasOfPillarQuery,
   useUpdatePillarNameMutation,
   useDeactivatePillarMutation,
-} from 'src/libs/service/pillar-item';
+  useGetAllContentsFromPillarIdQuery,
+  Content
+} from 'src/libs/service/pillar/pillar-item';
 import { useRouter } from 'src/routes/hooks';
 import { GenericModal } from 'src/components/modal/generic-modal';
+import { fDateTime } from 'src/utils/format-time';
+
 // ----------------------------------------------------------------------
 
 export function useTable() {
@@ -79,43 +83,55 @@ export default function Page() {
   const [pillarName, setPillarName] = useState('Title of content pillar');
   const [isActive, setIsActive] = useState(true);
   const { data: ideasOfPillar, isLoading: getIdeasOfPillarIsLoading } = useGetIdeasOfPillarQuery({ pillarId });
-
-  const table = useTable();  
+  const { data: allContentsApiRes } = useGetAllContentsFromPillarIdQuery({pillarId});
+  const table = useTable();
+  const mapContentsApiResToTable = (inputs: Content[]): ContentProps[] =>
+    inputs.map((input) => ({
+      id: input.content_id,
+      title: input.title,
+      pillar: input.pillar,
+      status: input.status,
+      views: input.pageviews,
+      updatedAt: input.last_modified,
+      updatedAtFormatted: fDateTime(input.last_modified, "DD MMM YYYY h:mm a"),
+    }));
+  const data = allContentsApiRes?.data ? mapContentsApiResToTable(allContentsApiRes?.data) : [];
+  console.log("data", allContentsApiRes?.data);
   // const data_: IdeaProps[] = ideasOfPillar?.data.map(idea => ({
   //   id: idea.id,
   //   title: idea.title,
   //   text: idea.text,
   //   createdAt: idea.created_at,
   // })) ?? [];
-  const data: ContentProps[] = [
-    {
-      id: '1',
-      title: 'Title of content 1',
-      pillar: 'Pillar 1',
-      status: 'published',
-      views: 1234,
-      updatedAt: '2025-01-21 06:52PM',
-      updatedAtFormatted: '21 Jan 2025 06:52 pm',
-    },
-    {
-      id: '2',
-      title: 'Title of content 2',
-      pillar: 'Pillar 2',
-      status: 'draft',
-      views: 2345,
-      updatedAt: '2025-01-21 06:52PM',
-      updatedAtFormatted: '21 Jan 2025 06:52 pm',
-    },
-    {
-      id: '3',
-      title: 'Title of content 3',
-      pillar: 'Pillar 2',
-      status: 'archived',
-      views: 2345,
-      updatedAt: '2025-01-21 06:52PM',
-      updatedAtFormatted: '21 Jan 2025 06:52 pm',
-    },
-  ]
+  // const data: ContentProps[] = [
+  //   {
+  //     id: '1',
+  //     title: 'Title of content 1',
+  //     pillar: 'Pillar 1',
+  //     status: 'published',
+  //     views: 1234,
+  //     updatedAt: '2025-01-21 06:52PM',
+  //     updatedAtFormatted: '21 Jan 2025 06:52 pm',
+  //   },
+  //   {
+  //     id: '2',
+  //     title: 'Title of content 2',
+  //     pillar: 'Pillar 2',
+  //     status: 'draft',
+  //     views: 2345,
+  //     updatedAt: '2025-01-21 06:52PM',
+  //     updatedAtFormatted: '21 Jan 2025 06:52 pm',
+  //   },
+  //   {
+  //     id: '3',
+  //     title: 'Title of content 3',
+  //     pillar: 'Pillar 2',
+  //     status: 'archived',
+  //     views: 2345,
+  //     updatedAt: '2025-01-21 06:52PM',
+  //     updatedAtFormatted: '21 Jan 2025 06:52 pm',
+  //   },
+  // ]
   const router = useRouter();
   const handleGoBack = () => {
     router.back();

@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../supabase/baseQuery";
 
 interface StorageReq {
@@ -26,7 +26,6 @@ const uploadToStorageApi = createApi({
                     "Content-Type": file.type,
                 },
                 body: file
-
             })
         })
     }),

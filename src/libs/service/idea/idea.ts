@@ -21,7 +21,30 @@ interface IdeaReq {
 }
 
 interface IdeaRes {
-    data?: any;
+    data?: {
+        id?: string;
+        created_at?: string;
+        updated_at?: string;
+        text?: string;
+        voice_input?: string;
+        user_id?: string;
+        is_deleted?: boolean;
+        pillar_id?: string;
+        title?: string;
+        status?: string;
+        statusText?: string;
+        content_id?: string;
+        idea_id?: string;
+        channel_id?: string;
+        content_body?: string;
+        excerpt?: string;
+        content_type?: string;
+        published_url?:string;
+        revision?: number
+        media_id?: string[];
+        published_at?: any;
+        rich_content?: any
+    }[];
     error?: any
 }
 
@@ -32,20 +55,28 @@ const IdeaApi = createApi({
         // -----------------------LIST IDEAs--------------------------
         listIdeas: builder.query<IdeaRes, void>({
             query: () => ({
-                url:"functions/v1/api/idea"
+                url: "functions/v1/api/idea"
             })
         }),
 
         // -----------------------CREATE IDEA-------------------------
         createIdea: builder.mutation<IdeaRes, IdeaReq>({
-            query: ({text, voice_input, pillar_id,}) => ({
+            query: ({ text, voice_input, pillar_id, }) => ({
                 url: "functions/v1/api/idea",
                 method: "POST",
                 body: {
-                    text, 
-                    voice_input, 
+                    text,
+                    voice_input,
                     pillar_id,
                 }
+            })
+        }),
+        // -----------------------CREATE IDEA-------------------------
+        createIdeaContent: builder.mutation<IdeaRes, { ideaId: string | undefined, payload: IdeaReq }>({
+            query: ({ ideaId, payload }) => ({
+                url: `functions/v1/api/idea/${ideaId}/create`,
+                method: "POST",
+                body: payload
             })
         }),
     })
@@ -54,5 +85,6 @@ const IdeaApi = createApi({
 export const {
     useListIdeasQuery,
     useCreateIdeaMutation,
+    useCreateIdeaContentMutation,
 } = IdeaApi;
 export { IdeaApi };

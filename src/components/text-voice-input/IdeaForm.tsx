@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useUploadToStorageMutation } from "src/libs/service/storage/api-storage";
 import { processingFilePath } from "src/utils/file-path-with-hash";
-import { IdeaFormat } from "../../interfaces/Idea";
+import { IdeaFormat } from "src/interfaces/idea-interfaces";
 
 interface IdeaFormProps {
   idea?: IdeaFormat | null;
@@ -35,7 +35,6 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   currentPillarId
 }) => {
   
-  const [isButtonClicked, setIsButtonClicked] = useState(false);
   const [ uploadToStorage ] = useUploadToStorageMutation();
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,8 +84,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: 2,
-        pt: 2,
-        width: "500px",
+        width: "100%",
       }}
     >
 
@@ -105,9 +103,9 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
       <Button
         onClick={handleSubmit}
         variant='contained'
-        color='primary'
+        // color='common'
         size='large'
-        sx={{ width: '100%', mt: '2rem' }}>
+        sx={{ width: '100%', mt: '2rem', backgroundColor: 'black' }}>
         Generate content
       </Button>
     </Box>

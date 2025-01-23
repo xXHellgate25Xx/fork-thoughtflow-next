@@ -18,7 +18,7 @@ import {
   useGetAllContentsOfUserQuery,
   useGetAllStatsOfUserQuery,
   ContentApiRes
-} from 'src/libs/service/content';
+} from 'src/libs/service/content/content';
 import { fDateTime } from 'src/utils/format-time';
 import { useRouter } from 'src/routes/hooks';
 
@@ -111,10 +111,10 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title> {`Contents - ${CONFIG.appName}`}</title>
+        <title> {`Content - ${CONFIG.appName}`}</title>
         <meta
           name="description"
-          content="Details of a content pillar"
+          content="List of content"
         />
         <meta name="keywords" content="react,material,kit,application,dashboard,admin,template" />
       </Helmet>
@@ -123,14 +123,14 @@ export default function Page() {
         {/* Navigation and title */}
         <Box display="flex" alignItems="center" mb='2rem' gap='1rem'>
           <Typography variant='h4' flexGrow={1}>
-            Contents
+            Content
           </Typography>
           <Button 
             size='large'
             variant='contained' 
             color='primary'
             startIcon={<Icon icon='hugeicons:idea-01'/>}
-            onClick={() => router.replace(`/ideas/create`)}
+            onClick={() => router.replace(`/create`)}
           >What&apos;s on your mind?
           </Button>
           <Button 
