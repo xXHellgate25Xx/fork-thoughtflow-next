@@ -39,6 +39,31 @@ interface ContentUpdatePayload {
   pillar_id?: string;
 }
 
+export interface ContentRes {
+    uuid: string;
+    created_at: string;
+    updated_at: string;
+    content_id: string;
+    idea_id: string;
+    content_body: string;
+    rich_content: string;
+    title: string;
+    excerpt: string;
+    status: 'draft' | 'published';
+    content_type: string;
+    published_url: string | null;
+    published_at: string | null;
+    revision: number;
+    media_id: string[];
+    pillar_id: string | null;
+}
+
+export interface getContentResponse {
+    data: ContentRes[],
+    error?: string
+}
+
+
 const ContentPageApi = createApi({
     reducerPath: "contentPageApi",
     baseQuery,
@@ -58,8 +83,8 @@ const ContentPageApi = createApi({
         }),
       }),
       // ------------------GET CONTENT BY ID--------------------------
-      getContent: builder.query<getAllContentsOfUserRes, string>({
-        query: (contentId) => ({        
+      getContent: builder.query<getContentResponse, {contentId: string}>({
+        query: ({contentId}) => ({        
             url: `/functions/v1/api/content/${contentId}`,
             method: 'GET'
         }),

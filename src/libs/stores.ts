@@ -7,6 +7,7 @@ import { uploadToStorageApi } from './service/storage/api-storage';
 import { PillarPageApi } from './service/pillar/pillar-item';
 import { ContentPageApi } from './service/content/content';
 import { generateContentApi } from './service/content/generate';
+import { AnalyticsPageApi } from './service/analytics/analytics';
 
 
 const store = configureStore({
@@ -20,6 +21,7 @@ const store = configureStore({
     [PillarPageApi.reducerPath]: PillarPageApi.reducer,
     [ContentPageApi.reducerPath]: ContentPageApi.reducer,
     [generateContentApi.reducerPath]: generateContentApi.reducer,
+    [AnalyticsPageApi.reducerPath]: AnalyticsPageApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -30,7 +32,7 @@ const store = configureStore({
       .concat(uploadToStorageApi.middleware)
       .concat(PillarPageApi.middleware)
       .concat(ContentPageApi.middleware)
-      .concat(generateContentApi.middleware),
+      .concat(AnalyticsPageApi.middleware)
 });
 
 

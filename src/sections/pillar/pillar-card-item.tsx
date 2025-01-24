@@ -16,7 +16,7 @@ export function PillarCardItem({ product, onClick }: { product: PillarItem, onCl
   const renderStatus = (
     <Label
       variant="inverted"
-      color={(product.is_active && 'error') || 'info'}
+      color={(product.is_active && 'success') || 'default'}
       sx={{
         zIndex: 9,
         top: 16,

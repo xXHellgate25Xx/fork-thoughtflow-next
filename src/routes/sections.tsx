@@ -20,6 +20,7 @@ export const CreateIdeaPage = lazy(() => import('src/pages/create-idea'));
 export const ContentItemPage = lazy(() => import('src/pages/content-item'));
 export const PillarItemPage = lazy(() => import('src/pages/pillar-item'));
 export const ContentPage = lazy(() => import('src/pages/content'));
+export const AnalyticsPage = lazy(() => import('src/pages/analytics'));
 
 // ----------------------------------------------------------------------
 
@@ -53,7 +54,8 @@ export function Router() {
         { path: 'blog', element: <BlogPage /> },
         { path: 'create', element: <CreateIdeaPage /> },
         { path: 'content', element: <ContentPage /> },
-        { path: 'content/content-id', element: <ContentItemPage /> },
+        { path: 'analytics', element: <AnalyticsPage /> },
+        { path: 'content/:content-id', element: <ContentItemPage /> },
         { path: 'pillar/:pillar-id', element: <PillarItemPage /> },
       ],
     },

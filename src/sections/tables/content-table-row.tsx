@@ -10,6 +10,7 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 
 import { Iconify } from 'src/components/iconify';
 import { Label, LabelColor } from 'src/components/label';
+import { useRouter } from 'src/routes/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -34,8 +35,8 @@ const labelColors: { [key: string]: LabelColor } = {
 }
 
 export function ContentTableRow({ row }: ContentTableRowProps) {
+  const router = useRouter();
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
-
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setOpenPopover(event.currentTarget);
   }, []);
@@ -43,6 +44,12 @@ export function ContentTableRow({ row }: ContentTableRowProps) {
   const handleClosePopover = useCallback(() => {
     setOpenPopover(null);
   }, []);
+
+  const handleRoute = (id: string) => {
+    setOpenPopover(null);
+    console.log(id);
+    router.replace(`/content/${id}`);
+  };
 
   return (
     <>
@@ -61,7 +68,7 @@ export function ContentTableRow({ row }: ContentTableRowProps) {
             {row.status.toUpperCase()}
             </Label>
         </TableCell>
-        <TableCell>{row.views}</TableCell>
+        <TableCell>{row.views ?? 0}</TableCell>
         <TableCell>{row.updatedAtFormatted}</TableCell>
 
         <TableCell align="right">
@@ -94,7 +101,7 @@ export function ContentTableRow({ row }: ContentTableRowProps) {
             },
           }}
         >
-          <MenuItem onClick={handleClosePopover}>
+          <MenuItem onClick={() => handleRoute(row.id)}>
             <Iconify icon="solar:pen-bold" />
             Edit
           </MenuItem>
