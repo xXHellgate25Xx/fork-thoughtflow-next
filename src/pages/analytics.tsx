@@ -10,8 +10,6 @@ import Grid from '@mui/material/Grid';
 import { SelectMenu } from 'src/sections/analytics/agg-time-select';
 import { Icon } from '@iconify/react';
 import LeaderboardTable from 'src/sections/analytics/leaderboard';
-
-
 import { 
   useGetAllChannelsOfUserQuery,
   useGetAllStatsOfUserQuery,
@@ -58,7 +56,7 @@ export default function Page() {
     type_of_agg: 'month',
     current_date: currentDate,
   });
-  console.log("Weekly Stat", weeklyStat);
+  // console.log("Weekly Stat", weeklyStat);
   const { data: analyticsViewByContent, isLoading: analyticsViewByContentIsLoading} = useGetAnalyticsViewByContentPillarQuery();
 
   const mapContentArray = (inputs: any[]): any[] =>

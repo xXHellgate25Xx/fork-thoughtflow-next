@@ -32,6 +32,7 @@ const store = configureStore({
       .concat(uploadToStorageApi.middleware)
       .concat(PillarPageApi.middleware)
       .concat(ContentPageApi.middleware)
+      .concat(generateContentApi.middleware)
       .concat(AnalyticsPageApi.middleware)
 });
 

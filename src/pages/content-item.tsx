@@ -21,7 +21,6 @@ const channelIcons: { [key: string]: string } = {
 
 export default function Page() {
   const { 'content-id': contentId} = useParams();
-  // console.log(`Content id: ${contentId}`);
   const {
     data: contentData,
     isLoading: contentLoading,
@@ -30,8 +29,8 @@ export default function Page() {
   // console.log(`Query: ${JSON.stringify(useGetContentQuery({contentId: contentId || ''}))}`)
   // console.log(`isLoading: ${JSON.stringify(contentLoading)}`);
   // console.log(`ContentData : ${JSON.stringify(contentData)}`)
-  const content = contentData?.data[0];
-  console.log(`Content : ${JSON.stringify(content)}`);
+  const content = contentData?.data?.[0];
+  // console.log(`Content : ${JSON.stringify(content)}`);
   
   const is_published = content?.status === 'published'
   const created_time = content?.created_at;

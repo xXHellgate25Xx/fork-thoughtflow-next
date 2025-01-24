@@ -20,8 +20,17 @@ interface IdeaReq {
     media_id?: (string | null | undefined)[];
 }
 
+interface createContentProps {
+    content_body: string | undefined;
+    title: string | undefined;
+    excerpt: string;
+    status: string;
+    content_type: string; // TODO: change this later
+}
+
 interface IdeaRes {
     data?: {
+        uuid?: string;
         id?: string;
         created_at?: string;
         updated_at?: string;
@@ -72,7 +81,7 @@ const IdeaApi = createApi({
             })
         }),
         // -----------------------CREATE IDEA-------------------------
-        createIdeaContent: builder.mutation<IdeaRes, { ideaId: string | undefined, payload: IdeaReq }>({
+        createIdeaContent: builder.mutation<IdeaRes, { ideaId: string | undefined, payload: createContentProps }>({
             query: ({ ideaId, payload }) => ({
                 url: `functions/v1/api/idea/${ideaId}/create`,
                 method: "POST",

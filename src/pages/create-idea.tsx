@@ -97,21 +97,21 @@ export default function Page() {
 
       setProgress(80);
 
-      await createIdeaContent({
+      const { data: contentData } = await createIdeaContent({
         ideaId: latestIdeaData?.data?.[0]?.id,
         payload: {
-          content_body: generationData?.data?.content,
-          title: generationData?.data?.title,
+          content_body: generationData?.content,
+          title: generationData?.title,
           excerpt: "",
           status: "draft",
-          content_type: "Blog Post", // TODO: change this later
+          content_type: "Blog Post"
         }
       });
 
       setProgress(100);
 
       setIsGenerating(false);
-      router.push("/content");
+      router.replace(`/content/${contentData?.data?.[0]?.content_id}`);
     } catch (error: any) {
       setIsGenerating(false);
       console.error("Error during creating content:", error);
@@ -136,7 +136,7 @@ export default function Page() {
 
         {isGenerating ?
           <Card sx={{ padding: '2rem', justifyItems: "center", alignItems: "center" }}>
-            <AutoFixHighIcon sx={{ justifyContent: "center", left:"40%", fontSize:"3rem" }}/>
+            <AutoFixHighIcon sx={{ justifyContent: "center", left: "40%", fontSize: "3rem" }} />
             <Typography variant='h2' mb='1rem' align="center">
               Generating content...
             </Typography>
@@ -144,7 +144,7 @@ export default function Page() {
               Please wait while we generating content from your ideas
             </Typography>
             <Box sx={{ width: '70%' }}>
-            <LinearProgress variant="determinate" value={progress} sx={{ color: "black", mt: 1 }} />
+              <LinearProgress variant="determinate" value={progress} sx={{ color: "black", mt: 1 }} />
             </Box>
             <Card
               sx={{
@@ -157,22 +157,22 @@ export default function Page() {
               }}
             >
               <Typography variant='body1' mb='1rem' align="left" sx={{ color: "black" }}>
-                {progress < 30 ? <CircularProgress size="1.25rem" sx={{ color: "black", mr: 2 }} /> : 
-                <CheckCircleOutlineIcon sx={{ mr: 2 }}/>}
+                {progress < 30 ? <CircularProgress size="1.25rem" sx={{ color: "black", mr: 2 }} /> :
+                  <CheckCircleOutlineIcon sx={{ mr: 2 }} />}
                 Analyzing content requirement
               </Typography>
               <Typography variant='body1' mb='1rem' align="left" sx={{ color: progress < 30 ? "grey" : "black" }}>
-                {progress < 80 ? 
-                 progress < 30 ? <PendingOutlinedIcon sx={{ color: "black", mr: 2, fontSize: "1.5rem" }} /> : 
-                 <CircularProgress size="1.25rem" sx={{ color: "black", mr: 2, fontSize: "1.5rem" }} /> : 
-                 <CheckCircleOutlineIcon sx={{ color: "black", mr: 2 }}/>}
+                {progress < 80 ?
+                  progress < 30 ? <PendingOutlinedIcon sx={{ color: "black", mr: 2, fontSize: "1.5rem" }} /> :
+                    <CircularProgress size="1.25rem" sx={{ color: "black", mr: 2, fontSize: "1.5rem" }} /> :
+                  <CheckCircleOutlineIcon sx={{ color: "black", mr: 2 }} />}
                 Writing content draft
               </Typography>
               <Typography variant='body1' mb='1rem' align="left" sx={{ color: progress < 80 ? "grey" : "black" }}>
-                {progress < 100 ? 
-                 progress < 80 ? <PendingOutlinedIcon sx={{ color: "black", mr: 2, fontSize: "1.5rem" }} /> : 
-                 <CircularProgress size="1.25rem" sx={{ color: "black", mr: 2, fontSize: "1.5rem" }} /> : 
-                 <CheckCircleOutlineIcon sx={{ color: "black", mr: 2 }}/>}
+                {progress < 100 ?
+                  progress < 80 ? <PendingOutlinedIcon sx={{ color: "black", mr: 2, fontSize: "1.5rem" }} /> :
+                    <CircularProgress size="1.25rem" sx={{ color: "black", mr: 2, fontSize: "1.5rem" }} /> :
+                  <CheckCircleOutlineIcon sx={{ color: "black", mr: 2 }} />}
                 Finalize formating
               </Typography>
             </Card>

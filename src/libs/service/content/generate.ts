@@ -9,8 +9,8 @@ interface GenContentReq {
 }
 
 interface GenContentRes {
-    data?: any;
-    error?: any
+    title?: string;
+    content?: string
 }
 
 const generateContentApi = createApi({
