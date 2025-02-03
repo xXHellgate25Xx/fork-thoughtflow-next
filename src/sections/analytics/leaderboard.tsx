@@ -26,67 +26,83 @@ interface ContentStatsProps {
   id: number;
   title: string;
   pillar: string;
-  viewsDaily: number;
-  viewsWeekly: number;
-  viewsAll: number;
+  // viewsDaily: number;
+  // viewsWeekly: number;
+  // viewsAll: number;
+  pageviews: number;
 }
 
 interface LeaderboardTableProps {
   contentStats?: ContentStatsProps[];
+  updateTableData?: (filter: string) => void;
   onClickRow?: () => void;
   title?: string;
 }
 
 // Sample data (replace with real data from your API)
+// const DUMMY_DATA: ContentStatsProps[] = [
+//   { id: 1, title: 'Very Very Very Very Very Long Post Very Very Very Very Very Long Post', pillar: 'Very Very Very Very Long Pillar Name', viewsDaily: 30,  viewsWeekly: 200, viewsAll: 1200 },
+//   { id: 2, title: 'Post B', pillar: 'Likewise',   viewsDaily: 25,  viewsWeekly: 190, viewsAll: 900  },
+//   { id: 3, title: 'Post C', pillar: 'Love', viewsDaily: 60,  viewsWeekly: 350, viewsAll: 2500 },
+//   { id: 4, title: 'Post D', pillar: 'Housing',   viewsDaily: 10,  viewsWeekly: 100, viewsAll: 600  },
+//   { id: 5, title: 'Post E', pillar: 'AI',   viewsDaily: 45,  viewsWeekly: 300, viewsAll: 2000 },
+//   { id: 6, title: 'Post F', pillar: 'Technology', viewsDaily: 70,  viewsWeekly: 102, viewsAll: 3000 },
+//   { id: 7, title: 'Post A1', pillar: 'Pillar 1', viewsDaily: 0,  viewsWeekly: 500, viewsAll: 5000 },
+//   { id: 8, title: 'Post B1', pillar: 'Pillar 1', viewsDaily: 0,  viewsWeekly: 10, viewsAll: 3000 },
+//   { id: 9, title: 'Post C1', pillar: 'Pillar 1', viewsDaily: 10,  viewsWeekly: 50, viewsAll: 2000 },
+//   { id: 10, title: 'Post D1', pillar: 'Pillar 2', viewsDaily: 32,  viewsWeekly: 500, viewsAll: 1000 },
+//   { id: 11, title: 'Post E1', pillar: 'Pillar 3', viewsDaily: 226,  viewsWeekly: 230, viewsAll: 230 },
+//   { id: 12, title: 'Post F1', pillar: 'Pillar 5', viewsDaily: 70,  viewsWeekly: 80, viewsAll: 500 },
+// ];
+
 const DUMMY_DATA: ContentStatsProps[] = [
-  { id: 1, title: 'Very Very Very Very Very Long Post Very Very Very Very Very Long Post', pillar: 'Very Very Very Very Long Pillar Name', viewsDaily: 30,  viewsWeekly: 200, viewsAll: 1200 },
-  { id: 2, title: 'Post B', pillar: 'Likewise',   viewsDaily: 25,  viewsWeekly: 190, viewsAll: 900  },
-  { id: 3, title: 'Post C', pillar: 'Love', viewsDaily: 60,  viewsWeekly: 350, viewsAll: 2500 },
-  { id: 4, title: 'Post D', pillar: 'Housing',   viewsDaily: 10,  viewsWeekly: 100, viewsAll: 600  },
-  { id: 5, title: 'Post E', pillar: 'AI',   viewsDaily: 45,  viewsWeekly: 300, viewsAll: 2000 },
-  { id: 6, title: 'Post F', pillar: 'Technology', viewsDaily: 70,  viewsWeekly: 102, viewsAll: 3000 },
-  { id: 7, title: 'Post A1', pillar: 'Pillar 1', viewsDaily: 0,  viewsWeekly: 500, viewsAll: 5000 },
-  { id: 8, title: 'Post B1', pillar: 'Pillar 1', viewsDaily: 0,  viewsWeekly: 10, viewsAll: 3000 },
-  { id: 9, title: 'Post C1', pillar: 'Pillar 1', viewsDaily: 10,  viewsWeekly: 50, viewsAll: 2000 },
-  { id: 10, title: 'Post D1', pillar: 'Pillar 2', viewsDaily: 32,  viewsWeekly: 500, viewsAll: 1000 },
-  { id: 11, title: 'Post E1', pillar: 'Pillar 3', viewsDaily: 226,  viewsWeekly: 230, viewsAll: 230 },
-  { id: 12, title: 'Post F1', pillar: 'Pillar 5', viewsDaily: 70,  viewsWeekly: 80, viewsAll: 500 },
+  { id: 1, title: 'Very Very Very Very Very Long Post Very Very Very Very Very Long Post', pillar: 'Very Very Very Very Long Pillar Name', pageviews: 100},
+  { id: 2, title: 'Post B', pillar: 'Likewise',   pageviews: 90},
+  { id: 3, title: 'Post C', pillar: 'Love', pageviews: 80},
+  { id: 4, title: 'Post D', pillar: 'Housing',   pageviews: 70},
+  { id: 5, title: 'Post E', pillar: 'AI',   pageviews: 65},
+  { id: 6, title: 'Post F', pillar: 'Technology', pageviews: 60},
+  { id: 7, title: 'Post A1', pillar: 'Pillar 1', pageviews: 50},
+  { id: 8, title: 'Post B1', pillar: 'Pillar 1', pageviews: 40},
+  { id: 9, title: 'Post C1', pillar: 'Pillar 1', pageviews: 30},
+  { id: 10, title: 'Post D1', pillar: 'Pillar 2', pageviews: 22},
+  { id: 11, title: 'Post E1', pillar: 'Pillar 3', pageviews: 21},
+  { id: 12, title: 'Post F1', pillar: 'Pillar 5', pageviews: 1},
 ];
 
-// Possible time filters
-type TimeFilter = 'all' | 'weekly' | 'daily';
 
 const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   contentStats=DUMMY_DATA,
+  updateTableData,
   onClickRow,
   title="Leaderboard",
 }) => {
   const router = useRouter();
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
+  const [timeFilter, setTimeFilter] = useState<string>('all');
   const [topCount, setTopCount] = useState<number>(5);
 
   // Helper to get the correct "views" based on the timeFilter
-  const getViews = (post: ContentStatsProps) => {
-    switch (timeFilter) {
-      case 'daily':
-        return post.viewsDaily;
-      case 'weekly':
-        return post.viewsWeekly;
-      case 'all':
-      default:
-        return post.viewsAll;
-    }
-  };
+  // const getViews = (post: ContentStatsProps) => {
+  //   switch (timeFilter) {
+  //     case 'daily':
+  //       return post.viewsDaily;
+  //     case 'weekly':
+  //       return post.viewsWeekly;
+  //     case 'all':
+  //     default:
+  //       return post.viewsAll;
+  //   }
+  // };
 
   // Sort the data by the selected time filter in descending order,
   // then slice to the selected topCount.
-  const sortedData = [...contentStats]
-    .sort((a, b) => getViews(b) - getViews(a))
+  const slicedData = [...contentStats]
     .slice(0, topCount);
 
   // Handlers
-  const handleTimeFilter = (filter: TimeFilter) => {
+  const handleTimeFilter = (filter: string) => {
     setTimeFilter(filter);
+    if(updateTableData) {updateTableData(filter);}
   };
 
   const handleTopCountChange = (event: SelectChangeEvent) => {
@@ -157,7 +173,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortedData.map((post, index) => (
+            {slicedData.map((post, index) => (
               <TableRow
                 key={post.id}
                 hover
@@ -169,7 +185,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 <TableCell sx ={{ maxWidth: '100px'}}>{index + 1}</TableCell>
                 <TableCell sx ={{ maxWidth: '200px'}}>{post.title}</TableCell>
                 <TableCell sx ={{ maxWidth: '200px'}}>{post.pillar}</TableCell>
-                <TableCell sx ={{ maxWidth: '100px'}}>{getViews(post)}</TableCell>
+                <TableCell sx ={{ maxWidth: '100px'}}>{post.pageviews}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -73,6 +73,27 @@ const AnalyticsPageApi = createApi({
         method: 'GET'
       }),
     }),
+    // ------------------GET ALL STATS OF USER--------------------------
+    getTopContent: builder.query<any, void>({
+      query: () => ({        
+          url: `/functions/v1/api/analytics/top-content`,
+          method: 'GET'
+      }),
+    }),
+    // ------------------GET ALL STATS OF USER--------------------------
+    getTopContentWeekly: builder.query<any, void>({
+      query: () => ({        
+          url: `/functions/v1/api/analytics/top-content/week`,
+          method: 'GET'
+      }),
+    }),
+    // ------------------GET ALL STATS OF USER--------------------------
+    getTopContentDaily: builder.query<any, void>({
+      query: () => ({        
+          url: `/functions/v1/api/analytics/top-content/day`,
+          method: 'GET'
+      }),
+    }),
   })
 });
 
@@ -82,6 +103,10 @@ export const {
   useGetAnalyticsViewByContentPillarQuery,
   useGetAllStatsOfUserByPillarQuery,
   useGetChannelStatsOfUserByPageQuery,
-  useGetChannelStatsOfUserByPillarQuery
+  useGetChannelStatsOfUserByPillarQuery,
+  useGetTopContentQuery,
+  useGetTopContentWeeklyQuery,
+  useGetTopContentDailyQuery,
 } = AnalyticsPageApi;
-export { AnalyticsPageApi };
+
+export {AnalyticsPageApi};

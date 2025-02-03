@@ -25,13 +25,18 @@ import {
   useGetAnalyticsViewByContentPillarQuery,
   useGetAllStatsOfUserByPillarQuery,
   useGetChannelStatsOfUserByPageQuery,
-  useGetChannelStatsOfUserByPillarQuery
+  useGetChannelStatsOfUserByPillarQuery,
+  useGetTopContentQuery,
+  useGetTopContentWeeklyQuery,
+  useGetTopContentDailyQuery,
 } from 'src/libs/service/analytics/analytics';
 import dayjs, { Dayjs } from 'dayjs';
+import { useRouter } from 'src/routes/hooks';
 
 // ----------------------------------------------------------------------
 
 export default function Page() {
+  const router = useRouter();
   const [channel, setChannel] = useState<string>('1');
   const [aggTime, setAggTime] = useState<string>('daily');
   const [totalViews, setTotalViews] = useState<number>(0);
@@ -162,6 +167,66 @@ export default function Page() {
         break
     }
   }, [dailyStat, weeklyStat, monthlyStat]);
+  const topContent = useGetTopContentQuery();
+  const mapTopContentArrayFromApi = (inputs: any[]): any[] =>
+    inputs.map((input) => ({
+      content_id: input.content_id,
+      title: input.title,
+      pillar: input.pillar,
+      pageviews: input.pageviews,
+    }));
+  const topContentAllTime = topContent?.data?.data ? mapTopContentArrayFromApi(topContent!.data?.data) : [];
+
+  const topContentDaily = [
+    {
+        "content_id": "67399025-ffef-411a-a966-8f1f91f77efb",
+        "title": "Offshore Employee Engagement",
+        "pillar": "High Performance Culture",
+        "pageviews": 1
+    },
+    {
+        "content_id": "e5d46189-25dd-4fb7-ab3e-22c6fea72e5e",
+        "title": "Sora's out, but there is a long way to go",
+        "pillar": "Tech-Forward Insights",
+        "pageviews": 1
+    }
+  ]
+  const topContentWeekly = [
+    {
+        "content_id": "67399025-ffef-411a-a966-8f1f91f77efb",
+        "title": "Offshore Employee Engagement",
+        "pillar": "High Performance Culture",
+        "pageviews": 2
+    },
+    {
+        "content_id": "e5d46189-25dd-4fb7-ab3e-22c6fea72e5e",
+        "title": "Sora's out, but there is a long way to go",
+        "pillar": "Tech-Forward Insights",
+        "pageviews": 2
+    }
+  ]
+  const [topContentTableAllData, setTopContentTableAllData] = useState<any>([]);
+  const [currentTimeFilter, setCurrentTimeFilter] = useState<string>('all');
+
+  useEffect(() => {
+    updateTableData(currentTimeFilter);
+  }, [topContentAllTime, topContentWeekly, topContentDaily, currentTimeFilter]);
+
+  const updateTableData = (timeFilterType: string) => {
+    setCurrentTimeFilter(timeFilterType);
+    switch (timeFilterType) {
+      case "daily":
+        setTopContentTableAllData(topContentDaily);
+        break;
+      case "weekly":
+        setTopContentTableAllData(topContentWeekly);
+        break;
+      case "all":
+      default:
+        setTopContentTableAllData(topContentAllTime);
+        break;
+    }
+  };
 
   return (
     <>
@@ -206,79 +271,82 @@ export default function Page() {
             }
 
           </Card>
-
-          <ViewPieChart
-            title='Views by Content Pillars'
-            data={totalViewsByPillar} />
+          <Card sx={{ padding: '2rem', width: 800, display: 'flex', flexDirection: 'column' }}>
+            <Typography
+              variant="h6"
+            > Views by pillars over time 
+            </Typography>
+            <Box
+              sx={{
+                justifyContent: "center",
+                alignItems: "center",
+                display: "flex",
+                flexDirection: "row",
+                gap: 1
+              }}
+            >
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DemoContainer
+                  components={['MobileDatePicker']}
+                  sx={{
+                    display: 'flex', 
+                    flexDirection: 'row',
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <MobileDatePicker
+                    label="Start"
+                    defaultValue={dayjs('2025-01-01')}
+                    value={lineChartStartDate}
+                    onChange={(startValue) => setLineChartStartDate(startValue)}
+                  />
+                </DemoContainer>
+              </LocalizationProvider>
+              <Typography> - </Typography>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DemoContainer
+                  components={['MobileDatePicker']}
+                  sx={{
+                    display: 'flex', 
+                    flexDirection: 'row',
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <MobileDatePicker
+                    label="End"
+                    defaultValue={dayjs()}
+                    value={lineChartEndDate}
+                    onChange={(endValue) => setLineChartEndDate(endValue)}
+                  />
+                </DemoContainer>
+              </LocalizationProvider>
+            </Box>
+            <CustomLineChart
+              legends={pillarNames}
+              xLabels={datesRangeReformatted}
+              series={pillarViews}
+            />
+          </Card>
+          
         </Box>
 
-        <Box display="none" gap='1rem'>
+        <Box display="flex" gap='1rem'>
           <Card sx={{ padding: '2rem', width: 'auto' }}>
             <LeaderboardTable
-              // contentStats = dataFromApi
-              // onClickRow={() => router.replace('/content/content-id')} // remember to import useRouter
+              contentStats = {topContentTableAllData}
+            updateTableData={updateTableData}
+              onClickRow={() => router.replace('/content/content-id')}
               title="Most viewed content"
             />
           </Card>
+        
+        
+          <ViewPieChart
+              title='Views by Content Pillars'
+              data={totalViewsByPillar} />
         </Box>
-        <Card sx={{ padding: '2rem', width: 'auto', display: 'flex', flexDirection: 'column' }}>
-        <Typography
-          variant="h6"
-        > Views by pillars over time 
-        </Typography>
-        <Box
-          sx={{
-            justifyContent: "center",
-            alignItems: "center",
-            display: "flex",
-            flexDirection: "row",
-            gap: 1
-          }}
-        >
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DemoContainer
-              components={['MobileDatePicker']}
-              sx={{
-                display: 'flex', 
-                flexDirection: 'row',
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <MobileDatePicker
-                label="Start"
-                defaultValue={dayjs('2025-01-01')}
-                value={lineChartStartDate}
-                onChange={(startValue) => setLineChartStartDate(startValue)}
-              />
-            </DemoContainer>
-          </LocalizationProvider>
-          <Typography> - </Typography>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DemoContainer
-              components={['MobileDatePicker']}
-              sx={{
-                display: 'flex', 
-                flexDirection: 'row',
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <MobileDatePicker
-                label="End"
-                defaultValue={dayjs()}
-                value={lineChartEndDate}
-                onChange={(endValue) => setLineChartEndDate(endValue)}
-              />
-            </DemoContainer>
-          </LocalizationProvider>
-          </Box>
-          <CustomLineChart
-            legends={pillarNames}
-            xLabels={datesRangeReformatted}
-            series={pillarViews}
-          />
-        </Card>
       </DashboardContent>
     </>
   );
