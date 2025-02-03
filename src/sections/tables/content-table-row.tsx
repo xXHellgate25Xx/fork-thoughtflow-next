@@ -7,6 +7,7 @@ import MenuList from '@mui/material/MenuList';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
 
 import { Iconify } from 'src/components/iconify';
 import { Label, LabelColor } from 'src/components/label';
@@ -56,7 +57,17 @@ export function ContentTableRow({ row }: ContentTableRowProps) {
       <TableRow hover tabIndex={-1} role="checkbox">
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
-            {row.title}
+          <Typography 
+              variant="body2" 
+              noWrap 
+              sx={{ 
+                maxWidth: 300,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              {row.title}
+            </Typography>
           </Box>
         </TableCell>
 

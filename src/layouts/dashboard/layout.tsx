@@ -1,6 +1,6 @@
 import type { Theme, SxProps, Breakpoint } from '@mui/material/styles';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
@@ -9,6 +9,9 @@ import { useTheme } from '@mui/material/styles';
 import { _langs, _notifications } from 'src/_mock';
 
 import { Iconify } from 'src/components/iconify';
+
+import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
+import { useRouter } from 'src/routes/hooks';
 
 import { Main } from './main';
 import { layoutClasses } from '../classes';
@@ -22,6 +25,7 @@ import { HeaderSection } from '../core/header-section';
 import { AccountPopover } from '../components/account-popover';
 import { LanguagePopover } from '../components/language-popover';
 import { NotificationsPopover } from '../components/notifications-popover';
+
 
 // ----------------------------------------------------------------------
 
@@ -37,8 +41,32 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
   const theme = useTheme();
 
   const [navOpen, setNavOpen] = useState(false);
+  const [allAccount, setAllAccount] = useState<{ id: string; name: string; }[]>([]);
 
   const layoutQuery: Breakpoint = 'lg';
+  const router = useRouter();
+
+  useEffect(() => {
+    const accountId = localStorage.getItem('accountId');
+    if (!accountId) {
+      router.replace('/select-account');
+    }
+  }, []);
+  
+  const allAccountsApiData = useGetAllAccountsQuery();
+  const mapAllAccountsApi = (inputs: any[]) =>
+    inputs.map((input) => ({
+      id: String(input.id),
+      name: String(input.name),
+      // logo: '',
+      // plan: '',
+    })) || [];
+  useEffect(() => {
+    if (allAccountsApiData?.data?.data) {
+      setAllAccount(mapAllAccountsApi(allAccountsApiData.data.data));
+    }
+  }, [allAccountsApiData]);
+
 
   return (
     <LayoutSection
@@ -74,7 +102,7 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
                   data={navData}
                   open={navOpen}
                   onClose={() => setNavOpen(false)}
-                  workspaces={_workspaces}
+                  workspaces={allAccount}
                 />
               </>
             ),
@@ -111,7 +139,7 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
        * Sidebar
        *************************************** */
       sidebarSection={
-        <NavDesktop data={navData} layoutQuery={layoutQuery} workspaces={_workspaces} />
+        <NavDesktop data={navData} layoutQuery={layoutQuery} workspaces={allAccount} />
       }
       /** **************************************
        * Footer

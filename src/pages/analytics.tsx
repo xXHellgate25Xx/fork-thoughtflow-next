@@ -1,21 +1,33 @@
 import { Helmet } from 'react-helmet-async';
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Typography from '@mui/material/Typography';
 import { ChannelSelect } from 'src/sections/analytics/channel-select';
+import { 
+  DatePicker, 
+  LocalizationProvider, 
+  MobileDatePicker,
+  DateField
+ } from '@mui/x-date-pickers';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Box, Card, CircularProgress } from '@mui/material';
 import { ViewPieChart } from 'src/sections/analytics/pie-chart';
 import Grid from '@mui/material/Grid';
+import { CustomLineChart, getDatesRange, secondsToYearMonthDay } from 'src/sections/analytics/line-chart';
 import { SelectMenu } from 'src/sections/analytics/agg-time-select';
 import { Icon } from '@iconify/react';
 import LeaderboardTable from 'src/sections/analytics/leaderboard';
-import { 
+import {
   useGetAllChannelsOfUserQuery,
   useGetAllStatsOfUserQuery,
   useGetAnalyticsViewByContentPillarQuery,
+  useGetAllStatsOfUserByPillarQuery,
+  useGetChannelStatsOfUserByPageQuery,
+  useGetChannelStatsOfUserByPillarQuery
 } from 'src/libs/service/analytics/analytics';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 // ----------------------------------------------------------------------
 
@@ -24,13 +36,18 @@ export default function Page() {
   const [aggTime, setAggTime] = useState<string>('daily');
   const [totalViews, setTotalViews] = useState<number>(0);
   const [diff, setDiff] = useState<number>(0);
-  const currentDate = dayjs().format('YYYY-MM-DD');  
-
-  // const totalViewsByPillar = [
-  //   { id: 0, value: 10, label: 'series A' },
-  //   { id: 1, value: 15, label: 'series B' },
-  //   { id: 2, value: 20, label: 'series C' },
-  // ]
+  const [pillarNames, setPillarNames] = useState<string[]>([]);
+  const [pillarViews, setPillarViews] = useState<number[][]>([]);
+  const [lineChartStartDate, setLineChartStartDate] = useState<Dayjs | null>(dayjs('2025-01-01'));
+  const [lineChartEndDate, setLineChartEndDate] = useState<Dayjs | null>(dayjs());
+  const formattedStartDate = lineChartStartDate?.format('YYYY-MM-DD') as string;
+  const formattedCurrentDate = lineChartEndDate?.format('YYYY-MM-DD') as string;
+  const datesRange = getDatesRange('2025-01-01', '2025-02-03');
+  // getDatesRange(formattedStartDate, formattedCurrentDate);
+  const datesRangeReformatted = datesRange.map((dateItem) => {
+    const formattedDate = secondsToYearMonthDay(dateItem);
+    return formattedDate;
+  });
 
   const aggTimeOptions = [
     { id: 'daily', name: 'Daily' },
@@ -38,35 +55,88 @@ export default function Page() {
     { id: 'monthly', name: 'Monthly' },
   ]
 
-  const { data: allChannels, isLoading: allChannelsIsLoading} = useGetAllChannelsOfUserQuery();
+  const {
+    data: allChannels,
+    isLoading: allChannelsIsLoading
+  } = useGetAllChannelsOfUserQuery();
+
   const channel_id = allChannels?.data[0].id;
-  
-  const {data : dailyStat, isLoading: dailyIsLoading} = useGetAllStatsOfUserQuery({
+
+  const {
+    data: channelStatsByPage,
+    isLoading: channelStatsByPageIsLoading
+  } = useGetChannelStatsOfUserByPageQuery(
+    {
+      channel_id,
+      start_date: formattedStartDate,
+      end_date: formattedCurrentDate
+    },
+    { skip: !channel_id }
+  );
+
+  const {
+    data: channelStatsByPillar,
+    isLoading: channelStatsByPillarIsLoading
+  } = useGetChannelStatsOfUserByPillarQuery(
+    {
+      channel_id,
+      start_date: lineChartStartDate?.format('YYYY-MM-DD') as string,
+      end_date: lineChartEndDate?.format('YYYY-MM-DD') as string
+    },
+    { skip: !channel_id }
+  );
+
+  useEffect(() => {
+    if (channelStatsByPillar) {
+      const uniquePillarNames = [...new Set(channelStatsByPillar?.data?.map((item: any) => item.content_pillar))] as string[];
+      const pillarProcessesByDates = datesRangeReformatted.map((date: string) => {
+        const pillarFilteredByDates = channelStatsByPillar?.data?.filter((pillar: any) => pillar.date_id === date);
+        const pillarWithMatchedDate = uniquePillarNames.map((pillarName) => {
+          let viewsPerpillar;
+          const matchedPillar = pillarFilteredByDates.find((pillar: any) => pillar.content_pillar === pillarName);
+          if (matchedPillar) {
+            viewsPerpillar = matchedPillar.page_view;
+          } else {
+            viewsPerpillar = 0;
+          }
+          return viewsPerpillar;
+        });
+        return pillarWithMatchedDate;
+      });
+      setPillarNames(uniquePillarNames);
+      setPillarViews(pillarProcessesByDates);
+    }
+  }, [channelStatsByPillar]);
+
+  const { data: dailyStat, isLoading: dailyIsLoading } = useGetAllStatsOfUserQuery({
     channel_id,
     type_of_agg: 'day',
-    current_date: currentDate,
+    current_date: formattedCurrentDate,
   });
-  const {data : weeklyStat, isLoading: weeklyIsLoading} = useGetAllStatsOfUserQuery({
+  const { data: weeklyStat, isLoading: weeklyIsLoading } = useGetAllStatsOfUserQuery({
     channel_id,
     type_of_agg: 'week',
-    current_date: currentDate,
+    current_date: formattedCurrentDate,
   });
-  const {data : monthlyStat, isLoading: monthlyIsLoading} = useGetAllStatsOfUserQuery({
+  const { data: monthlyStat, isLoading: monthlyIsLoading } = useGetAllStatsOfUserQuery({
     channel_id,
     type_of_agg: 'month',
-    current_date: currentDate,
+    current_date: formattedCurrentDate,
   });
-  // console.log("Weekly Stat", weeklyStat);
-  const { data: analyticsViewByContent, isLoading: analyticsViewByContentIsLoading} = useGetAnalyticsViewByContentPillarQuery();
+
+  const {
+    data: analyticsViewByContent,
+    isLoading: analyticsViewByContentIsLoading
+  } = useGetAnalyticsViewByContentPillarQuery();
 
   const mapContentArray = (inputs: any[]): any[] =>
-      inputs.map((input) => ({
-        id: input.pillar_id,
-        value: input.views,
-        label: input.pillar_name,
-      }));
+    inputs.map((input) => ({
+      id: input.pillar_id,
+      value: input.views,
+      label: input.pillar_name,
+    }));
   const totalViewsByPillar = analyticsViewByContent?.data ? mapContentArray(analyticsViewByContent!.data) : [];
-  
+
   // useEffect(() => {
   //   if (dailyStat) {
   //     setTotalViews(dailyStat.t1Views);
@@ -103,7 +173,7 @@ export default function Page() {
           <Typography variant="h4">
             Analytics
           </Typography>
-        </Box> 
+        </Box>
 
         <Box display="flex" mb='2rem' gap='1rem'>
           <Card sx={{ padding: '2rem', width: 'auto' }}>
@@ -111,10 +181,10 @@ export default function Page() {
               <Typography variant="h6">Total views</Typography>
               <SelectMenu itemId={aggTime} options={aggTimeOptions} onChosen={onChosen} />
             </Box>
-            
-            {dailyIsLoading && weeklyIsLoading && monthlyIsLoading? 
+
+            {dailyIsLoading && weeklyIsLoading && monthlyIsLoading ?
               <Box display="flex" justifyContent='center'>
-                <CircularProgress color='inherit'/>
+                <CircularProgress color='inherit' />
               </Box>
               :
               <Box display="flex" alignItems='center' justifyContent='center' flexDirection='column'>
@@ -123,10 +193,10 @@ export default function Page() {
                 </Typography>
 
                 <Box display="flex" alignItems='center'>
-                
-                  <Icon 
+
+                  <Icon
                     color={diff > 0 ? 'green' : 'red'}
-                    icon={diff > 0 ? 'iconamoon:trend-up' : 'iconamoon:trend-down'}/>
+                    icon={diff > 0 ? 'iconamoon:trend-up' : 'iconamoon:trend-down'} />
                   <Typography color={diff > 0 ? 'green' : 'red'}>{diff > 0 ? '+' : ''}</Typography>
                   <Typography variant='subtitle1' color={diff > 0 ? 'green' : 'red'}>
                     {new Intl.NumberFormat('en-GB', { style: 'percent' }).format(diff)}
@@ -134,26 +204,81 @@ export default function Page() {
                 </Box>
               </Box>
             }
-          
+
           </Card>
 
-          <ViewPieChart 
+          <ViewPieChart
             title='Views by Content Pillars'
-            data={totalViewsByPillar}/>
+            data={totalViewsByPillar} />
         </Box>
 
         <Box display="none" gap='1rem'>
           <Card sx={{ padding: '2rem', width: 'auto' }}>
-            Line chart - view by pillars over date
-          </Card>
-          <Card sx={{ padding: '2rem', width: 'auto' }}>
             <LeaderboardTable
-            // contentStats = dataFromApi
-            // onClickRow={() => router.replace('/content/content-id')} // remember to import useRouter
-            title = "Most viewed content"
-          />
+              // contentStats = dataFromApi
+              // onClickRow={() => router.replace('/content/content-id')} // remember to import useRouter
+              title="Most viewed content"
+            />
           </Card>
         </Box>
+        <Card sx={{ padding: '2rem', width: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <Typography
+          variant="h6"
+        > Views by pillars over time 
+        </Typography>
+        <Box
+          sx={{
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+            flexDirection: "row",
+            gap: 1
+          }}
+        >
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DemoContainer
+              components={['MobileDatePicker']}
+              sx={{
+                display: 'flex', 
+                flexDirection: 'row',
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              <MobileDatePicker
+                label="Start"
+                defaultValue={dayjs('2025-01-01')}
+                value={lineChartStartDate}
+                onChange={(startValue) => setLineChartStartDate(startValue)}
+              />
+            </DemoContainer>
+          </LocalizationProvider>
+          <Typography> - </Typography>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DemoContainer
+              components={['MobileDatePicker']}
+              sx={{
+                display: 'flex', 
+                flexDirection: 'row',
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              <MobileDatePicker
+                label="End"
+                defaultValue={dayjs()}
+                value={lineChartEndDate}
+                onChange={(endValue) => setLineChartEndDate(endValue)}
+              />
+            </DemoContainer>
+          </LocalizationProvider>
+          </Box>
+          <CustomLineChart
+            legends={pillarNames}
+            xLabels={datesRangeReformatted}
+            series={pillarViews}
+          />
+        </Card>
       </DashboardContent>
     </>
   );

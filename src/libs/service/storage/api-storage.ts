@@ -2,15 +2,15 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../supabase/baseQuery";
 
 interface StorageReq {
-    file?: any,
-    bucketName?: string,
-    pathName?: string
+  file?: any;
+  bucketName?: string;
+  pathName?: string;
 }
 
 interface StorageRes {
-    data?: any;
-    error?: any;
-    Id?: any
+  data?: any;
+  error?: any;
+  Id?: any;
 }
 
 const uploadToStorageApi = createApi({
@@ -28,12 +28,15 @@ const uploadToStorageApi = createApi({
                 body: file
             })
         })
+    ,
+    getMediaFromStorage: builder.query<StorageRes, StorageReq>({
+      query: ({ bucketName, pathName }) => ({
+        url: `/storage/v1/object/${bucketName}/${pathName}`,
+        method: 'GET',
+      }),
     }),
-})
+  }),
+});
 
-
-
-export const {
-    useUploadToStorageMutation,
-} = uploadToStorageApi;
+export const { useUploadToStorageMutation , useLazyGetMediaFromStorageQuery } = uploadToStorageApi;
 export { uploadToStorageApi };

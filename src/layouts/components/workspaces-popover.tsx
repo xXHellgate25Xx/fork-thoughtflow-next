@@ -1,6 +1,6 @@
 import type { ButtonBaseProps } from '@mui/material/ButtonBase';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Popover from '@mui/material/Popover';
@@ -19,14 +19,16 @@ export type WorkspacesPopoverProps = ButtonBaseProps & {
   data?: {
     id: string;
     name: string;
-    logo: string;
-    plan: string;
   }[];
 };
 
 export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopoverProps) {
   const [workspace, setWorkspace] = useState(data[0]);
-
+  useEffect(() => {
+    if (data.length > 0) {
+      setWorkspace(data[0]);
+    }
+  }, [data]);
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -40,17 +42,10 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
   const handleChangeWorkspace = useCallback(
     (newValue: (typeof data)[number]) => {
       setWorkspace(newValue);
+      localStorage.setItem("accountId", newValue.id);
       handleClosePopover();
     },
     [handleClosePopover]
-  );
-
-  const renderAvatar = (alt: string, src: string) => (
-    <Box component="img" alt={alt} src={src} sx={{ width: 24, height: 24, borderRadius: '50%' }} />
-  );
-
-  const renderLabel = (plan: string) => (
-    <Label color={plan === 'Free' ? 'default' : 'info'}>{plan}</Label>
   );
 
   return (
@@ -72,7 +67,6 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
         }}
         {...other}
       >
-        {renderAvatar(workspace?.name, workspace?.logo)}
 
         <Box
           gap={1}
@@ -82,7 +76,6 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
           sx={{ typography: 'body2', fontWeight: 'fontWeightSemiBold' }}
         >
           {workspace?.name}
-          {renderLabel(workspace?.plan)}
         </Box>
 
         <Iconify width={16} icon="carbon:chevron-sort" sx={{ color: 'text.disabled' }} />
@@ -114,13 +107,16 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
               selected={option.id === workspace?.id}
               onClick={() => handleChangeWorkspace(option)}
             >
-              {renderAvatar(option.name, option.logo)}
 
               <Box component="span" sx={{ flexGrow: 1 }}>
                 {option.name}
               </Box>
 
-              {renderLabel(option.plan)}
+              {option.id === workspace?.id && (
+                <Label color="info" variant="soft">
+                  CURRENT
+                </Label>
+              )}
             </MenuItem>
           ))}
         </MenuList>

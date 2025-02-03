@@ -1,3 +1,4 @@
+import { RichContent } from 'ricos-schema';
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../supabase/baseQuery";
 
@@ -46,7 +47,7 @@ export interface ContentRes {
     content_id: string;
     idea_id: string;
     content_body: string;
-    rich_content: string;
+    rich_content: RichContent;
     title: string;
     excerpt: string;
     status: 'draft' | 'published';

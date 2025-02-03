@@ -10,6 +10,12 @@ import { useGetContentQuery } from 'src/libs/service/content/content';
 import { useParams } from 'react-router-dom';
 import { useRouter } from 'src/routes/hooks';
 import { fDateTime } from 'src/utils/format-time';
+
+import Viewer from 'src/components/editor/Viewer';
+import { toDraft } from 'ricos-content/libs/toDraft';
+import { fromPlainText } from 'ricos-content/libs/fromPlainText';
+import { fromDraft } from 'ricos-content/libs/fromDraft';
+import { RichContent } from 'ricos-schema';
 // ----------------------------------------------------------------------
 
 const channelIcons: { [key: string]: string } = {
@@ -42,13 +48,24 @@ export default function Page() {
   const [publishedAt, setPublishedAt] = useState('Loading...');
   const [views, setViews] = useState(1234);
   const [channelType, setChannelType] = useState('wix');
+  const [richContent, setRichContent] = useState(toDraft(fromPlainText("Loading...")));
   // console.log(createdAt);
   useEffect(() => {
     if (content) {
       setCreatedAt(fDateTime(content.created_at, "DD MMM YYYY h:mm a") || 'N/A');
       setPublishedAt(fDateTime(content.published_at, "DD MMM YYYY h:mm a") || 'N/A');
       setPublished(content.status === 'published');
-      // setChannelType(content.content_type || 'wix');
+  
+      try {
+        const parsedContent = typeof content.rich_content === 'string' 
+          ? JSON.parse(content.rich_content) 
+          : content.rich_content;
+        
+        setRichContent(parsedContent);
+      } catch (error) {
+        console.error("Error parsing richContent:", error);
+        setRichContent(toDraft(fromPlainText("Error loading content")));
+      }
     }
   }, [content]);
   // console.log(`Content Data: ${JSON.stringify(contentData?.data)}`);
@@ -61,6 +78,9 @@ export default function Page() {
   const handlePublish = () => {
 
   }
+
+
+
 
   return (
     <>
@@ -143,9 +163,7 @@ export default function Page() {
           </Button>
         </Box>
         <Card sx={{ mt: '1rem', padding: '1rem' }}>
-          <div style={{ whiteSpace: 'pre-line' }}>
-        {contentLoading === false ? content?.content_body : "Loading..."}
-          </div>
+<Viewer content={richContent}/>
         </Card>
 
       </DashboardContent>

@@ -4,14 +4,14 @@ import { HomePageApi } from './service/pillar/home';
 import exampleSlice from './service/example/exampleSlice';
 import { IdeaApi } from './service/idea/idea';
 import { uploadToStorageApi } from './service/storage/api-storage';
+import { WixApi } from './service/wix/wix';
 import { PillarPageApi } from './service/pillar/pillar-item';
 import { ContentPageApi } from './service/content/content';
 import { generateContentApi } from './service/content/generate';
 import { AnalyticsPageApi } from './service/analytics/analytics';
-
+import { AccountApi } from './service/account/account';
 
 const store = configureStore({
-
   reducer: {
     example: exampleSlice, // Add your reducers here
     [authApi.reducerPath]: authApi.reducer,
@@ -20,8 +20,10 @@ const store = configureStore({
     [uploadToStorageApi.reducerPath]: uploadToStorageApi.reducer,
     [PillarPageApi.reducerPath]: PillarPageApi.reducer,
     [ContentPageApi.reducerPath]: ContentPageApi.reducer,
+    [WixApi.reducerPath]: WixApi.reducer,
     [generateContentApi.reducerPath]: generateContentApi.reducer,
     [AnalyticsPageApi.reducerPath]: AnalyticsPageApi.reducer,
+    [AccountApi.reducerPath]: AccountApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -32,9 +34,11 @@ const store = configureStore({
       .concat(uploadToStorageApi.middleware)
       .concat(PillarPageApi.middleware)
       .concat(ContentPageApi.middleware)
+      .concat(WixApi.middleware)
+      .concat(generateContentApi.middleware)
       .concat(generateContentApi.middleware)
       .concat(AnalyticsPageApi.middleware)
+      .concat(AccountApi.middleware)
 });
-
 
 export default store;

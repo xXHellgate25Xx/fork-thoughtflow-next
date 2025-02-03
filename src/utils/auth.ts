@@ -20,6 +20,12 @@ export const removeToken = (): void => {
   }
 };
 
+export const removeAccountId = (): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('accountId');
+  }
+}
+
 export const isTokenValid = (token: string | null): boolean => {
   if (!token) return false;
 

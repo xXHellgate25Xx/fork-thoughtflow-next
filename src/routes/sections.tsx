@@ -21,6 +21,10 @@ export const ContentItemPage = lazy(() => import('src/pages/content-item'));
 export const PillarItemPage = lazy(() => import('src/pages/pillar-item'));
 export const ContentPage = lazy(() => import('src/pages/content'));
 export const AnalyticsPage = lazy(() => import('src/pages/analytics'));
+export const SettingsPage = lazy(() => import('src/pages/settings'));
+export const AddChannelPage = lazy(() => import('src/pages/add-channel'));
+export const SelectAccountPage = lazy(() => import('src/pages/select-account'));
+
 
 // ----------------------------------------------------------------------
 
@@ -55,8 +59,10 @@ export function Router() {
         { path: 'create', element: <CreateIdeaPage /> },
         { path: 'content', element: <ContentPage /> },
         { path: 'analytics', element: <AnalyticsPage /> },
+        { path: 'settings', element: <SettingsPage /> },
         { path: 'content/:content-id', element: <ContentItemPage /> },
         { path: 'pillar/:pillar-id', element: <PillarItemPage /> },
+        { path: 'add-channel', element: <AddChannelPage /> },
       ],
     },
     {
@@ -64,6 +70,14 @@ export function Router() {
       element: (
         <AuthLayout>
           <SignInPage />
+        </AuthLayout>
+      ),
+    },
+    {
+      path: 'select-account',
+      element: (
+        <AuthLayout>
+          <SelectAccountPage />
         </AuthLayout>
       ),
     },

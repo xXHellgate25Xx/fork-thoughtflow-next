@@ -34,7 +34,10 @@ export type NavContentProps = {
     topArea?: React.ReactNode;
     bottomArea?: React.ReactNode;
   };
-  workspaces: WorkspacesPopoverProps['data'];
+  workspaces: {
+    id: string;
+    name: string;
+  }[];
   sx?: SxProps<Theme>;
 };
 

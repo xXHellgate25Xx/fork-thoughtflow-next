@@ -15,7 +15,7 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { _myAccount } from 'src/_mock';
-import { removeToken } from 'src/utils/auth';
+import { removeToken, removeAccountId } from 'src/utils/auth';
 
 // ----------------------------------------------------------------------
 
@@ -53,6 +53,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
 
   const handleLogout = useCallback(() => {
     removeToken();
+    removeAccountId();
     router.push('/sign-in')
   }, []);
 
