@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import Typography from '@mui/material/Typography';
 import { ChannelSelect } from 'src/sections/analytics/channel-select';
 import { 
@@ -167,7 +167,7 @@ export default function Page() {
         break
     }
   }, [dailyStat, weeklyStat, monthlyStat]);
-  const topContent = useGetTopContentQuery();
+  const { data: topContent } = useGetTopContentQuery();
   const mapTopContentArrayFromApi = (inputs: any[]): any[] =>
     inputs.map((input) => ({
       content_id: input.content_id,
@@ -175,36 +175,29 @@ export default function Page() {
       pillar: input.pillar,
       pageviews: input.pageviews,
     }));
-  const topContentAllTime = topContent?.data?.data ? mapTopContentArrayFromApi(topContent!.data?.data) : [];
+  const topContentAllTime = useMemo(() => {
+    if (topContent?.data) {
+      return mapTopContentArrayFromApi(topContent.data);
+    }
+    return [];
+  }, [topContent?.data]);
 
-  const topContentDaily = [
-    {
-        "content_id": "67399025-ffef-411a-a966-8f1f91f77efb",
-        "title": "Offshore Employee Engagement",
-        "pillar": "High Performance Culture",
-        "pageviews": 1
-    },
-    {
-        "content_id": "e5d46189-25dd-4fb7-ab3e-22c6fea72e5e",
-        "title": "Sora's out, but there is a long way to go",
-        "pillar": "Tech-Forward Insights",
-        "pageviews": 1
+  const { data: topContentDailyApi } = useGetTopContentDailyQuery();
+  const topContentDaily = useMemo(() => {
+    if (topContentDailyApi?.data) {
+      return mapTopContentArrayFromApi(topContentDailyApi.data);
     }
-  ]
-  const topContentWeekly = [
-    {
-        "content_id": "67399025-ffef-411a-a966-8f1f91f77efb",
-        "title": "Offshore Employee Engagement",
-        "pillar": "High Performance Culture",
-        "pageviews": 2
-    },
-    {
-        "content_id": "e5d46189-25dd-4fb7-ab3e-22c6fea72e5e",
-        "title": "Sora's out, but there is a long way to go",
-        "pillar": "Tech-Forward Insights",
-        "pageviews": 2
+    return [];
+  }, [topContentDailyApi?.data]);
+
+  const { data: topContentWeeklyApi } = useGetTopContentWeeklyQuery();
+  const topContentWeekly = useMemo(() => {
+    if (topContentWeeklyApi?.data) {
+      return mapTopContentArrayFromApi(topContentWeeklyApi.data);
     }
-  ]
+    return [];
+  }, [topContentWeeklyApi?.data]);
+
   const [topContentTableAllData, setTopContentTableAllData] = useState<any>([]);
   const [currentTimeFilter, setCurrentTimeFilter] = useState<string>('all');
 

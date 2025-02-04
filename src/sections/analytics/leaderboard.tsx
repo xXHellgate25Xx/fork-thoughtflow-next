@@ -173,21 +173,31 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {slicedData.map((post, index) => (
-              <TableRow
-                key={post.id}
-                hover
-                sx={{ cursor: 'pointer' }}
-                onClick={() => 
-                  {if (onClickRow) {onClickRow();}}
-                }
-              >
-                <TableCell sx ={{ maxWidth: '100px'}}>{index + 1}</TableCell>
-                <TableCell sx ={{ maxWidth: '200px'}}>{post.title}</TableCell>
-                <TableCell sx ={{ maxWidth: '200px'}}>{post.pillar}</TableCell>
-                <TableCell sx ={{ maxWidth: '100px'}}>{post.pageviews}</TableCell>
-              </TableRow>
-            ))}
+            {
+              slicedData.length > 0 ? (
+                slicedData.map((post, index) => (
+                  <TableRow
+                    key={post.id}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => 
+                      {if (onClickRow) {onClickRow();}}
+                    }
+                  >
+                    <TableCell sx ={{ maxWidth: '100px'}}>{index + 1}</TableCell>
+                    <TableCell sx ={{ maxWidth: '200px'}}>{post.title}</TableCell>
+                    <TableCell sx ={{ maxWidth: '200px'}}>{post.pillar}</TableCell>
+                    <TableCell sx ={{ maxWidth: '100px'}}>{post.pageviews}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{fontStyle: 'italic'}}>
+                    No content received views during this period
+                  </TableCell>
+                </TableRow>
+              )
+            }
           </TableBody>
         </Table>
       </TableContainer>

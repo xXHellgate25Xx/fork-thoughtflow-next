@@ -79,7 +79,7 @@ const ContentPageApi = createApi({
       // ------------------GET ALL STATS OF USER--------------------------
       getAllStatsOfUser: builder.query<getAllStatsOfUserRes, void>({
         query: () => ({        
-            url: `/functions/v1/api/analytics/user`,
+            url: `/functions/v1/api/analytics/account`,
             method: 'GET'
         }),
       }),

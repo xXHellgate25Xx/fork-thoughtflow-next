@@ -4,7 +4,7 @@ import { Box, Button, Typography } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useState, useEffect } from 'react';
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
-import { useRouter } from 'src/routes/hooks';
+import { useNavigate } from "react-router-dom";
 
 // ----------------------------------------------------------------------
 
@@ -16,7 +16,13 @@ export default function Page() {
   ]
 
   const [allAccount, setAllAccount] = useState<{ id: string; name: string; }[]>([]);
-  const router = useRouter();
+  const navigate = useNavigate();
+  const handleNavigateToAccount = (account_id:string, account_name:string) => {
+    navigate("/", {
+      replace: true,
+      state: { id:account_id, name:account_name },
+    });
+  };
   const allAccountsApiData = useGetAllAccountsQuery();
   const mapAllAccountsApi = (inputs: any[]) =>
     inputs.map((input) => ({
@@ -34,12 +40,13 @@ export default function Page() {
     allAccountsApiData.refetch();
   }, []);
 
-  const handleOnClickAccount = (account_id:string) => {
+  const handleOnClickAccount = (account_id:string, account_name:string) => {
     // Clear existing data immediately
     setAllAccount([]);
     // Set account ID and navigate
     localStorage.setItem("accountId", account_id);
-    router.replace('/');
+    localStorage.setItem("accountName", account_name);
+    handleNavigateToAccount(account_id, account_name);
   }
   return (
     <>
@@ -55,7 +62,7 @@ export default function Page() {
             size='large'
             variant='outlined'
             color='inherit'
-            onClick={() => handleOnClickAccount(account.id)}
+            onClick={() => handleOnClickAccount(account.id, account.name)}
             endIcon={<Icon icon='weui:arrow-filled' width='1rem'/>}
           >{account.name}
           </Button>

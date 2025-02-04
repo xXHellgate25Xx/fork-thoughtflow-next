@@ -23,6 +23,7 @@ export const removeToken = (): void => {
 export const removeAccountId = (): void => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('accountId');
+    localStorage.removeItem('accountName');
   }
 }
 

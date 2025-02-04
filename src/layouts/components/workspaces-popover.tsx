@@ -23,10 +23,14 @@ export type WorkspacesPopoverProps = ButtonBaseProps & {
 };
 
 export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopoverProps) {
-  const [workspace, setWorkspace] = useState(data[0]);
+  const defaultData = {
+    id: localStorage.getItem('accountId'),
+    name: localStorage.getItem('accountName')
+  }
+  const [workspace, setWorkspace] = useState(defaultData);
   useEffect(() => {
     if (data.length > 0) {
-      setWorkspace(data[0]);
+      setWorkspace(defaultData);
     }
   }, [data]);
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
@@ -43,7 +47,9 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
     (newValue: (typeof data)[number]) => {
       setWorkspace(newValue);
       localStorage.setItem("accountId", newValue.id);
+      localStorage.setItem("accountName", newValue.name);
       handleClosePopover();
+      window.location.reload();
     },
     [handleClosePopover]
   );

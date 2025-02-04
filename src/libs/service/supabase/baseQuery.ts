@@ -8,6 +8,7 @@ export const baseQuery = fetchBaseQuery({
     const accountId = localStorage?.getItem('accountId') || '';
     headers.set('Content-Type', 'application/json');
     headers.set('Authorization', `Bearer ${token}`);
+    headers.set('account-id', accountId);
     return headers;
   },
 });

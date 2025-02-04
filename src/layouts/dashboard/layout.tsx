@@ -12,6 +12,7 @@ import { Iconify } from 'src/components/iconify';
 
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 import { useRouter } from 'src/routes/hooks';
+import { useLocation } from "react-router-dom";
 
 import { Main } from './main';
 import { layoutClasses } from '../classes';
@@ -42,12 +43,15 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
 
   const [navOpen, setNavOpen] = useState(false);
   const [allAccount, setAllAccount] = useState<{ id: string; name: string; }[]>([]);
+  const location = useLocation();
+  const state = location.state || {}; // Handle undefined state
 
   const layoutQuery: Breakpoint = 'lg';
   const router = useRouter();
 
   useEffect(() => {
     const accountId = localStorage.getItem('accountId');
+    const accountName = localStorage.getItem('accountName');
     if (!accountId) {
       router.replace('/select-account');
     }
