@@ -6,6 +6,7 @@ import TableContainer from '@mui/material/TableContainer';
 import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
 import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
 import { ChannelTableRow, type ChannelProps } from 'src/sections/tables/channel-table-row';
+import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
 
 import { Box, Button, Card, Typography, Table, TableBody } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -61,12 +62,21 @@ export function useTable() {
 export default function Page() {
   const router = useRouter();
   const table = useTable();  
+  const {data: channelData} = useGetAllChannelsOfUserQuery(); 
 
-  const data: ChannelProps[] = [
-    { id: '1', type: 'wix', name: 'Wix channel', url: 'https://www.wix.com/' },
-    { id: '2', type: 'linkedin', name: 'LinkedIn channel', url: 'https://www.linkedin.com/' },
+  const data: ChannelProps[] = channelData?.data?.map((channel: any) => {
+    const mapping = {
+      id: channel.id, 
+      type: channel.channel_type, 
+      name: channel.name, 
+      url: channel.url,
+      prompt: channel.brand_voice_initial
+    };
+    return mapping;
+  }) || [
+    { id: '1', type: 'wix', name: 'Wix channel', url: 'https://www.wix.com/', prompt: '' },
+    { id: '2', type: 'linkedin', name: 'LinkedIn channel', url: 'https://www.linkedin.com/', prompt: '' },
   ];
-  
 
   return (
     <>

@@ -5,17 +5,41 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { channelIcons } from 'src/theme/icons/channel-icons';
+import { useCreateChannelMutation } from 'src/libs/service/channel/channel';
+
+import { useRouter } from 'src/routes/hooks';
 
 // ----------------------------------------------------------------------
 
 export default function Page() {
+  const router = useRouter();
+  const [channelName, setChannelName] = useState('');
+  const [channelUrl, setChannelUrl] = useState('');
+  const [channelVoice, setChannelVoice] = useState('');
   const [channelType, setChannelType] = useState('wix');
 
+  const [createChannel] = useCreateChannelMutation();
+  
   const availableTypes = [
     { id: 'wix', label: 'Wix' },
-    { id: 'linkedin', label: 'LinkedIn' },
-    { id: 'instagram', label: 'Instagram' }
+    // { id: 'linkedin', label: 'LinkedIn' },
+    // { id: 'instagram', label: 'Instagram' }
   ]
+
+  const handleCreateChannel = async () => {
+      await createChannel({
+      payload:{
+        name: channelName,
+        channel_type: channelType,
+        url: channelUrl,
+        is_active: true,
+        brand_voice_initial: channelVoice,
+        account_id: localStorage.getItem('accountId')
+      }
+    });
+    router.push("/settings");
+  };
+
 
   return (
     <>
@@ -31,18 +55,30 @@ export default function Page() {
         <Card sx={{ padding: '2rem' }}>
           <Box display='flex' flexDirection='column' gap='0.5rem'>
             <Typography>Name</Typography>
-            <TextField fullWidth/>
+            <TextField 
+              onChange={(name) => {setChannelName(name.target.value)}}
+              fullWidth
+            />
 
             <Typography>URL</Typography>
-            <TextField fullWidth/>
+            <TextField 
+              onChange={(url) => {setChannelUrl(url.target.value)}}
+              fullWidth
+            />
 
             <Typography>Channel voice</Typography>
-            <TextField fullWidth multiline rows={10}/>
+            <TextField 
+              onChange={(voice) => {setChannelVoice(voice.target.value)}}
+              fullWidth 
+              multiline 
+              rows={10}
+            />
 
             <Typography>Channel type</Typography>
             <Box display='flex' gap='1rem' mb='0.5rem'>
             {availableTypes.map((card, index) => (
               <Card
+                key={index}
                 onClick={() => setChannelType(card.id)}
                 data-active={channelType === card.id ? '' : undefined}
                 sx={{
@@ -71,6 +107,7 @@ export default function Page() {
               color='inherit'
               variant='contained'
               sx={{ mt: '1rem' }}
+              onClick={handleCreateChannel}
             >
               Submit
             </Button>

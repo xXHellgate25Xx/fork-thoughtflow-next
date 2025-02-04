@@ -19,8 +19,8 @@ import { CustomLineChart, getDatesRange, secondsToYearMonthDay } from 'src/secti
 import { SelectMenu } from 'src/sections/analytics/agg-time-select';
 import { Icon } from '@iconify/react';
 import LeaderboardTable from 'src/sections/analytics/leaderboard';
+import {useGetAllChannelsOfUserQuery} from 'src/libs/service/channel/channel';
 import {
-  useGetAllChannelsOfUserQuery,
   useGetAllStatsOfUserQuery,
   useGetAnalyticsViewByContentPillarQuery,
   useGetAllStatsOfUserByPillarQuery,

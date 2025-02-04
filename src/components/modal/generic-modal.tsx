@@ -8,18 +8,28 @@ import {
   TextField,
   Button,
   Box,
-  CircularProgress
+  CircularProgress,
+  ButtonPropsColorOverrides,
+  Typography,
 } from '@mui/material';
-
 
 interface GenericModalProps {
   open: boolean;
   onClose: () => void;
-  onAddItem: (name: string) => void;
+  onAddItem: (text: string) => void;
   isLoading?: boolean;
   modalTitle: string;
-  textFieldText: string;
+  modalSubTitle?: string;
+  textFieldText?: string;
+  textFieldValue?: string;
+  customChildren?: React.ReactNode;
   buttonText: string;
+  styling?: {
+    buttonColor?: any;
+    multiline?: boolean | undefined;
+    rows?: number;
+    enableCloseButton?: boolean
+  }
 }
 
 export function GenericModal({
@@ -28,15 +38,18 @@ export function GenericModal({
   onAddItem,
   isLoading=false,
   modalTitle,
+  modalSubTitle,
   textFieldText,
+  textFieldValue,
+  customChildren,
   buttonText,
+  styling
 }: GenericModalProps) {
-  const [name, setName] = useState('');
+  const [text, setText] = useState(textFieldValue || '');
 
   const handleAddItem = () => {
-    if (name.trim() && !isLoading) {
-      onAddItem(name);
-      setName('');
+    if (text.trim() && !isLoading) {
+      onAddItem(text);
     }
   };
 
@@ -48,6 +61,9 @@ export function GenericModal({
       fullWidth
     >
       <DialogTitle>{modalTitle}</DialogTitle>
+      {modalSubTitle? 
+      <Typography variant='body2' sx={{ml: 3}}>{modalSubTitle}</Typography>
+      : <></>}
       
       <DialogContent>
         <TextField
@@ -57,27 +73,40 @@ export function GenericModal({
           type="text"
           fullWidth
           variant="outlined"
-          value={name}
+          value={text}
           sx={{color:'inherit'}}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
           disabled={isLoading}
+          multiline={styling?.multiline}
+          rows={styling?.rows? styling?.rows : 0}
         />
+        {customChildren}
       </DialogContent>
       
       <DialogActions>
         <Box 
           gap='1rem'
-          sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}
+          sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', p: 2 }}
         >
+          {styling?.enableCloseButton? 
+            <Button 
+              onClick={onClose} 
+              variant='outlined'
+              color={styling?.buttonColor? styling?.buttonColor : "inherit"}
+            >
+              Cancel
+          </Button> : <></>}
+          
           {isLoading && <CircularProgress size={34} />}
           <Button 
             onClick={handleAddItem} 
             variant="contained" 
-            color="primary"
+            color={styling?.buttonColor? styling?.buttonColor : "inherit"}
             disabled={isLoading}
           >
             {isLoading ? 'Loading...' : `${buttonText}`}
           </Button>
+          
         </Box>
       </DialogActions>
     </Dialog>

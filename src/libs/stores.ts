@@ -10,6 +10,7 @@ import { ContentPageApi } from './service/content/content';
 import { generateContentApi } from './service/content/generate';
 import { AnalyticsPageApi } from './service/analytics/analytics';
 import { AccountApi } from './service/account/account';
+import { ChannelApi } from './service/channel/channel';
 
 const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ const store = configureStore({
     [generateContentApi.reducerPath]: generateContentApi.reducer,
     [AnalyticsPageApi.reducerPath]: AnalyticsPageApi.reducer,
     [AccountApi.reducerPath]: AccountApi.reducer,
+    [ChannelApi.reducerPath]: ChannelApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -36,9 +38,9 @@ const store = configureStore({
       .concat(ContentPageApi.middleware)
       .concat(WixApi.middleware)
       .concat(generateContentApi.middleware)
-      .concat(generateContentApi.middleware)
       .concat(AnalyticsPageApi.middleware)
       .concat(AccountApi.middleware)
+      .concat(ChannelApi.middleware)
 });
 
 export default store;
