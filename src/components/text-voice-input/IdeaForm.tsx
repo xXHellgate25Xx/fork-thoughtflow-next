@@ -32,33 +32,40 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   setAudioBlob,
   handleEditSubmit,
   onSubmitSuccess,
-  currentPillarId
+  currentPillarId,
 }) => {
-  
-  const [ uploadToStorage ] = useUploadToStorageMutation();
+  const [uploadToStorage] = useUploadToStorageMutation();
+
+  const [error, setError] = useState<string | null>(null);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedTexts({ ...editedIdea, text: e.target.value });
+    const newText = e.target.value;
+    setEditedTexts({ ...editedIdea, text: newText });
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     setEditedTexts({
       ...editedIdea,
       pillar_id: currentPillarId,
     });
-  },[currentPillarId]);
+  }, [currentPillarId]);
 
   const handleSubmit = async () => {
+    if (!editedIdea?.text || editedIdea.text.trim() === "") {
+      setError("Text is required.");
+      return;
+    }
+
     try {
-      const path = audioBlob ? await processingFilePath(audioBlob, "voice_inputs", "voice") : null;
+      const path = audioBlob
+        ? await processingFilePath(audioBlob, "voice_inputs", "voice")
+        : null;
       const audio = audioBlob
-        ? await uploadToStorage(
-          {
+        ? await uploadToStorage({
             file: audioBlob,
             bucketName: "media",
-            pathName: path || ""
-          }    
-          )
+            pathName: path || "",
+          })
         : null;
 
       const updatedIdea = { ...editedIdea, voice_input: audio?.data?.Id || null };
@@ -72,8 +79,8 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
         text: "",
       });
       setAudioBlob?.(null);
-    } catch (error) {
-      console.error("Error during submission:", error);
+    } catch (e) {
+      console.error("Error during submission:", e);
       alert("Submission failed. Please try again.");
     }
   };
@@ -87,25 +94,25 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
         width: "100%",
       }}
     >
-
       <Box sx={{ position: "relative" }}>
         <TextField
           placeholder="Idea Text"
           multiline
           rows={10}
-          value={editedIdea?.text || idea?.text}
+          value={editedIdea?.text || idea?.text || ""}
           onChange={handleTextChange}
           fullWidth
-          focused={(editedIdea?.text ?? "").length > 0}
+          error={!!error}
+          helperText={error}
         />
       </Box>
 
       <Button
         onClick={handleSubmit}
-        variant='contained'
-        // color='common'
-        size='large'
-        sx={{ width: '100%', mt: '2rem', backgroundColor: 'black' }}>
+        variant="contained"
+        size="large"
+        sx={{ width: "100%", mt: "2rem", backgroundColor: "black" }}
+      >
         Generate content
       </Button>
     </Box>

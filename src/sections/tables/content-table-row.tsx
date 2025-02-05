@@ -28,6 +28,7 @@ export type ContentProps = {
 type ContentTableRowProps = {
   row: ContentProps;
   onClickRow?: (id: string) => void;
+  // onDeleteRow?: (id: string) => void;
 };
 
 const labelColors: { [key: string]: LabelColor } = {
@@ -58,6 +59,12 @@ export function ContentTableRow({ row, onClickRow }: ContentTableRowProps) {
       onClickRow(row.id);
     }
   }, [onClickRow, row.id]);
+
+  // const handleRowDelete = useCallback(() => {
+  //   if (onDeleteRow) {
+  //     onDeleteRow(row.id);
+  //   }
+  // }, [onDeleteRow, row.id]);
 
   return (
     <>

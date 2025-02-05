@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { CONFIG } from 'src/config-global';
 import { Scrollbar } from 'src/components/scrollbar';
 import TableContainer from '@mui/material/TableContainer';
@@ -23,11 +23,12 @@ import {
   useUpdatePillarNameMutation,
   useDeactivatePillarMutation,
   useGetAllContentsFromPillarIdQuery,
-  Content
+  Content,
 } from 'src/libs/service/pillar/pillar-item';
 import { useRouter } from 'src/routes/hooks';
 import { GenericModal } from 'src/components/modal/generic-modal';
 import { fDateTime } from 'src/utils/format-time';
+import { useDeleteContentMutation } from 'src/libs/service/content/content';
 
 // ----------------------------------------------------------------------
 
@@ -74,16 +75,25 @@ export function useTable() {
   };
 }
 
-
 export default function Page() {
   const { 'pillar-id': pillarId } = useParams();
-  const { data: pillarData, isLoading: getPillarIsLoading, refetch: getPillarRefetch } = useGetPillarByIdQuery({ pillarId });
+  const {
+    data: pillarData,
+    isLoading: getPillarIsLoading,
+    refetch: getPillarRefetch,
+  } = useGetPillarByIdQuery({ pillarId });
   const pillar = pillarData?.data[0];
   const pillarIsActive = getPillarIsLoading ? null : pillar?.is_active;
-  const [pillarName, setPillarName] = useState('Title of content pillar');
+  const [pillarName, setPillarName] = useState<string>('Title of content pillar');
   const [isActive, setIsActive] = useState(true);
-  const { data: ideasOfPillar, isLoading: getIdeasOfPillarIsLoading } = useGetIdeasOfPillarQuery({ pillarId });
-  const { data: allContentsApiRes } = useGetAllContentsFromPillarIdQuery({pillarId});
+  const { data: ideasOfPillar, isLoading: getIdeasOfPillarIsLoading } = useGetIdeasOfPillarQuery({
+    pillarId,
+  });
+  const {
+    data: allContentsApiRes,
+    isLoading,
+    refetch,
+  } = useGetAllContentsFromPillarIdQuery({ pillarId });
   const table = useTable();
   const mapContentsApiResToTable = (inputs: Content[]): ContentProps[] =>
     inputs.map((input) => ({
@@ -93,10 +103,13 @@ export default function Page() {
       status: input.status,
       views: input.pageviews,
       updatedAt: input.last_modified,
-      updatedAtFormatted: fDateTime(input.last_modified, "DD MMM YYYY h:mm a"),
+      updatedAtFormatted: fDateTime(input.last_modified, 'DD MMM YYYY h:mm a'),
     }));
   const data = allContentsApiRes?.data ? mapContentsApiResToTable(allContentsApiRes?.data) : [];
-  console.log("data", allContentsApiRes?.data);
+
+  useEffect(() => {
+    setPillarName(pillar?.name ?? "Loading... ");
+  }, [pillar]);
   // const data_: IdeaProps[] = ideasOfPillar?.data.map(idea => ({
   //   id: idea.id,
   //   title: idea.title,
@@ -135,22 +148,22 @@ export default function Page() {
   const router = useRouter();
   const handleGoBack = () => {
     router.back();
-  }
+  };
 
   const dataFiltered = applyFilter({
     inputData: data,
     comparator: getComparator(table.order, table.orderBy),
   });
 
-  const [ isModalOpen, setIsModalOpen ] = useState(false);
-  const [ isConfirmClicked ,setIsConfirmClicked ] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmClicked, setIsConfirmClicked] = useState(false);
 
   const [UpdatePillarNameMutation, _] = useUpdatePillarNameMutation();
 
   const handleAddItem = async (newName: string) => {
     try {
       setIsConfirmClicked(true);
-      await UpdatePillarNameMutation({pillarId, newName}).unwrap();
+      await UpdatePillarNameMutation({ pillarId, newName }).unwrap();
       getPillarRefetch();
       setIsModalOpen(false);
     } catch (addItemError) {
@@ -163,39 +176,36 @@ export default function Page() {
   const [DeactivatePillarMutation, _2] = useDeactivatePillarMutation();
 
   const handleDeactivateButton = async () => {
-    await DeactivatePillarMutation({pillarId});
+    await DeactivatePillarMutation({ pillarId });
     getPillarRefetch();
-  }
+  };
+  // const [DeleteContentMutation, _3] = useDeleteContentMutation();
+  // const onDelete = async(content_id: string) => {
+  //   await DeleteContentMutation(content_id);
+  // };
 
   return (
     <>
       <Helmet>
         <title> {`${pillarName} - ${CONFIG.appName}`}</title>
-        <meta
-          name="description"
-          content="Details of a content pillar"
-        />
+        <meta name="description" content="Details of a content pillar" />
         <meta name="keywords" content="react,material,kit,application,dashboard,admin,template" />
       </Helmet>
 
       <DashboardContent>
         {/* Navigation and title */}
-        <Box display="flex" alignItems="center" mb='1rem' gap='1rem'>
-          <Button color='inherit'>
-            <Icon icon='ep:back' width={30} onClick={(handleGoBack)}/>
+        <Box display="flex" alignItems="center" mb="1rem" gap="1rem">
+          <Button color="inherit">
+            <Icon icon="ep:back" width={30} onClick={handleGoBack} />
           </Button>
-          <Label 
-            color={pillarIsActive === null ? 'default' : (pillarIsActive ? 'success' : 'info')}
-          >
-            {pillarIsActive === null ? 'Loading...' : (pillarIsActive ? 'Active' : 'Inactive')}
+          <Label color={pillarIsActive === null ? 'default' : pillarIsActive ? 'success' : 'info'}>
+            {pillarIsActive === null ? 'Loading...' : pillarIsActive ? 'Active' : 'Inactive'}
           </Label>
-          <Typography variant='h4'>
-            {pillar?.name}
-          </Typography>
+          <Typography variant="h4">{pillar?.name}</Typography>
         </Box>
 
         {/* Buttons to edit and deactivate */}
-        <Box display="flex" alignItems="center" gap='0.5rem' mb='1rem'>
+        <Box display="flex" alignItems="center" gap="0.5rem" mb="1rem">
           <Button
             variant="outlined"
             color="inherit"
@@ -206,7 +216,7 @@ export default function Page() {
           >
             Edit
           </Button>
-          <GenericModal 
+          <GenericModal
             open={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onAddItem={handleAddItem}
@@ -225,7 +235,7 @@ export default function Page() {
           </Button>
         </Box>
 
-        <Typography variant='h5' mb='1rem'>
+        <Typography variant="h5" mb="1rem">
           Content
         </Typography>
 
@@ -257,14 +267,15 @@ export default function Page() {
                       <ContentTableRow
                         key={row.id}
                         row={row}
+                        onClickRow={(id)=>{router.push(`/content/${id}`)}}
+                        // onDeleteRow={onDelete}
                       />
                     ))}
 
                   <TableEmptyRows
                     height={68}
-                    emptyRows={emptyRows(table.page, table.rowsPerPage, (data?.length ?? 0))}
+                    emptyRows={emptyRows(table.page, table.rowsPerPage, data?.length ?? 0)}
                   />
-
                 </TableBody>
               </Table>
             </TableContainer>
@@ -280,7 +291,6 @@ export default function Page() {
             onRowsPerPageChange={table.onChangeRowsPerPage}
           />
         </Card>
-
       </DashboardContent>
     </>
   );

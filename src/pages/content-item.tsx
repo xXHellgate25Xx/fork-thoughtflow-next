@@ -116,7 +116,7 @@ export default function Page() {
   const router = useRouter();
   // Function to handle go back button
   const handleGoBack = () => {
-    router.replace('/content');
+    router.back();
   }
 
   // Function to handle publishing to Wix

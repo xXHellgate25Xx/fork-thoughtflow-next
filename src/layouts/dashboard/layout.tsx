@@ -12,7 +12,7 @@ import { Iconify } from 'src/components/iconify';
 
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 import { useRouter } from 'src/routes/hooks';
-import { useLocation } from "react-router-dom";
+import { useLocation } from 'react-router-dom';
 
 import { Main } from './main';
 import { layoutClasses } from '../classes';
@@ -26,7 +26,6 @@ import { HeaderSection } from '../core/header-section';
 import { AccountPopover } from '../components/account-popover';
 import { LanguagePopover } from '../components/language-popover';
 import { NotificationsPopover } from '../components/notifications-popover';
-
 
 // ----------------------------------------------------------------------
 
@@ -42,21 +41,13 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
   const theme = useTheme();
 
   const [navOpen, setNavOpen] = useState(false);
-  const [allAccount, setAllAccount] = useState<{ id: string; name: string; }[]>([]);
+  const [allAccount, setAllAccount] = useState<{ id: string; name: string }[]>([]);
   const location = useLocation();
   const state = location.state || {}; // Handle undefined state
 
   const layoutQuery: Breakpoint = 'lg';
   const router = useRouter();
 
-  useEffect(() => {
-    const accountId = localStorage.getItem('accountId');
-    const accountName = localStorage.getItem('accountName');
-    if (!accountId) {
-      router.replace('/select-account');
-    }
-  }, []);
-  
   const allAccountsApiData = useGetAllAccountsQuery();
   const mapAllAccountsApi = (inputs: any[]) =>
     inputs.map((input) => ({
@@ -70,7 +61,6 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
       setAllAccount(mapAllAccountsApi(allAccountsApiData.data.data));
     }
   }, [allAccountsApiData]);
-
 
   return (
     <LayoutSection
@@ -112,7 +102,7 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
             ),
             rightArea: (
               <Box gap={1} display="flex" alignItems="center">
-                <Searchbar />
+                {/* <Searchbar /> */}
                 {/* <LanguagePopover data={_langs} />
                 <NotificationsPopover data={_notifications} /> */}
                 <AccountPopover
@@ -122,14 +112,14 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
                       href: '/',
                       icon: <Iconify width={22} icon="solar:home-angle-bold-duotone" />,
                     },
-                    {
-                      label: 'Profile',
-                      href: '#',
-                      icon: <Iconify width={22} icon="solar:shield-keyhole-bold-duotone" />,
-                    },
+                    // {
+                    //   label: 'Profile',
+                    //   href: '#',
+                    //   icon: <Iconify width={22} icon="solar:shield-keyhole-bold-duotone" />,
+                    // },
                     {
                       label: 'Settings',
-                      href: '#',
+                      href: '/settings',
                       icon: <Iconify width={22} icon="solar:settings-bold-duotone" />,
                     },
                   ]}

@@ -48,7 +48,7 @@ export function SignInView() {
         const { session } = result.data;
         if (session?.access_token) {
           setToken(session.access_token);
-          router.push('/');
+          router.push('/select-account');
         } else {
           console.warn('Sign-in successful but no session data found.');
         }
