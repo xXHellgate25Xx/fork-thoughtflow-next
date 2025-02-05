@@ -108,6 +108,10 @@ export default function Page() {
     comparator: getComparator(table.order, table.orderBy),
   });
 
+  const onClickContent = (content_id:string) => {
+    router.push(content_id)
+  }
+
   return (
     <>
       <Helmet>
@@ -146,7 +150,7 @@ export default function Page() {
         {/* Basic stats */}
         <Box display="flex" alignItems="center" mb='2rem' gap='1rem'>
           <Card sx={{ padding: '2rem', width: '25%' }}>
-            <Typography >Total Contents</Typography>
+            <Typography >Total Content</Typography>
             <Typography variant='h6'>{numContent}</Typography>
           </Card>
           <Card sx={{ padding: '2rem', width: '25%' }}>
@@ -189,6 +193,7 @@ export default function Page() {
                     )
                     .map((row) => (
                       <ContentTableRow
+                        onClickRow={onClickContent}
                         key={row.id}
                         row={row}
                       />

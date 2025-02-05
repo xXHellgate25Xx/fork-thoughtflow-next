@@ -27,6 +27,7 @@ export type ContentProps = {
 
 type ContentTableRowProps = {
   row: ContentProps;
+  onClickRow?: (id: string) => void;
 };
 
 const labelColors: { [key: string]: LabelColor } = {
@@ -35,7 +36,7 @@ const labelColors: { [key: string]: LabelColor } = {
     archived: 'default',
 }
 
-export function ContentTableRow({ row }: ContentTableRowProps) {
+export function ContentTableRow({ row, onClickRow }: ContentTableRowProps) {
   const router = useRouter();
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -52,9 +53,27 @@ export function ContentTableRow({ row }: ContentTableRowProps) {
     router.replace(`/content/${id}`);
   };
 
+  const handleRowClick = useCallback((event: React.MouseEvent<HTMLTableRowElement>) => {
+    if (onClickRow) {
+      onClickRow(row.id);
+    }
+  }, [onClickRow, row.id]);
+
   return (
     <>
-      <TableRow hover tabIndex={-1} role="checkbox">
+      <TableRow
+        hover
+        tabIndex={-1}
+        role="checkbox"
+        onClick={handleRowClick}
+        sx={{
+          cursor: 'pointer',
+          '&:hover': {
+            backgroundColor: 'action.hover', // Use MUI's built-in hover state
+            transition: 'background-color 0.2s ease',
+          }
+        }}
+      >
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
           <Typography 

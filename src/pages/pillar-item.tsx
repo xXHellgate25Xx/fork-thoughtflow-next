@@ -226,7 +226,7 @@ export default function Page() {
         </Box>
 
         <Typography variant='h5' mb='1rem'>
-          Contents
+          Content
         </Typography>
 
         <Card>

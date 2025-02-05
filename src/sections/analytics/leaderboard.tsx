@@ -23,7 +23,7 @@ import { useRouter } from 'src/routes/hooks';
 
 // Define the shape of each post's data
 interface ContentStatsProps {
-  id: number;
+  content_id: string | number;
   title: string;
   pillar: string;
   // viewsDaily: number;
@@ -56,23 +56,23 @@ interface LeaderboardTableProps {
 // ];
 
 const DUMMY_DATA: ContentStatsProps[] = [
-  { id: 1, title: 'Very Very Very Very Very Long Post Very Very Very Very Very Long Post', pillar: 'Very Very Very Very Long Pillar Name', pageviews: 100},
-  { id: 2, title: 'Post B', pillar: 'Likewise',   pageviews: 90},
-  { id: 3, title: 'Post C', pillar: 'Love', pageviews: 80},
-  { id: 4, title: 'Post D', pillar: 'Housing',   pageviews: 70},
-  { id: 5, title: 'Post E', pillar: 'AI',   pageviews: 65},
-  { id: 6, title: 'Post F', pillar: 'Technology', pageviews: 60},
-  { id: 7, title: 'Post A1', pillar: 'Pillar 1', pageviews: 50},
-  { id: 8, title: 'Post B1', pillar: 'Pillar 1', pageviews: 40},
-  { id: 9, title: 'Post C1', pillar: 'Pillar 1', pageviews: 30},
-  { id: 10, title: 'Post D1', pillar: 'Pillar 2', pageviews: 22},
-  { id: 11, title: 'Post E1', pillar: 'Pillar 3', pageviews: 21},
-  { id: 12, title: 'Post F1', pillar: 'Pillar 5', pageviews: 1},
+  { content_id: 1, title: 'Very Very Very Very Very Long Post Very Very Very Very Very Long Post', pillar: 'Very Very Very Very Long Pillar Name', pageviews: 100},
+  { content_id: 2, title: 'Post B', pillar: 'Likewise',   pageviews: 90},
+  { content_id: 3, title: 'Post C', pillar: 'Love', pageviews: 80},
+  { content_id: 4, title: 'Post D', pillar: 'Housing',   pageviews: 70},
+  { content_id: 5, title: 'Post E', pillar: 'AI',   pageviews: 65},
+  { content_id: 6, title: 'Post F', pillar: 'Technology', pageviews: 60},
+  { content_id: 7, title: 'Post A1', pillar: 'Pillar 1', pageviews: 50},
+  { content_id: 8, title: 'Post B1', pillar: 'Pillar 1', pageviews: 40},
+  { content_id: 9, title: 'Post C1', pillar: 'Pillar 1', pageviews: 30},
+  { content_id: 10, title: 'Post D1', pillar: 'Pillar 2', pageviews: 22},
+  { content_id: 11, title: 'Post E1', pillar: 'Pillar 3', pageviews: 21},
+  { content_id: 12, title: 'Post F1', pillar: 'Pillar 5', pageviews: 1},
 ];
 
 
 const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
-  contentStats=DUMMY_DATA,
+  contentStats=[],
   updateTableData,
   onClickRow,
   title="Leaderboard",
@@ -177,11 +177,11 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               slicedData.length > 0 ? (
                 slicedData.map((post, index) => (
                   <TableRow
-                    key={post.id}
+                    key={post.content_id}
                     hover
                     sx={{ cursor: 'pointer' }}
                     onClick={() => 
-                      {if (onClickRow) {onClickRow();}}
+                      {if (onClickRow) {router.replace(`/content/${String(post.content_id)}`);}}
                     }
                   >
                     <TableCell sx ={{ maxWidth: '100px'}}>{index + 1}</TableCell>
