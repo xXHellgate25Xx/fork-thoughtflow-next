@@ -58,7 +58,7 @@ export const WixApi = createApi({
   endpoints: (builder) => ({
     uploadToWix: builder.mutation<{ file: FileResponse }, WixUploadRequest>({
       query: (fileData) => ({
-        url: `functions/v1/api2/upload-file/72c3825a-4675-480a-a952-033cc75111c3/upload-image`,
+        url: `functions/v1/api/upload-file/f31d044e-b0f6-45db-9623-3ae4ae6b6b69/upload-image`,
         method: 'POST',
         body: {
           file: fileData.file,

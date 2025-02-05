@@ -108,6 +108,7 @@ function Editor({content,callback} : {content?: any, callback?: any}) {
         type="button"
         onClick={addCustomImage}
         style={{ marginTop: '10px', padding: '8px 16px' }}
+        disabled
       >
         Add Custom Image
       </button>
