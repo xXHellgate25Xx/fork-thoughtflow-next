@@ -1,5 +1,5 @@
 // src/components/modal/basic-modal.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,6 +17,7 @@ interface GenericModalProps {
   open: boolean;
   onClose: () => void;
   onAddItem: (text: string) => void;
+  setParentText?: React.Dispatch<React.SetStateAction<string>>;
   isLoading?: boolean;
   modalTitle: string;
   modalSubTitle?: string;
@@ -24,6 +25,7 @@ interface GenericModalProps {
   textFieldValue?: string;
   customChildren?: React.ReactNode;
   buttonText: string;
+  textInputRef?: React.Ref<any>
   styling?: {
     buttonColor?: any;
     multiline?: boolean | undefined;
@@ -36,6 +38,7 @@ export function GenericModal({
   open,
   onClose,
   onAddItem,
+  setParentText,
   isLoading=false,
   modalTitle,
   modalSubTitle,
@@ -43,9 +46,14 @@ export function GenericModal({
   textFieldValue,
   customChildren,
   buttonText,
+  textInputRef,
   styling
 }: GenericModalProps) {
-  const [text, setText] = useState(textFieldValue || '');
+  const [text, setText] = useState<string>('');
+
+  useEffect(()=>{
+    setText(textFieldValue || '');
+  },[textFieldValue]);
 
   const handleAddItem = () => {
     if (text.trim() && !isLoading) {
@@ -75,10 +83,14 @@ export function GenericModal({
           variant="outlined"
           value={text}
           sx={{color:'inherit'}}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            setParentText?.(e.target.value);
+          }}
           disabled={isLoading}
           multiline={styling?.multiline}
           rows={styling?.rows? styling?.rows : 0}
+          inputRef={textInputRef}
         />
         {customChildren}
       </DialogContent>

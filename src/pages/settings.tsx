@@ -8,7 +8,15 @@ import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils
 import { ChannelTableRow, type ChannelProps } from 'src/sections/tables/channel-table-row';
 import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
 
-import { Box, Button, Card, Typography, Table, TableBody } from '@mui/material';
+import { 
+  Box, 
+  Button, 
+  Card, 
+  Typography, 
+  Table, 
+  TableBody,
+  CircularProgress
+} from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'src/routes/hooks';
@@ -58,11 +66,10 @@ export function useTable() {
   };
 }
 
-
 export default function Page() {
   const router = useRouter();
   const table = useTable();  
-  const {data: channelData} = useGetAllChannelsOfUserQuery(); 
+  const {data: channelData, isFetching: channelIsFetching} = useGetAllChannelsOfUserQuery(); 
 
   const data: ChannelProps[] = channelData?.data?.map((channel: any) => {
     const mapping = {
@@ -73,10 +80,7 @@ export default function Page() {
       prompt: channel.brand_voice_initial
     };
     return mapping;
-  }) || [
-    { id: '1', type: 'wix', name: 'Wix channel', url: 'https://www.wix.com/', prompt: '' },
-    { id: '2', type: 'linkedin', name: 'LinkedIn channel', url: 'https://www.linkedin.com/', prompt: '' },
-  ];
+  });
 
   return (
     <>
@@ -109,8 +113,14 @@ export default function Page() {
             <TableContainer sx={{ overflow: 'unset' }}>
               <Table sx={{ minWidth: 800 }}>
                 <TableBody>
-                  {data
-                    .slice(
+                  {channelIsFetching?
+                  (
+                    <Box display="flex" alignItems="center" justifyContent="center" gap='2rem' sx={{p: 2}}>
+                      <CircularProgress color='inherit'/>
+                      <Typography>Fetching channels...</Typography>
+                    </Box>
+                  ):
+                  data?.slice(
                       table.page * table.rowsPerPage,
                       table.page * table.rowsPerPage + table.rowsPerPage
                     )

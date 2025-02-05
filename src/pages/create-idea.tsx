@@ -20,20 +20,47 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 import { PillarSelect } from 'src/sections/pillar/pillar-select';
+import { ChannelSelect } from 'src/sections/channel/channel-select';
 import VoiceToTextButton from 'src/components/text-voice-input/VoiceRecorderButton';
 import { useGetAllPillarQuery } from 'src/libs/service/pillar/home';
 import { useCreateIdeaMutation, useCreateIdeaContentMutation } from 'src/libs/service/idea/idea';
 import { useGenerateContentMutation } from 'src/libs/service/content/generate';
+import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
 import { fromPlainText } from 'ricos-content/libs/fromPlainText';
 import { useGlobalContext } from 'src/GlobalContextProvider';
+import { useLocation } from 'react-router-dom';
+
 // ----------------------------------------------------------------------
 
 export default function Page() {
   const router = useRouter();
 
+  const location = useLocation();
+  const navigationState = location.state as { id?: string; name?: string };
+  useEffect(() => {
+    if (navigationState?.id && navigationState?.name) {
+      console.log('Navigated from pillar:', navigationState);
+    }
+  }, [navigationState]);
+  
   const [createIdea] = useCreateIdeaMutation();
   const [generateContent] = useGenerateContentMutation();
   const [createIdeaContent] = useCreateIdeaContentMutation();
+  const { data: channelData } = useGetAllChannelsOfUserQuery(); 
+  const [channelId, setChannelId] = useState<string>('');
+  const [channelIdAndName, setChannelName] = useState<{id: string; name: string}[] | undefined>(undefined);
+
+  useEffect(()=>{
+    setChannelName(channelData?.data?.map((channel: any)=>{
+        const requiredPairs = {id: channel.id, name: channel.name};
+        return requiredPairs;
+      }) ?? []
+    );
+  },[channelIdAndName]);
+
+  useEffect(()=>{
+    setChannelId(channelData?.data?.[0]?.id ?? '');
+  },[channelIdAndName]);
 
   const [pillarIdAndName, setPillarIdAndName] = useState<
     { id: string; name: string }[] | undefined
@@ -75,12 +102,17 @@ export default function Page() {
   });
 
   useEffect(() => {
-    setPillar(pillarIdAndName?.[0]?.id ?? '');
-  }, [pillarIdAndName]);
+    if (navigationState?.id) {setPillar(navigationState?.id ?? '');}
+    else {setPillar(pillarIdAndName?.[0]?.id ?? '')}
+  }, [navigationState, pillarIdAndName]);
 
-  const handleSort = useCallback((newPillar: string) => {
+  const handleSelectPillar = useCallback((newPillar: string) => {
     setPillar(newPillar);
   }, []);
+
+  const handleSelectChannel = (chosenChannelId: string) => {
+    setChannelId(chosenChannelId);
+  };
 
   const handleSubmit = async (updatedIdea?: Partial<IdeaFormat>) => {
     try {
@@ -98,7 +130,7 @@ export default function Page() {
         idea: ideaToSubmit.text,
         feedback: '',
         content: '',
-        action: 'initial',
+        action: 'initial'
       });
 
       setProgress(80);
@@ -111,7 +143,8 @@ export default function Page() {
           excerpt: '',
           status: 'draft',
           content_type: 'Blog Post',
-        },
+          channel_id: channelId
+        }
       });
 
       setProgress(100);
@@ -222,13 +255,25 @@ export default function Page() {
               Share Your Idea
             </Typography>
 
-            {/* Select content pillar */}
-            <PillarSelect pillarId={pillar} onSort={handleSort} options={pillarIdAndName} />
+            <Box sx={{display: 'flex', flexDirection:'row', gap: 2}}>
+              {/* Select content pillar */}
+              <PillarSelect
+                pillarId={pillar}
+                onSort={handleSelectPillar}
+                options={pillarIdAndName}
+              />
+              {/* Select content pillar */}
+              <ChannelSelect
+                channelId={channelId}
+                onSort={handleSelectChannel}
+                options={channelIdAndName}
+              />
+            </Box>    
 
             {/* Buttons to choose Type or Voice input */}
-            <Box display="flex" alignItems="center" my="1rem" sx={{ width: 'auto' }} gap="1rem">
+            <Box display='flex' alignItems='center' my='1rem' sx={{ width: 'auto' }} gap='1rem'>
               <VoiceToTextButton
-                language="en-US"
+                language='en-US'
                 onTranscribe={handleTranscription}
                 onAudioRecorded={(childAudioBlob) => {
                   setAudioBlob(childAudioBlob);
@@ -264,7 +309,7 @@ export default function Page() {
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
           <Alert
-            variant="outlined"
+            variant='outlined'
             onClose={handleCloseSnackbar}
             severity={snackbar.severity}
             sx={{ width: '100%' }}

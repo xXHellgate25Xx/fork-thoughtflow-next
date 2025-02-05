@@ -27,7 +27,8 @@ interface createContentProps {
     title: string | undefined;
     excerpt: string;
     status: string;
-    content_type: string; // TODO: change this later
+    content_type: string;
+    channel_id: string;
 }
 
 interface IdeaRes {

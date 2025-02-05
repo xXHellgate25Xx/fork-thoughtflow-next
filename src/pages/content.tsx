@@ -17,7 +17,8 @@ import { Icon } from '@iconify/react';
 import { 
   useGetAllContentsOfUserQuery,
   useGetAllStatsOfUserQuery,
-  ContentApiRes
+  ContentApiRes,
+  useDeleteContentMutation
 } from 'src/libs/service/content/content';
 import { fDateTime } from 'src/utils/format-time';
 import { useRouter } from 'src/routes/hooks';
@@ -76,7 +77,7 @@ export default function Page() {
 
   const table = useTable();  
 
-  const {data : allContentsData} = useGetAllContentsOfUserQuery();
+  const {data : allContentsData, refetch:refetchAllContent} = useGetAllContentsOfUserQuery();
 
   const mapContentArray = (inputs: ContentApiRes[]): ContentProps[] =>
     inputs.map((input) => ({
@@ -90,7 +91,7 @@ export default function Page() {
     }));
   
   const data = allContentsData?.data ? mapContentArray(allContentsData.data) : [];
-  const {data : allStatsApiData} = useGetAllStatsOfUserQuery();
+  const {data : allStatsApiData, refetch:refetchAllStat} = useGetAllStatsOfUserQuery();
   const userStatData = allStatsApiData?.data[0];
   useEffect(() => {
     if (userStatData) {
@@ -111,6 +112,20 @@ export default function Page() {
   const onClickContent = (content_id:string) => {
     router.push(content_id)
   }
+
+  const [DeleteContentMutation, ] = useDeleteContentMutation();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const onDelete = async(content_id: string) => {
+    try {
+      setIsDeleting(true);
+      await DeleteContentMutation(content_id);
+      refetchAllContent();
+      refetchAllStat();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -194,6 +209,8 @@ export default function Page() {
                     .map((row) => (
                       <ContentTableRow
                         onClickRow={onClickContent}
+                        onDeleteRow={onDelete}
+                        isDeleting={isDeleting}
                         key={row.id}
                         row={row}
                       />

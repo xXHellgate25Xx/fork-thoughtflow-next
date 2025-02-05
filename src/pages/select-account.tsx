@@ -37,7 +37,6 @@ export default function Page() {
     localStorage.setItem('accountId', account_id);
     localStorage.setItem('accountName', account_name);
     handleNavigateToAccount(account_id, account_name);
-    window.location.reload();
   };
   return (
     <>

@@ -8,6 +8,7 @@ import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { Iconify } from 'src/components/iconify';
 import { Label, LabelColor } from 'src/components/label';
@@ -28,7 +29,8 @@ export type ContentProps = {
 type ContentTableRowProps = {
   row: ContentProps;
   onClickRow?: (id: string) => void;
-  // onDeleteRow?: (id: string) => void;
+  onDeleteRow?: (id: string) => Promise<void> | void;
+  isDeleting?: boolean;
 };
 
 const labelColors: { [key: string]: LabelColor } = {
@@ -37,7 +39,7 @@ const labelColors: { [key: string]: LabelColor } = {
     archived: 'default',
 }
 
-export function ContentTableRow({ row, onClickRow }: ContentTableRowProps) {
+export function ContentTableRow({ row, onClickRow, onDeleteRow, isDeleting }: ContentTableRowProps) {
   const router = useRouter();
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -60,11 +62,12 @@ export function ContentTableRow({ row, onClickRow }: ContentTableRowProps) {
     }
   }, [onClickRow, row.id]);
 
-  // const handleRowDelete = useCallback(() => {
-  //   if (onDeleteRow) {
-  //     onDeleteRow(row.id);
-  //   }
-  // }, [onDeleteRow, row.id]);
+  const handleRowDelete = useCallback(() => {
+    if (onDeleteRow && !isDeleting) {
+      onDeleteRow(row.id);
+      setTimeout(handleClosePopover, 1000); // time sleep 1 second
+    }
+  }, [onDeleteRow, row.id, isDeleting, handleClosePopover]);
 
   return (
     <>
@@ -149,13 +152,25 @@ export function ContentTableRow({ row, onClickRow }: ContentTableRowProps) {
             },
           }}
         >
-          <MenuItem onClick={() => handleRoute(row.id)}>
+          <MenuItem
+            onClick={() => {
+              handleRoute(row.id);
+              handleClosePopover();
+            }}
+          >
             <Iconify icon="solar:pen-bold" />
             Edit
           </MenuItem>
 
-          <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
-            <Iconify icon="solar:trash-bin-trash-bold" />
+          <MenuItem 
+            disabled={isDeleting}
+            onClick={handleRowDelete}
+          >
+            {isDeleting ? (
+              <CircularProgress size={20} />
+            ) : (
+              <Iconify icon="solar:trash-bin-trash-bold" />
+            )}
             Delete
           </MenuItem>
         </MenuList>

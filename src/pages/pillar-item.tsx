@@ -16,7 +16,7 @@ import { Label } from 'src/components/label';
 import { Box, Button, Card, Typography, Table, TableBody } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   useGetPillarByIdQuery,
   useGetIdeasOfPillarQuery,
@@ -92,7 +92,7 @@ export default function Page() {
   const {
     data: allContentsApiRes,
     isLoading,
-    refetch,
+    refetch:refetchAllContentFromPillar,
   } = useGetAllContentsFromPillarIdQuery({ pillarId });
   const table = useTable();
   const mapContentsApiResToTable = (inputs: Content[]): ContentProps[] =>
@@ -179,10 +179,20 @@ export default function Page() {
     await DeactivatePillarMutation({ pillarId });
     getPillarRefetch();
   };
-  // const [DeleteContentMutation, _3] = useDeleteContentMutation();
-  // const onDelete = async(content_id: string) => {
-  //   await DeleteContentMutation(content_id);
-  // };
+  const [DeleteContentMutation, ] = useDeleteContentMutation();
+  const onDelete = async(content_id: string) => {
+    await DeleteContentMutation(content_id);
+    refetchAllContentFromPillar();
+  };
+
+  const navigate = useNavigate();
+
+  const handleAddContent = () => {
+    navigate('/create',{
+      replace: true,
+      state: { id: pillarId, name: pillarName }
+    });
+  };
 
   return (
     <>
@@ -233,6 +243,14 @@ export default function Page() {
           >
             {pillarIsActive ? 'Deactivate' : 'Currently Not Active'}
           </Button>
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<Icon icon="akar-icons:circle-plus" />}
+            onClick={handleAddContent}
+          >
+            Add Content
+          </Button>
         </Box>
 
         <Typography variant="h5" mb="1rem">
@@ -268,7 +286,7 @@ export default function Page() {
                         key={row.id}
                         row={row}
                         onClickRow={(id)=>{router.push(`/content/${id}`)}}
-                        // onDeleteRow={onDelete}
+                        onDeleteRow={onDelete}
                       />
                     ))}
 

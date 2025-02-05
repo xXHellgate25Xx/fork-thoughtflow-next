@@ -11,7 +11,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import Grid from '@mui/material/Unstable_Grid2';
 import { CircularProgress } from '@mui/material';
 import { useRouter } from 'src/routes/hooks';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GenericModal } from 'src/components/modal/generic-modal';
 import { 
   useGetAllPillarQuery,
@@ -21,7 +21,15 @@ import {
 // ----------------------------------------------------------------------
 
 export default function Page() {
-  const { data, error, isLoading, refetch } = useGetAllPillarQuery();
+  const [allPillars, setAllPillars] = useState<any[]>([]);
+  const { data: allPillarsData, isLoading, refetch } = useGetAllPillarQuery();
+  
+  useEffect(() => {
+    if (!isLoading && allPillarsData) {
+      setAllPillars(allPillarsData.data || []);
+    }
+  }, [isLoading, allPillarsData]);
+
   const router = useRouter();
   const handleWhatsOnMyMind = () => {
     router.push("/create");
@@ -95,8 +103,8 @@ export default function Page() {
         </Box>
 
         <Grid container spacing={3}>
-          {data?.data?.length ? (
-            [...data.data]
+          {allPillars?.length ? (
+            [...allPillars]
             .sort((a, b) => {
               // First, sort by is_active (active pillars first)
               if (a.is_active !== b.is_active) {

@@ -16,6 +16,9 @@ import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { _myAccount } from 'src/_mock';
 import { removeToken, removeAccountId } from 'src/utils/auth';
+import store from 'src/libs/stores';
+import { HomePageApi } from 'src/libs/service/pillar/home';
+import { ContentPageApi } from 'src/libs/service/content/content';
 
 // ----------------------------------------------------------------------
 
@@ -52,6 +55,8 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
   );
 
   const handleLogout = useCallback(() => {
+    store.dispatch(HomePageApi.util.resetApiState());
+    store.dispatch(ContentPageApi.util.resetApiState());
     removeToken();
     removeAccountId();
     router.push('/sign-in')
