@@ -6,9 +6,15 @@ import { useUploadToWixMutation } from 'src/libs/service/wix/wix';
 import { toBase64 } from 'src/utils/encodeFileToBase64';
 import { processingFilePath } from 'src/utils/file-path-with-hash';
 import { pluginImage } from 'wix-rich-content-plugin-image';
+import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-text-color';
+import { pluginHeadings } from "wix-rich-content-plugin-headings";
+import { pluginLink } from "wix-rich-content-plugin-link";
 
-function Editor() {
-  const [editorState, setEditorState] = useState();
+import { fromDraft } from 'ricos-content/libs/fromDraft';
+import { RichContent } from 'ricos-schema';
+
+function Editor({content,callback} : {content?: any, callback?: any}) {
+  const [editorState, setEditorState] = useState(JSON.parse(content));
   const editorRef = useRef<EditorCommands | null>(null);
 
   const [uploadToWix] = useUploadToWixMutation();
@@ -73,9 +79,11 @@ function Editor() {
     input.click(); // Trigger the file picker
   };
 
-  useEffect(() => {
-    console.log(editorState);
-  }, [editorState]);
+  // useEffect(() => {
+  //   console.log(content);
+  //   console.log("EditorState: ");
+  //   console.log(editorState);
+  // }, [editorState]);
 
   return (
     <>
@@ -84,11 +92,17 @@ function Editor() {
         content={editorState}
         onChange={(updatedContent: any) => {
           setEditorState(updatedContent);
+          callback((updatedContent))
         }}
         ref={(ref: any) => {
           editorRef.current = ref?.getEditorCommands() || null;
         }} // Save editor commands using ref
-        plugins={[pluginImage()]} // Add plugins if needed
+        plugins={[pluginImage(), 
+          pluginTextColor(), 
+          pluginTextHighlight(), 
+          pluginHeadings(), 
+          pluginLink()
+        ]} // Add plugins if needed
       />
       <button
         type="button"

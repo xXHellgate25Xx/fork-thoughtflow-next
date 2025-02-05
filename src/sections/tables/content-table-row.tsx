@@ -101,7 +101,18 @@ export function ContentTableRow({ row, onClickRow }: ContentTableRowProps) {
         <TableCell>{row.views ?? 0}</TableCell>
         <TableCell>{row.updatedAtFormatted}</TableCell>
 
-        <TableCell align="right">
+        <TableCell 
+          onClick={(event) => {
+            event.stopPropagation(); // This prevents the click from bubbling up to the row
+          }}
+          align="right"
+          sx={{ 
+            cursor: 'default',
+            '&:hover': {
+              backgroundColor: 'transparent !important'
+            }
+          }}
+        >
           <IconButton onClick={handleOpenPopover}>
             <Iconify icon="eva:more-vertical-fill" />
           </IconButton>

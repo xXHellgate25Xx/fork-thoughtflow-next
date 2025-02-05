@@ -2,20 +2,12 @@ import { Helmet } from 'react-helmet-async';
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import Typography from '@mui/material/Typography';
 import { ChannelSelect } from 'src/sections/analytics/channel-select';
-import { 
-  DatePicker, 
-  LocalizationProvider, 
-  MobileDatePicker,
-  DateField
- } from '@mui/x-date-pickers';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { Box, Card, CircularProgress } from '@mui/material';
+import { Box, Card, CircularProgress, Typography } from '@mui/material';
 import { ViewPieChart } from 'src/sections/analytics/pie-chart';
 import Grid from '@mui/material/Grid';
 import { CustomLineChart, getDatesRange, secondsToYearMonthDay } from 'src/sections/analytics/line-chart';
+import { DateRangePicker } from 'src/components/date-picker/date-range-picker';
 import { SelectMenu } from 'src/sections/analytics/agg-time-select';
 import { Icon } from '@iconify/react';
 import LeaderboardTable from 'src/sections/analytics/leaderboard';
@@ -45,14 +37,10 @@ export default function Page() {
   const [pillarViews, setPillarViews] = useState<number[][]>([]);
   const [lineChartStartDate, setLineChartStartDate] = useState<Dayjs | null>(dayjs('2025-01-01'));
   const [lineChartEndDate, setLineChartEndDate] = useState<Dayjs | null>(dayjs());
+  const [enableSetDates, setEnableSetDates] = useState<boolean>(false);
   const formattedStartDate = lineChartStartDate?.format('YYYY-MM-DD') as string;
   const formattedCurrentDate = lineChartEndDate?.format('YYYY-MM-DD') as string;
-  const datesRange = getDatesRange('2025-01-01', '2025-02-03');
-  // getDatesRange(formattedStartDate, formattedCurrentDate);
-  const datesRangeReformatted = datesRange.map((dateItem) => {
-    const formattedDate = secondsToYearMonthDay(dateItem);
-    return formattedDate;
-  });
+  const datesRangeReformatted = getDatesRange(formattedStartDate, formattedCurrentDate);
 
   const aggTimeOptions = [
     { id: 'daily', name: 'Daily' },
@@ -269,53 +257,14 @@ export default function Page() {
               variant="h6"
             > Views by pillars over time 
             </Typography>
-            <Box
-              sx={{
-                justifyContent: "center",
-                alignItems: "center",
-                display: "flex",
-                flexDirection: "row",
-                gap: 1
-              }}
-            >
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DemoContainer
-                  components={['MobileDatePicker']}
-                  sx={{
-                    display: 'flex', 
-                    flexDirection: 'row',
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
-                  <MobileDatePicker
-                    label="Start"
-                    defaultValue={dayjs('2025-01-01')}
-                    value={lineChartStartDate}
-                    onChange={(startValue) => setLineChartStartDate(startValue)}
-                  />
-                </DemoContainer>
-              </LocalizationProvider>
-              <Typography> - </Typography>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DemoContainer
-                  components={['MobileDatePicker']}
-                  sx={{
-                    display: 'flex', 
-                    flexDirection: 'row',
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
-                  <MobileDatePicker
-                    label="End"
-                    defaultValue={dayjs()}
-                    value={lineChartEndDate}
-                    onChange={(endValue) => setLineChartEndDate(endValue)}
-                  />
-                </DemoContainer>
-              </LocalizationProvider>
-            </Box>
+            {enableSetDates?
+            <DateRangePicker
+              startDate={lineChartStartDate}
+              endDate={lineChartEndDate}
+              setStartDate={setLineChartStartDate}
+              setEndDate={setLineChartEndDate}
+            />:<></>}
+            
             <CustomLineChart
               legends={pillarNames}
               xLabels={datesRangeReformatted}

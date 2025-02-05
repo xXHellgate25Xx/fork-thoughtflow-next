@@ -30,13 +30,14 @@ interface getAllStatsOfUserRes {
 }
 
 interface ContentUpdatePayload {
-  content_body: string;
-  title: string;
-  excerpt: string;
-  status: 'draft' | 'published';
-  content_type: string;
+  content_body?: string;
+  rich_content?: string;
+  title?: string;
+  excerpt?: string;
+  status?: 'draft' | 'published';
+  content_type?: string;
   published_url?: string;
-  media_id: string[];
+  media_id?: string[];
   pillar_id?: string;
 }
 
@@ -116,8 +117,8 @@ const ContentPageApi = createApi({
             method: 'GET'
         }),
       }),
-      // ------------------GET CONTENT REVISIONS--------------------------
-      updateContent: builder.mutation<getAllContentsOfUserRes, {contentId: string; content: ContentUpdatePayload}>({
+      // ------------------UPDATE CONTENT--------------------------
+      updateContent: builder.mutation<getContentResponse, {contentId: string; content: ContentUpdatePayload}>({
         query: ({contentId, content}) => ({        
             url: `/functions/v1/api/content/${contentId}`,
             method: 'PUT',

@@ -76,12 +76,17 @@ export const getColors = (labels: string[], customColors?: string[]): { [key: st
 
 export function getDatesRange (startDate: string | undefined, endDate: string | undefined) {
     const dates = [];
-    const dayIncrements = 24 * 3600 * 1000;
-    const formattedStartDate = new Date(startDate as string);
-    const formattedEndDate = new Date(endDate as string);
-    for (let date = formattedStartDate.getTime(); date <= formattedEndDate.getTime(); date += dayIncrements){
-        dates.push(date);
+    // const dayIncrements = 24 * 3600 * 1000;
+    // const formattedStartDate = new Date(startDate as string);
+    // const formattedEndDate = new Date(endDate as string);
+    let currentDate = startDate
+    while(dayjs(currentDate).isBefore(endDate)){
+        dates.push(dayjs(currentDate).format('YYYY-MM-DD'));
+        currentDate = dayjs(currentDate).add(1, 'day').format('YYYY-MM-DD');
     }
+    // for (let date = formattedStartDate.getTime(); date <= formattedEndDate.getTime(); date += dayIncrements){
+    //     dates.push(dayjs(date).format('YYYY-MM-DD'));
+    // }
     return dates;
 }
 
