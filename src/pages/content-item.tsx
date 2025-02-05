@@ -6,7 +6,8 @@ import { _products } from 'src/_mock';
 import { Box, Button, Card, Typography } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
-import { useGetContentQuery } from 'src/libs/service/content/content';
+import { useGetContentQuery, useGetContentViewCountQuery } from 'src/libs/service/content/content';
+import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
 import { useParams } from 'react-router-dom';
 import { useRouter } from 'src/routes/hooks';
 import { fDateTime } from 'src/utils/format-time';
@@ -26,6 +27,8 @@ const channelIcons: { [key: string]: string } = {
 }
 
 export default function Page() {
+  const [createPublishToWix] = useCreatePublishToWixMutation();
+
   const { 'content-id': contentId} = useParams();
   const {
     data: contentData,
@@ -36,38 +39,55 @@ export default function Page() {
   // console.log(`isLoading: ${JSON.stringify(contentLoading)}`);
   // console.log(`ContentData : ${JSON.stringify(contentData)}`)
   const content = contentData?.data?.[0];
-  // console.log(`Content : ${JSON.stringify(content)}`);
-  
+  console.log(`Content: ${JSON.stringify(content)}`);
   const is_published = content?.status === 'published'
   const created_time = content?.created_at;
   // console.log(created_time);
   const published_time = content?.published_at;
   // console.log(published_time)
+
+  const {
+    data: viewsData,
+    isLoading: viewsLoading,
+    refetch: viewsRefetch
+  } = useGetContentViewCountQuery({contentId: contentId || '', type_of_agg: 'all'});
+
+  const views_obj = viewsData?.data?.[0];
+  // console.log(`Views: ${JSON.stringify(views_obj)}`);
+
   const [published, setPublished] = useState(false);
   const [createdAt, setCreatedAt] = useState('Loading...');
   const [publishedAt, setPublishedAt] = useState('Loading...');
-  const [views, setViews] = useState(1234);
+  const [views, setViews] = useState('Loading...');
   const [channelType, setChannelType] = useState('wix');
   const [richContent, setRichContent] = useState(toDraft(fromPlainText("Loading...")));
+  const [isLoading, setIsLoading] = useState(true);
   // console.log(createdAt);
   useEffect(() => {
     if (content) {
       setCreatedAt(fDateTime(content.created_at, "DD MMM YYYY h:mm a") || 'N/A');
       setPublishedAt(fDateTime(content.published_at, "DD MMM YYYY h:mm a") || 'N/A');
       setPublished(content.status === 'published');
+      setIsLoading(false);
   
       try {
         const parsedContent = typeof content.rich_content === 'string' 
-          ? JSON.parse(content.rich_content) 
-          : content.rich_content;
-        
+          ? toDraft(JSON.parse(content.rich_content))
+          : toDraft(content.rich_content);
         setRichContent(parsedContent);
       } catch (error) {
         console.error("Error parsing richContent:", error);
         setRichContent(toDraft(fromPlainText("Error loading content")));
       }
     }
-  }, [content]);
+    if (views_obj) {
+      setViews(views_obj.view_counts);
+    }
+    else
+    {
+      setViews('N/A');
+    }
+  }, [content, views_obj]);
   // console.log(`Content Data: ${JSON.stringify(contentData?.data)}`);
 
   const router = useRouter();
@@ -75,8 +95,22 @@ export default function Page() {
     router.replace('/content');
   }
 
-  const handlePublish = () => {
-
+  const handlePublish = async () => {
+    if (content) {
+      console.log(content);
+      if (content.channel_id) {
+      const {data: publishData}  = await createPublishToWix({
+        channel_id: content.channel_id, 
+        CreatePublishReq: { 
+          title: content.title,
+          richContent: content.rich_content // Example content
+        },
+      })
+    }
+    }
+    else {
+      console.error(`Content is not loaded!!`)
+    }
   }
 
 
@@ -125,6 +159,7 @@ export default function Page() {
             variant="contained"
             color="inherit"
             onClick={(handlePublish)}
+            disabled={isLoading}
             startIcon={<Icon icon="ic:baseline-publish" />}
           >
             Publish
@@ -142,6 +177,7 @@ export default function Page() {
             variant="contained"
             color="inherit"
             startIcon={<Icon icon="mingcute:copy-fill" />}
+            disabled={isLoading}
           >
             Repurpose
           </Button>
@@ -150,6 +186,7 @@ export default function Page() {
             variant="outlined"
             color="inherit"
             startIcon={<Icon icon="akar-icons:edit" />}
+            disabled={isLoading}
           >
             Edit
           </Button>
@@ -158,6 +195,7 @@ export default function Page() {
             variant="outlined"
             color="error"
             startIcon={<Icon icon="solar:archive-bold" />}
+            disabled={isLoading}
           >
             Archive
           </Button>

@@ -1,3 +1,4 @@
+import { RichContent } from 'ricos-schema';
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../supabase/baseQuery";
 
@@ -22,6 +23,7 @@ interface IdeaReq {
 
 interface createContentProps {
     content_body: string | undefined;
+    rich_content: RichContent;
     title: string | undefined;
     excerpt: string;
     status: string;
@@ -52,7 +54,7 @@ interface IdeaRes {
         revision?: number
         media_id?: string[];
         published_at?: any;
-        rich_content?: any
+        rich_content?: RichContent;
     }[];
     error?: any
 }

@@ -1,3 +1,4 @@
+import { RichContent } from 'ricos-schema';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { baseQuery } from '../supabase/baseQuery';
 
@@ -30,6 +31,27 @@ export interface WixUploadRequest {
   contentType: string; 
 }
 
+export interface WixDraftPostResponse {
+  data? :{
+  title: string;
+  excerpt: string;
+  featured: boolean;
+  catetegoryId: string[];
+  memberId: string;
+  status: string;
+  richContent: RichContent;
+  }[];
+  error?: any;
+}
+
+export interface WixCreatePublishPostRequest {
+  title: string;
+  richContent: RichContent;
+  content_id?: string;
+  draftPostId?: string;
+}
+
+
 export const WixApi = createApi({
   reducerPath: 'supabaseApi',
   baseQuery,
@@ -47,8 +69,18 @@ export const WixApi = createApi({
         },
       }),
     }),
+    CreatePublishToWix: builder.mutation<WixDraftPostResponse, { channel_id: string; CreatePublishReq: WixCreatePublishPostRequest }>({
+      query: ({ channel_id, CreatePublishReq }) => ({
+        url: `functions/v1/api/post/${channel_id}/create-publish`,
+        method: 'POST',
+        body: CreatePublishReq,
+      }),
+    }),
   }),
 });
 
 // Export hooks for usage in functional components
-export const { useUploadToWixMutation } = WixApi;
+export const { 
+  useUploadToWixMutation,
+  useCreatePublishToWixMutation,
+} = WixApi;

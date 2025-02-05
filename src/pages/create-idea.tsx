@@ -29,7 +29,7 @@ import {
 import {
   useGenerateContentMutation,
 } from 'src/libs/service/content/generate';
-
+import { fromPlainText } from 'ricos-content/libs/fromPlainText';
 // ----------------------------------------------------------------------
 
 export default function Page() {
@@ -96,11 +96,11 @@ export default function Page() {
       });
 
       setProgress(80);
-
       const { data: contentData } = await createIdeaContent({
         ideaId: latestIdeaData?.data?.[0]?.id,
         payload: {
           content_body: generationData?.content,
+          rich_content: fromPlainText(generationData?.content || ""),
           title: generationData?.title,
           excerpt: "",
           status: "draft",

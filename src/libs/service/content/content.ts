@@ -41,29 +41,41 @@ interface ContentUpdatePayload {
 }
 
 export interface ContentRes {
-    uuid: string;
-    created_at: string;
-    updated_at: string;
-    content_id: string;
-    idea_id: string;
-    content_body: string;
-    rich_content: RichContent;
-    title: string;
-    excerpt: string;
-    status: 'draft' | 'published';
-    content_type: string;
-    published_url: string | null;
-    published_at: string | null;
-    revision: number;
-    media_id: string[];
-    pillar_id: string | null;
+  uuid: string;
+  created_at: string;
+  updated_at: string;
+  content_id: string;
+  idea_id: string;
+  content_body: string;
+  rich_content: RichContent;
+  title: string;
+  excerpt: string;
+  status: 'draft' | 'published';
+  content_type: string;
+  published_url: string | null;
+  published_at: string | null;
+  revision: number;
+  media_id: string[];
+  pillar_id: string | null;
+  channel_id: string | null;
 }
 
 export interface getContentResponse {
-    data: ContentRes[],
-    error?: string
+  data: ContentRes[],
+  error?: string
 }
 
+export interface ContentViewRes {
+  content_id: string;
+  title: string;
+  pillar: string;
+  view_counts: string;
+}
+
+export interface getContentViewCountResponse {
+    data: ContentViewRes[],
+    error?: string
+}
 
 const ContentPageApi = createApi({
     reducerPath: "contentPageApi",
@@ -88,6 +100,13 @@ const ContentPageApi = createApi({
         query: ({contentId}) => ({        
             url: `/functions/v1/api/content/${contentId}`,
             method: 'GET'
+        }),
+      }),
+      // -----------------GET CONTENT VIEW COUNT BY ID--------------------
+      getContentViewCount: builder.query<getContentViewCountResponse, {contentId: string, type_of_agg: string}>({
+        query: ({contentId, type_of_agg}) => ({
+          url: `/functions/v1/api/content/${contentId}/${type_of_agg}`,
+          method: 'GET'
         }),
       }),
       // ------------------GET CONTENT REVISIONS--------------------------
@@ -119,6 +138,7 @@ const ContentPageApi = createApi({
     useGetAllContentsOfUserQuery,
     useGetAllStatsOfUserQuery,
     useGetContentQuery,
+    useGetContentViewCountQuery,
     useGetContentRevisionsQuery,
     useUpdateContentMutation,
     useDeleteContentMutation,
