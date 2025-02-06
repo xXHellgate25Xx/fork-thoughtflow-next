@@ -13,7 +13,7 @@ import { pluginLink } from "wix-rich-content-plugin-link";
 import { fromDraft } from 'ricos-content/libs/fromDraft';
 import { RichContent } from 'ricos-schema';
 
-function Editor({content,callback} : {content?: any, callback?: any}) {
+function Editor({content,callback, channel_id} : {content?: any, callback?: any, channel_id?: any}) {
   const [editorState, setEditorState] = useState(JSON.parse(content));
   const editorRef = useRef<EditorCommands | null>(null);
 
@@ -32,11 +32,14 @@ function Editor({content,callback} : {content?: any, callback?: any}) {
 
           const encodedFile = await toBase64(file);
           const response = await uploadToWix({
-            bucketName,
-            file: encodedFile,
-            destinationPath: pathName,
-            displayName: file.name,
-            contentType: file.type,
+            channelId : channel_id,
+            fileData: {
+              bucketName,
+              file: encodedFile,
+              destinationPath: pathName,
+              displayName: file.name,
+              contentType: file.type,
+            }
           });
 
           if (response.data) {
@@ -108,7 +111,6 @@ function Editor({content,callback} : {content?: any, callback?: any}) {
         type="button"
         onClick={addCustomImage}
         style={{ marginTop: '10px', padding: '8px 16px' }}
-        disabled
       >
         Add Custom Image
       </button>

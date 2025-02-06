@@ -48,6 +48,7 @@ export default function Page() {
   // console.log(created_time);
   const published_time = content?.published_at;
   // console.log(published_time)
+  const channel_id = content?.channel_id
 
   const {
     data: viewsData,
@@ -87,7 +88,7 @@ export default function Page() {
       setPublished(content.status === 'published');
       setIsLoading(false);
       try {
-        const read_richContent = content.rich_content ?? fromPlainText(content.content_body);
+        const read_richContent = content.rich_content ?? JSON.stringify(fromPlainText(content.content_body));
         setEditorRichContent(read_richContent);
         let parsedContent;
         if (typeof read_richContent === 'string') {
@@ -321,9 +322,13 @@ export default function Page() {
           {!isEditing ? (
           <Viewer content={richContent}/>
           ) : (
-          <Editor callback={(e:any)=>{
+          <Editor 
+          callback={(e:any)=>{
             setEditorRichContent(convertJson(e))
-          }} content={editorRichContent}/>
+          }} 
+          content={editorRichContent}
+          channel_id={channel_id}
+          />
           )
           }
         </Card>

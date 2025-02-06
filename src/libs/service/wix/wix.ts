@@ -56,9 +56,9 @@ export const WixApi = createApi({
   reducerPath: 'supabaseApi',
   baseQuery,
   endpoints: (builder) => ({
-    uploadToWix: builder.mutation<{ file: FileResponse }, WixUploadRequest>({
-      query: (fileData) => ({
-        url: `functions/v1/api/upload-file/f31d044e-b0f6-45db-9623-3ae4ae6b6b69/upload-image`,
+    uploadToWix: builder.mutation<{ file: FileResponse }, {channelId: string ; fileData: WixUploadRequest}>({
+      query: ({channelId, fileData}) => ({
+        url: `functions/v1/api/upload-file/${channelId}/upload-image`,
         method: 'POST',
         body: {
           file: fileData.file,
