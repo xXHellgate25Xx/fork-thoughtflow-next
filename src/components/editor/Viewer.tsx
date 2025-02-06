@@ -15,7 +15,7 @@ function Viewer({ content }: { content: any }) {
         content={fromDraft(content)}
         // content={draftcon}
         plugins={[
-          pluginImageViewer(),
+          pluginImageViewer({disableExpand: true}),
           pluginTextColorViewer(),
           pluginTextHighlightViewer(),
           pluginHeadings(),
