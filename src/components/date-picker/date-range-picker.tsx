@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import { 
     LocalizationProvider, 
     MobileDatePicker,
@@ -14,8 +14,12 @@ import dayjs, { Dayjs } from 'dayjs';
 interface DateRangePickerProps{
     startDate: Dayjs | null;
     endDate?: Dayjs | null;
-    setStartDate: React.Dispatch<React.SetStateAction<Dayjs | null>>;
-    setEndDate: React.Dispatch<React.SetStateAction<Dayjs | null>>;
+    setStartDate: React.Dispatch<
+      React.SetStateAction<Dayjs | null>
+    > | ((date: Dayjs | null) => void);
+    setEndDate: React.Dispatch<
+      React.SetStateAction<Dayjs | null>
+    > | ((date: Dayjs | null) => void);
 }
 
 export function DateRangePicker({
@@ -47,7 +51,6 @@ export function DateRangePicker({
                 >
                   <MobileDatePicker
                     label="Start"
-                    // defaultValue={dayjs('2025-01-01')}
                     value={startDate}
                     onChange={(startValue) => setStartDate(startValue)}
                   />
@@ -66,7 +69,6 @@ export function DateRangePicker({
                 >
                   <MobileDatePicker
                     label="End"
-                    // defaultValue={dayjs()}
                     value={endDate}
                     onChange={(endValue) => setEndDate(endValue)}
                   />

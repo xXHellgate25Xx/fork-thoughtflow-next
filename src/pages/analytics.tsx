@@ -2,15 +2,26 @@ import { Helmet } from 'react-helmet-async';
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { ChannelSelect } from 'src/sections/channel/channel-select';
-import { Box, Card, CircularProgress, Typography } from '@mui/material';
+
+import { 
+  Box, 
+  Card,
+  CircularProgress, 
+  Typography,
+  Snackbar, 
+  Alert, 
+  AlertColor,
+} from '@mui/material';
+import { Icon } from '@iconify/react';
 import { ViewPieChart } from 'src/sections/analytics/pie-chart';
 import Grid from '@mui/material/Grid';
-import { CustomLineChart, getDatesRange, secondsToYearMonthDay } from 'src/sections/analytics/line-chart';
+
 import { DateRangePicker } from 'src/components/date-picker/date-range-picker';
+import { CustomLineChart, getDatesRange } from 'src/sections/analytics/line-chart';
 import { SelectMenu } from 'src/sections/analytics/agg-time-select';
-import { Icon } from '@iconify/react';
+import { ChannelSelect } from 'src/sections/channel/channel-select';
 import LeaderboardTable from 'src/sections/analytics/leaderboard';
+
 import {useGetAllChannelsOfUserQuery} from 'src/libs/service/channel/channel';
 import {
   useGetAllStatsOfUserQuery,
@@ -21,7 +32,9 @@ import {
   useGetTopContentQuery,
   useGetTopContentWeeklyQuery,
   useGetTopContentDailyQuery,
+  AnalyticsPageApi
 } from 'src/libs/service/analytics/analytics';
+import store from 'src/libs/stores';
 import dayjs, { Dayjs } from 'dayjs';
 import { useRouter } from 'src/routes/hooks';
 
@@ -39,12 +52,26 @@ export default function Page() {
   const [lineChartStartDate, setLineChartStartDate] = useState<Dayjs | null>(dayjs('2025-01-01'));
   const [lineChartEndDate, setLineChartEndDate] = useState<Dayjs | null>(dayjs());
   const [datesRangeReformatted, setDatesRangeReformatted] = useState<number[]>([]);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({
+    open: false,
+    message: '',
+    severity: 'error',
+  });
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   useEffect(()=>{
     const millisecondStartDate = lineChartStartDate?.valueOf();
     const millisecondEndDate = lineChartEndDate?.valueOf();
     setDatesRangeReformatted(getDatesRange(millisecondStartDate, millisecondEndDate));
   },[lineChartStartDate, lineChartEndDate]);
+
 
   const aggTimeOptions = [
     { id: 'daily', name: 'Daily' },
@@ -80,18 +107,21 @@ export default function Page() {
       channel_id: channelId,
       start_date: lineChartStartDate?.format('YYYY-MM-DD') as string,
       end_date: lineChartEndDate?.format('YYYY-MM-DD') as string
-    }
+    },
+    {skip: !channelId}
   );
 
   const {
     data: channelStatsByPillar,
-    isFetching: channelStatsByPillarIsFetching
+    isFetching: channelStatsByPillarIsFetching,
+    refetch: channelStatsByPillarRefetch,
   } = useGetChannelStatsOfUserByPillarQuery(
     {
       channel_id: channelId,
       start_date: lineChartStartDate?.format('YYYY-MM-DD') as string,
       end_date: lineChartEndDate?.format('YYYY-MM-DD') as string
-    }
+    },
+    {skip: !channelId}
   );
 
   useEffect(() => {
@@ -120,17 +150,17 @@ export default function Page() {
     channel_id: channelId,
     type_of_agg: 'day',
     current_date: dayjs().format('YYYY-MM-DD'),
-  });
+  },{skip: !channelId});
   const { data: weeklyStat, isLoading: weeklyIsLoading } = useGetAllStatsOfUserQuery({
     channel_id: channelId,
     type_of_agg: 'week',
     current_date: dayjs().format('YYYY-MM-DD'),
-  });
+  },{skip: !channelId});
   const { data: monthlyStat, isLoading: monthlyIsLoading } = useGetAllStatsOfUserQuery({
     channel_id: channelId,
     type_of_agg: 'month',
     current_date: dayjs().format('YYYY-MM-DD'),
-  });
+  },{skip: !channelId});
 
   const {
     data: analyticsViewByContent,
@@ -224,6 +254,45 @@ export default function Page() {
     }
   };
 
+  const handleSelectStartDate = (date: Dayjs | null) => {
+    // Handle selecting start date the same or after current date 
+    if(dayjs().isSame(date, 'day') || dayjs().isBefore(date)){
+      setLineChartStartDate(dayjs(lineChartStartDate));
+      setSnackbar({
+        open: true,
+        message: 'Start date should not be the same day or a day after the current date.',
+        severity: 'warning'
+      });
+    } else {
+      setLineChartStartDate(date);
+    }
+    // Clear Redux Store API Cache for analytics API 
+    // and force re-fetch to get fresh data
+    // to avoid SVG rendering error
+    store.dispatch(AnalyticsPageApi.util.resetApiState());
+    channelStatsByPillarRefetch();
+  };
+
+  const handleSelectEndDate = (date: Dayjs | null) => {
+    // Handle selecting end date after current date
+    if(dayjs().isBefore(date)){
+      setLineChartEndDate(dayjs());
+      setSnackbar({
+        open: true,
+        message: 'End date should not be a day after the current date.',
+        severity: 'warning'
+      });
+    } else {
+      setLineChartEndDate(date);
+    }
+    // setLineChartEndDate(dayjs().isBefore(date)? dayjs() : date);
+    // Clear Redux Store API Cache for analytics API 
+    // and force re-fetch to get fresh data
+    // to avoid SVG rendering error
+    store.dispatch(AnalyticsPageApi.util.resetApiState());
+    channelStatsByPillarRefetch();
+  };
+
   return (
     <>
       <Helmet>
@@ -290,12 +359,12 @@ export default function Page() {
                   width: '60%'
                 }}
             />
-            {/* <DateRangePicker
+            <DateRangePicker
               startDate={lineChartStartDate}
               endDate={lineChartEndDate}
-              setStartDate={setLineChartStartDate}
-              setEndDate={setLineChartEndDate}
-            /> */}
+              setStartDate={handleSelectStartDate}
+              setEndDate={handleSelectEndDate}
+            />
             {channelStatsByPillarIsFetching?
             (
               <Box display="flex" alignItems="center" justifyContent="center" gap='2rem' sx={{p: 2}}>
@@ -328,6 +397,16 @@ export default function Page() {
               data={totalViewsByPillar} />
         </Box>
       </DashboardContent>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

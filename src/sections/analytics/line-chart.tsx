@@ -123,17 +123,28 @@ export function CustomLineChart({ legends, xLabels, series, style }: CustomLineC
         'stepAfter'
     ];
 
+
     useEffect(()=>{
         if(legends && series && xLabels){
-            setDisplayLegends(legends ?? []);
+            
             const datasetReformated = series.map((byDate, yIndex) => {
-                const perLabelCount = Object.fromEntries(byDate?.map((count, legendIndex) =>
+                const perLabelCount = Object.fromEntries(byDate
+                    ?.map((count, legendIndex) =>
                     [legends[legendIndex], count])
                 );
                 return { xValue: new Date(xLabels[yIndex]), ...perLabelCount };
             });
-            setDisplayDataset(datasetReformated);
-            setYTicks([... new Set(series?.flat())]);
+            // Clear data before resetting on time changes 
+            // to avoid rendering error when calculating 
+            // attribute d for line chart SVG <path> element
+            setDisplayLegends([]);
+            setDisplayDataset([]);
+            setYTicks([]);
+            setTimeout(()=> {
+                setDisplayLegends(legends ?? []);
+                setDisplayDataset(datasetReformated);
+                setYTicks([... new Set(series?.flat())]);
+            }, 0);
         }
     },[legends, series, xLabels]);
 
@@ -245,8 +256,8 @@ export function CustomLineChart({ legends, xLabels, series, style }: CustomLineC
                         dataKey: 'xValue',
                         scaleType: 'time',
                         valueFormatter: (value) => dayjs(value).format('YYYY-MM-DD'),
-                        min: new Date(xLabels[0]),
-                        max: new Date(xLabels.slice(-1)[0]),
+                        min: new Date(Math.min(...xLabels)),
+                        max: new Date(Math.max(...xLabels)),
                         tickInterval: [new Date(xLabels[0]), new Date(xLabels.slice(-1)[0])]
                     },
                 ]}
