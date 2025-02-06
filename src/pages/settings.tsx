@@ -15,7 +15,10 @@ import {
   Typography, 
   Table, 
   TableBody,
-  CircularProgress
+  CircularProgress,
+  Snackbar, 
+  Alert, 
+  AlertColor,
 } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
@@ -69,7 +72,34 @@ export function useTable() {
 export default function Page() {
   const router = useRouter();
   const table = useTable();  
-  const {data: channelData, isFetching: channelIsFetching} = useGetAllChannelsOfUserQuery(); 
+  const {
+    data: channelData, 
+    isFetching: channelIsFetching,
+    refetch: channelRefetch,
+  } = useGetAllChannelsOfUserQuery(); 
+
+  const [snackbar, setSnackbar] = useState<{
+      open: boolean;
+      message: string;
+      severity: AlertColor;
+    }>({
+      open: false,
+      message: '',
+      severity: 'error',
+    });
+  
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handlePromptSubmission = () => {
+    channelRefetch();
+    setSnackbar({
+      open: true,
+      message: 'Prompt updated successfully!',
+      severity: 'success'
+    });
+  };
 
   const data: ChannelProps[] = channelData?.data?.map((channel: any) => {
     const mapping = {
@@ -128,6 +158,7 @@ export default function Page() {
                       <ChannelTableRow
                         key={row.id}
                         row={row}
+                        onChannelSubmit={handlePromptSubmission}
                       />
                     ))}
 
@@ -142,8 +173,17 @@ export default function Page() {
           </Scrollbar>
 
         </Card>
-
       </DashboardContent>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

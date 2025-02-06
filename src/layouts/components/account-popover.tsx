@@ -19,6 +19,8 @@ import { removeToken, removeAccountId } from 'src/utils/auth';
 import store from 'src/libs/stores';
 import { HomePageApi } from 'src/libs/service/pillar/home';
 import { ContentPageApi } from 'src/libs/service/content/content';
+import { ChannelApi } from 'src/libs/service/channel/channel';
+import { AnalyticsPageApi } from 'src/libs/service/analytics/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -57,6 +59,8 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
   const handleLogout = useCallback(() => {
     store.dispatch(HomePageApi.util.resetApiState());
     store.dispatch(ContentPageApi.util.resetApiState());
+    store.dispatch(ChannelApi.util.resetApiState());
+    store.dispatch(AnalyticsPageApi.util.resetApiState());
     removeToken();
     removeAccountId();
     router.push('/sign-in')

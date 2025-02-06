@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     LineChart,
     lineElementClasses,
@@ -14,7 +14,8 @@ import {
     TextField,
     Switch,
     FormControl,
-    FormControlLabel
+    FormControlLabel,
+    Typography,
 } from '@mui/material';
 import GenericSelector from "src/components/selector/generic-selector";
 import dayjs, {Dayjs} from 'dayjs';
@@ -31,7 +32,7 @@ const customize = {
         itemGap: 3,
     },
     margin: {
-        top: 50,
+        top: 70,
         right: 50,
         left: 50,
     },
@@ -47,7 +48,7 @@ export const secondsToYearMonthDay = (seconds: number | Date) => {
     const dateString = new Date(seconds).getDate().toString().padStart(2, "0");
     const monthString = (new Date(seconds).getMonth() + 1).toString().padStart(2, "0");
     const yearString = new Date(seconds).getFullYear();
-    return `${yearString}-${monthString}-${dateString}`;
+    return `${yearString}/${monthString}/${dateString}`;
 };
 
 export const integerToRgbString = (input: number) => {
@@ -74,26 +75,19 @@ export const getColors = (labels: string[], customColors?: string[]): { [key: st
     return labelToColorSet;
 };
 
-export function getDatesRange (startDate: string | undefined, endDate: string | undefined) {
+export function getDatesRange (startDate: number | undefined, endDate: number | undefined) {
     const dates = [];
-    // const dayIncrements = 24 * 3600 * 1000;
-    // const formattedStartDate = new Date(startDate as string);
-    // const formattedEndDate = new Date(endDate as string);
-    let currentDate = startDate
-    while(dayjs(currentDate).isBefore(endDate)){
-        dates.push(dayjs(currentDate).format('YYYY-MM-DD'));
-        currentDate = dayjs(currentDate).add(1, 'day').format('YYYY-MM-DD');
+    const dayIncrements = 24 * 3600 * 1000;
+    for (let date = startDate as number; date <= (endDate as number); date += dayIncrements){
+        dates.push(date);
     }
-    // for (let date = formattedStartDate.getTime(); date <= formattedEndDate.getTime(); date += dayIncrements){
-    //     dates.push(dayjs(date).format('YYYY-MM-DD'));
-    // }
     return dates;
 }
 
 interface CustomLineChartProps {
-    legends?: string[];
-    xLabels?: string[];
-    series?: number[][];
+    legends: string[];
+    xLabels: number[];
+    series: number[][];
     style?: {
         lineType?: CurveType | undefined;
         markSize?: string;
@@ -115,7 +109,9 @@ export function CustomLineChart({ legends, xLabels, series, style }: CustomLineC
     const [lineWidth, setLineWidth] = useState<string | number>("2");
     const [stackStatus, setStackStatus] = useState<boolean>(style?.isStacked || false);
     const [isConfigEnabled, setIsConfigEnabled] = useState<boolean>(style?.withConfig || false);
-
+    const [displayLegends, setDisplayLegends] = useState<string[]>([]);
+    const [displayDataset, setDisplayDataset] = useState<{[x: string]: Date | string | number}[]>([]);
+    const [yTicks, setYTicks] = useState<number[]>([]);
     const linesTypeOptions = [
         'catmullRom',
         'linear',
@@ -127,28 +123,21 @@ export function CustomLineChart({ legends, xLabels, series, style }: CustomLineC
         'stepAfter'
     ];
 
-    const mockLegends = legends || ["pillar-A", "pillar-B", "pillar-C", "pillar-D", "pillar-E"];
-    const displayX = xLabels || ["2024-01-10", "2024-01-11", "2024-01-12", "2024-01-13", "2024-01-14"];
-    const displaySeries = series || [
-        [0, 2, 5, 6, 10],
-        [1, 4, 6, 10, 15],
-        [2, 6, 9, 25, 1],
-        [0, 2, 5, 6, 10],
-        [1, 5, 3, 17, 32]
-    ];
+    useEffect(()=>{
+        if(legends && series && xLabels){
+            setDisplayLegends(legends ?? []);
+            const datasetReformated = series.map((byDate, yIndex) => {
+                const perLabelCount = Object.fromEntries(byDate?.map((count, legendIndex) =>
+                    [legends[legendIndex], count])
+                );
+                return { xValue: new Date(xLabels[yIndex]), ...perLabelCount };
+            });
+            setDisplayDataset(datasetReformated);
+            setYTicks([... new Set(series?.flat())]);
+        }
+    },[legends, series, xLabels]);
 
-    const yTicksSet = [... new Set(series?.flat())];
-
-    const sortedXData = displayX.sort((a, b) => Date.parse(a) - Date.parse(b));
-
-    const displayLineColors = getColors(mockLegends, style?.lineColors);
-
-    const datasetReformated = displaySeries.map((byDate, yIndex) => {
-        const perLabelCount = Object.fromEntries(byDate?.map((count, legendIndex) =>
-            [mockLegends[legendIndex], count])
-        );
-        return { xValue: new Date(sortedXData[yIndex]), ...perLabelCount };
-    });
+    // const displayLineColors = getColors(displayLegends, style?.lineColors);
 
     const handleStackChoice = (choice: string) => {
         setStackStatus(choice === "Stack");
@@ -254,10 +243,11 @@ export function CustomLineChart({ legends, xLabels, series, style }: CustomLineC
                 xAxis={[
                     {
                         dataKey: 'xValue',
-                        valueFormatter: (value) => secondsToYearMonthDay(value),
-                        min: new Date(sortedXData[0]),
-                        max: new Date(sortedXData.slice(-1)[0]),
-                        tickInterval: [new Date(sortedXData[0]), new Date(sortedXData.slice(-1)[0])]
+                        scaleType: 'time',
+                        valueFormatter: (value) => dayjs(value).format('YYYY-MM-DD'),
+                        min: new Date(xLabels[0]),
+                        max: new Date(xLabels.slice(-1)[0]),
+                        tickInterval: [new Date(xLabels[0]), new Date(xLabels.slice(-1)[0])]
                     },
                 ]}
                 yAxis={[
@@ -265,11 +255,11 @@ export function CustomLineChart({ legends, xLabels, series, style }: CustomLineC
                         id: 'yValue',
                         scaleType: 'linear',
                         label: 'Views',
-                        tickInterval: yTicksSet,
+                        tickInterval: yTicks,
                         valueFormatter: (yValue) => yValue.toString()
                     },
                 ]}
-                series={mockLegends.map((labelItem) => ({
+                series={displayLegends.map((labelItem) => ({
                     curve: chosenLineType,
                     dataKey: labelItem,
                     label: `${labelItem}`,
@@ -277,7 +267,7 @@ export function CustomLineChart({ legends, xLabels, series, style }: CustomLineC
                     showMark: false,
                     ...(style?.isStacked ? stackStrategy : undefined),
                 }))}
-                dataset={datasetReformated}
+                dataset={displayDataset}
                 {...(style?.otherConfiguration || customize)}
             />
         </Stack >

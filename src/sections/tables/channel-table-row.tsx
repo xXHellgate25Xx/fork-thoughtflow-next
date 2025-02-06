@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import TableRow from '@mui/material/TableRow';
@@ -9,10 +9,7 @@ import { Icon } from '@iconify/react';
 import { channelIcons } from 'src/theme/icons/channel-icons';
 import { 
   Button, 
-  Typography, 
-  Snackbar, 
-  Alert, 
-  AlertColor
+  Typography,
 } from '@mui/material';
 import { GenericModal } from 'src/components/modal/generic-modal';
 import { TagsPicker } from 'src/components/tags/tags-picker';
@@ -31,6 +28,7 @@ export type ChannelProps = {
 
 type ChannelTableRowProps = {
   row: ChannelProps;
+  onChannelSubmit?: () => void;
 };
 
 const labelColors: { [key: string]: LabelColor } = {
@@ -39,82 +37,74 @@ const labelColors: { [key: string]: LabelColor } = {
     archived: 'default',
 }
 
-export function ChannelTableRow({ row }: ChannelTableRowProps) {
+export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-  const [modifyChannel, { isLoading : modifyChannelIsLoading }] = useModifyChannelMutation();
-  const [textInput, setTextInput] = useState<string>(row.prompt || '');
-  const [textUpload, setTextUpload] = useState<string>('');
+  const [modifyChannel] = useModifyChannelMutation();
+  const [promptInput, setPromptInput] = useState<string>('');
   const textFieldRef = useRef<HTMLInputElement | null>(null);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: AlertColor;
-  }>({
-    open: false,
-    message: '',
-    severity: 'error',
-  });
 
-  const mockTagList = [
-    {tagLabel: "title", tagValue: row.name},
-    {tagLabel: "content", tagValue: `Specific content for ${row.name}`},
-    {tagLabel: "date", tagValue: dayjs().format("YYYY-MM-DD")},
+  useEffect(()=>{
+    setPromptInput(row.prompt);
+  },[row.prompt]);
+
+  const tagList = [
+    {tagLabel: 'title', tagValue: row.name},
+    {tagLabel: 'content', tagValue: `Specific content for ${row.name}`},
+    {tagLabel: 'date', tagValue: dayjs().format('YYYY-MM-DD')},
   ];
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
 
   const handleTagSelection = (tag: {tagLabel: string; tagValue: string}) => {
     if(textFieldRef.current) {
       const input = textFieldRef.current;
       if(input) {
         const startPos = input.selectionStart;
-        const preCursor = textInput.substring(0, startPos as number);
-        const posCursor = textInput.substring(input.selectionEnd as number);
+        const preCursor = promptInput.substring(0, startPos as number);
+        const posCursor = promptInput.substring(input.selectionEnd as number);
 
-        setTextInput(`${preCursor}{{${tag.tagLabel}}}${posCursor}`);
-        setTextUpload(`${preCursor}${tag.tagValue}${posCursor}`);
+        setPromptInput(`${preCursor}{{${tag.tagLabel}}}${posCursor}`);
 
         input.selectionStart = (startPos as number) + `{{${tag.tagLabel}}}`.length;
         input.selectionEnd = input.selectionStart;
       }
     }
-  }
+  };
 
   const displayTagsPicker: React.ReactNode = (
     <TagsPicker
-      tagList={mockTagList}
+      tagList={tagList}
       onTagSelect={handleTagSelection}
     />
   );
 
-  const handlePromptSubmit = async (prompt: string) => {
+  const handlePromptSubmit = async () => {
     setIsSubmitted(true);
-    const finalUploadPrompt = textUpload!==''? textUpload : textInput;
+    const reg = new RegExp(`${tagList.map((tag)=>{
+      const labels = tag.tagLabel;
+      return `\\{\\{${labels}\\}\\}`;
+    }).join("|")}`, "g");
+    console.log(reg);
+    const promptUpload = promptInput.replace(reg, (matched) => 
+      tagList.find((tag) => matched === `{{${tag.tagLabel}}}`)
+      ?.tagValue as string);
+    console.log(promptUpload);
     const result = await modifyChannel({
       channel_id: row.id,
       payload: {
         name: row.name,
         channel_type: row.type,
-        brand_voice_initial: finalUploadPrompt
+        brand_voice_initial: promptUpload
       }
     });
     setIsSubmitted(false);
-    if (!result.data) {
-      setSnackbar({
-        open: true,
-        message: "Failed to submit modified prompt",
-        severity: 'error',
-      })
-    } else {
-      setSnackbar({
-        open: true,
-        message: "Prompt is successfully updated",
-        severity: 'success',
-      })
-    }
+    
+    const openModal = onChannelSubmit?.();
+    // dispatch(
+    //   api.endpoints.getPosts.initiate(
+    //     { count: 5 },
+    //     { subscribe: false, forceRefetch: true },
+    //   ),
+    // )
   };
 
   return (
@@ -155,14 +145,14 @@ export function ChannelTableRow({ row }: ChannelTableRowProps) {
       <GenericModal
         open={openPopover}
         onClose={()=>setOpenPopover(false)}
-        setParentText={setTextInput}
+        setParentText={setPromptInput}
         isLoading={isSubmitted}
-        onAddItem={(value) => {handlePromptSubmit(value)}}
+        onAddItem={handlePromptSubmit}
         modalTitle={`Edit prompt for ${row.name}`}
         modalSubTitle='Customize the prompt for generating content for this channel'
         buttonText='Submit'
-        textFieldValue={textInput}
-        customChildren={displayTagsPicker}
+        textFieldValue={promptInput}
+        customChildren={displayTagsPicker} // Variables selection disabled
         textInputRef={textFieldRef}
         styling={{
           multiline: true,
@@ -170,16 +160,6 @@ export function ChannelTableRow({ row }: ChannelTableRowProps) {
           enableCloseButton: true
         }}
       />
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 }

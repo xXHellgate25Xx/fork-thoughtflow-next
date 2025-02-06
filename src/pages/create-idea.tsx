@@ -46,39 +46,43 @@ export default function Page() {
   const [createIdea] = useCreateIdeaMutation();
   const [generateContent] = useGenerateContentMutation();
   const [createIdeaContent] = useCreateIdeaContentMutation();
-  const { data: channelData } = useGetAllChannelsOfUserQuery(); 
-  const [channelId, setChannelId] = useState<string>('');
-  const [channelIdAndName, setChannelName] = useState<{id: string; name: string}[] | undefined>(undefined);
-
-  useEffect(()=>{
-    setChannelName(channelData?.data?.map((channel: any)=>{
-        const requiredPairs = {id: channel.id, name: channel.name};
-        return requiredPairs;
-      }) ?? []
-    );
-  },[channelIdAndName]);
-
-  useEffect(()=>{
-    setChannelId(channelData?.data?.[0]?.id ?? '');
-  },[channelIdAndName]);
-
   const [pillarIdAndName, setPillarIdAndName] = useState<
     { id: string; name: string }[] | undefined
   >(undefined);
+  const [channelId, setChannelId] = useState<string>('');
+  const [channelIdAndName, setChannelIdAndName] = useState<
+    {id: string; name: string}[] | undefined
+  >(undefined);
   const { data: pillarData, error: pillarError } = useGetAllPillarQuery();
+  const { data: channelData } = useGetAllChannelsOfUserQuery(); 
 
   useEffect(() => {
     if (pillarData) {
-      setPillarIdAndName(
-        pillarData?.data
-          ?.filter((pillarItem) => pillarItem.is_active)
-          .map((pillarItem) => {
-            const selectedFields = { id: pillarItem.id, name: pillarItem.name };
-            return selectedFields;
-          }) ?? []
+      const formattedPillars = pillarData?.data
+        ?.filter((pillarItem) => pillarItem.is_active)
+        .map((pillarItem) => {
+          const selectedFields = { id: pillarItem.id, name: pillarItem.name };
+          return selectedFields;
+        }) ?? [];
+      setPillarIdAndName( formattedPillars.length > 0?
+        formattedPillars :
+        [{id: '1', name: 'No existing pillar'}]
       );
     }
   }, [pillarData]);
+
+  useEffect(()=>{
+    if(channelData){
+      const formattedChannels = channelData?.data.map((channel: any)=>{
+        const requiredPairs = {id: channel.id, name: channel.name};
+        return requiredPairs;
+      }) ?? [];
+      setChannelId(channelData?.data?.[0]?.id ?? '');
+      setChannelIdAndName(formattedChannels.length > 0?
+        formattedChannels:
+        [{id: '1', name: 'No existing channels'}]);
+    }
+  },[channelData]);
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -262,7 +266,7 @@ export default function Page() {
                 onSort={handleSelectPillar}
                 options={pillarIdAndName}
               />
-              {/* Select content pillar */}
+              {/* Select content channel */}
               <ChannelSelect
                 channelId={channelId}
                 onSort={handleSelectChannel}

@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { ChannelSelect } from 'src/sections/analytics/channel-select';
+import { ChannelSelect } from 'src/sections/channel/channel-select';
 import { Box, Card, CircularProgress, Typography } from '@mui/material';
 import { ViewPieChart } from 'src/sections/analytics/pie-chart';
 import Grid from '@mui/material/Grid';
@@ -29,7 +29,8 @@ import { useRouter } from 'src/routes/hooks';
 
 export default function Page() {
   const router = useRouter();
-  const [channel, setChannel] = useState<string>('1');
+  const [channelId, setChannelId] = useState<string>('1');
+  const [channelOptions, setChannelOptions] = useState<{id: string; name: string}[]>([]);
   const [aggTime, setAggTime] = useState<string>('daily');
   const [totalViews, setTotalViews] = useState<number>(0);
   const [diff, setDiff] = useState<number>(0);
@@ -37,10 +38,13 @@ export default function Page() {
   const [pillarViews, setPillarViews] = useState<number[][]>([]);
   const [lineChartStartDate, setLineChartStartDate] = useState<Dayjs | null>(dayjs('2025-01-01'));
   const [lineChartEndDate, setLineChartEndDate] = useState<Dayjs | null>(dayjs());
-  const [enableSetDates, setEnableSetDates] = useState<boolean>(false);
-  const formattedStartDate = lineChartStartDate?.format('YYYY-MM-DD') as string;
-  const formattedCurrentDate = lineChartEndDate?.format('YYYY-MM-DD') as string;
-  const datesRangeReformatted = getDatesRange(formattedStartDate, formattedCurrentDate);
+  const [datesRangeReformatted, setDatesRangeReformatted] = useState<number[]>([]);
+
+  useEffect(()=>{
+    const millisecondStartDate = lineChartStartDate?.valueOf();
+    const millisecondEndDate = lineChartEndDate?.valueOf();
+    setDatesRangeReformatted(getDatesRange(millisecondStartDate, millisecondEndDate));
+  },[lineChartStartDate, lineChartEndDate]);
 
   const aggTimeOptions = [
     { id: 'daily', name: 'Daily' },
@@ -53,37 +57,48 @@ export default function Page() {
     isLoading: allChannelsIsLoading
   } = useGetAllChannelsOfUserQuery();
 
-  const channel_id = allChannels?.data[0].id;
+  useEffect(()=>{
+    if(allChannels){
+      setChannelId(allChannels?.data[0].id);
+      setChannelOptions(allChannels?.data
+        ?.map((channel: any)=>{
+          const reformattedChannel = { id: channel.id, name: channel.name };
+          return reformattedChannel;
+      }));
+    }
+  },[allChannels]);
+
+  const handleSelectChannel = (chosenChannelId: string) => {
+    setChannelId(chosenChannelId);
+  };
 
   const {
     data: channelStatsByPage,
     isLoading: channelStatsByPageIsLoading
   } = useGetChannelStatsOfUserByPageQuery(
     {
-      channel_id,
-      start_date: formattedStartDate,
-      end_date: formattedCurrentDate
-    },
-    { skip: !channel_id }
+      channel_id: channelId,
+      start_date: lineChartStartDate?.format('YYYY-MM-DD') as string,
+      end_date: lineChartEndDate?.format('YYYY-MM-DD') as string
+    }
   );
 
   const {
     data: channelStatsByPillar,
-    isLoading: channelStatsByPillarIsLoading
+    isFetching: channelStatsByPillarIsFetching
   } = useGetChannelStatsOfUserByPillarQuery(
     {
-      channel_id,
+      channel_id: channelId,
       start_date: lineChartStartDate?.format('YYYY-MM-DD') as string,
       end_date: lineChartEndDate?.format('YYYY-MM-DD') as string
-    },
-    { skip: !channel_id }
+    }
   );
 
   useEffect(() => {
     if (channelStatsByPillar) {
       const uniquePillarNames = [...new Set(channelStatsByPillar?.data?.map((item: any) => item.content_pillar))] as string[];
-      const pillarProcessesByDates = datesRangeReformatted.map((date: string) => {
-        const pillarFilteredByDates = channelStatsByPillar?.data?.filter((pillar: any) => pillar.date_id === date);
+      const pillarProcessesByDates = datesRangeReformatted.map((date: number) => {
+        const pillarFilteredByDates = channelStatsByPillar?.data?.filter((pillar: any) => dayjs(pillar.date_id).valueOf() === date);
         const pillarWithMatchedDate = uniquePillarNames.map((pillarName) => {
           let viewsPerpillar;
           const matchedPillar = pillarFilteredByDates.find((pillar: any) => pillar.content_pillar === pillarName);
@@ -102,19 +117,19 @@ export default function Page() {
   }, [channelStatsByPillar]);
 
   const { data: dailyStat, isLoading: dailyIsLoading } = useGetAllStatsOfUserQuery({
-    channel_id,
+    channel_id: channelId,
     type_of_agg: 'day',
-    current_date: formattedCurrentDate,
+    current_date: dayjs().format('YYYY-MM-DD'),
   });
   const { data: weeklyStat, isLoading: weeklyIsLoading } = useGetAllStatsOfUserQuery({
-    channel_id,
+    channel_id: channelId,
     type_of_agg: 'week',
-    current_date: formattedCurrentDate,
+    current_date: dayjs().format('YYYY-MM-DD'),
   });
   const { data: monthlyStat, isLoading: monthlyIsLoading } = useGetAllStatsOfUserQuery({
-    channel_id,
+    channel_id: channelId,
     type_of_agg: 'month',
-    current_date: formattedCurrentDate,
+    current_date: dayjs().format('YYYY-MM-DD'),
   });
 
   const {
@@ -252,24 +267,47 @@ export default function Page() {
             }
 
           </Card>
-          <Card sx={{ padding: '2rem', width: 800, display: 'flex', flexDirection: 'column' }}>
+          <Card 
+            sx={{ 
+              padding: '2rem', 
+              width: 800, 
+              display: 'flex', 
+              flexDirection: 'column',
+            }}
+          >
             <Typography
               variant="h6"
             > Views by pillars over time 
             </Typography>
-            {enableSetDates?
-            <DateRangePicker
+            <ChannelSelect
+                channelId={channelId}
+                onSort={handleSelectChannel}
+                options={channelOptions}
+                sx={{
+                  mt: 2,
+                  mb: 1,
+                  right: 0,
+                  width: '60%'
+                }}
+            />
+            {/* <DateRangePicker
               startDate={lineChartStartDate}
               endDate={lineChartEndDate}
               setStartDate={setLineChartStartDate}
               setEndDate={setLineChartEndDate}
-            />:<></>}
-            
+            /> */}
+            {channelStatsByPillarIsFetching?
+            (
+              <Box display="flex" alignItems="center" justifyContent="center" gap='2rem' sx={{p: 2}}>
+                <CircularProgress color='inherit'/>
+                  <Typography>Fetching pillars statistic...</Typography>
+              </Box>
+            ):
             <CustomLineChart
               legends={pillarNames}
-              xLabels={datesRangeReformatted}
+              xLabels={datesRangeReformatted.sort((a, b) => a - b)}
               series={pillarViews}
-            />
+            />}
           </Card>
           
         </Box>

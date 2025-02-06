@@ -28,7 +28,7 @@ export function TagsPicker({tagList, onTagSelect}: TagProps) {
                         key={index}
                         sx={{
                             textAlign: "center",
-                            backgroundColor: "rgb(157, 155, 155)",
+                            backgroundColor: "rgb(201, 199, 199)",
                             borderRadius: 1,
                             p: 1
                         }}

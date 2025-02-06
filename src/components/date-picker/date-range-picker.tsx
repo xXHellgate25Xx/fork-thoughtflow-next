@@ -47,7 +47,7 @@ export function DateRangePicker({
                 >
                   <MobileDatePicker
                     label="Start"
-                    defaultValue={dayjs('2025-01-01')}
+                    // defaultValue={dayjs('2025-01-01')}
                     value={startDate}
                     onChange={(startValue) => setStartDate(startValue)}
                   />
@@ -66,7 +66,7 @@ export function DateRangePicker({
                 >
                   <MobileDatePicker
                     label="End"
-                    defaultValue={dayjs()}
+                    // defaultValue={dayjs()}
                     value={endDate}
                     onChange={(endValue) => setEndDate(endValue)}
                   />
