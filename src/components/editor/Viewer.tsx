@@ -1,23 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
-import { RicosViewer } from 'ricos-viewer';
-import { pluginImage } from 'wix-rich-content-plugin-image';
-import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-text-color';
-import { pluginHeadings } from "wix-rich-content-plugin-headings";
-import { pluginLink } from "wix-rich-content-plugin-link";
+import {
+  pluginHeadings,
+  RicosViewer,
+  pluginImageViewer,
+  pluginLinkViewer,
+  pluginTextHighlightViewer,
+  pluginTextColorViewer,
+  fromDraft,
+} from '@wix/ricos';
 
-function Viewer({content}:{content: any}) {
-
-    // console.log((content))
-    
-    return (
-        <>
-        <RicosViewer
-        content={content}
+function Viewer({ content }: { content: any }) {
+  return (
+    <>
+      <RicosViewer
+        content={fromDraft(content)}
         // content={draftcon}
-        plugins={[pluginImage(), pluginTextColor(), pluginTextHighlight(), pluginHeadings(), pluginLink()]} 
-        />
-        </>
-    )
+        plugins={[
+          pluginImageViewer(),
+          pluginTextColorViewer(),
+          pluginTextHighlightViewer(),
+          pluginHeadings(),
+          pluginLinkViewer(),
+        ]}
+      />
+    </>
+  );
 }
 
 export default Viewer;
