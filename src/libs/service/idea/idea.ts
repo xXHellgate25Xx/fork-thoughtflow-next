@@ -19,6 +19,7 @@ interface IdeaReq {
     content_type?: string | null | undefined;
     published_url?: string | null | undefined;
     media_id?: (string | null | undefined)[];
+   
 }
 
 interface createContentProps {
@@ -27,6 +28,9 @@ interface createContentProps {
     title: string | undefined;
     excerpt: string;
     status: string;
+    seo_slug?: string | null | undefined;
+    seo_title_tag?: string | null | undefined;
+    seo_meta_description?: string | null | undefined;
     content_type: string;
     channel_id: string;
 }
@@ -55,6 +59,9 @@ interface IdeaRes {
         revision?: number
         media_id?: string[];
         published_at?: any;
+        seo_slug?: string ;
+        seo_title_tag?: string;
+        seo_meta_description?: string ;
         rich_content?: RichContent;
     }[];
     error?: any
@@ -73,13 +80,14 @@ const IdeaApi = createApi({
 
         // -----------------------CREATE IDEA-------------------------
         createIdea: builder.mutation<IdeaRes, IdeaReq>({
-            query: ({ text, voice_input, pillar_id, }) => ({
+            query: ({ text, voice_input, pillar_id}) => ({
                 url: "functions/v1/api/idea",
                 method: "POST",
                 body: {
                     text,
                     voice_input,
                     pillar_id,
+                  
                 }
             })
         }),

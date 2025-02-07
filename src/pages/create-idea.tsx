@@ -149,6 +149,9 @@ export default function Page() {
           excerpt: '',
           status: 'draft',
           content_type: 'Blog Post',
+          seo_meta_description: ideaToSubmit.seo_meta_description || null,
+          seo_slug: ideaToSubmit.seo_slug || null,
+          seo_title_tag: ideaToSubmit.seo_title_tag || null,
           channel_id: channelId
         }
       });

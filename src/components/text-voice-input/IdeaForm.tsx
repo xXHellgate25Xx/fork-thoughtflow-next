@@ -1,17 +1,10 @@
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
-} from "@mui/material";
-import { useUploadToStorageMutation } from "src/libs/service/storage/api-storage";
-import { processingFilePath } from "src/utils/file-path-with-hash";
-import { IdeaFormat } from "src/interfaces/idea-interfaces";
+import React, { useState, useEffect } from 'react';
+import { Box, Button } from '@mui/material';
+import { useUploadToStorageMutation } from 'src/libs/service/storage/api-storage';
+import { processingFilePath } from 'src/utils/file-path-with-hash';
+import { IdeaFormat } from 'src/interfaces/idea-interfaces';
+import { handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
+import TextField from '../text-field/text-field';
 
 interface IdeaFormProps {
   idea?: IdeaFormat | null;
@@ -34,14 +27,30 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   onSubmitSuccess,
   currentPillarId,
 }) => {
+  const [titleTag, setTitleTag] = useState<string>('');
+  const [metaDescription, setMetaDescription] = useState<string>('');
+  const [seoSlug, setSeoSlug] = useState<string>('');
   const [uploadToStorage] = useUploadToStorageMutation();
 
-  const [error, setError] = useState<string | null>(null);
+  // Error states for validation
+  const [errors, setErrors] = useState({
+    ideaText: false,
+  });
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newText = e.target.value;
-    setEditedTexts({ ...editedIdea, text: newText });
+    setEditedTexts({ ...editedIdea, text: e.target.value });
+    setErrors((prev) => ({ ...prev, ideaText: false })); // Clear error on valid input
   };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitleTag(e.target.value);
+  };
+
+  const handleMetaDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMetaDescription(e.target.value);
+  };
+
+ 
 
   useEffect(() => {
     setEditedTexts({
@@ -51,24 +60,28 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   }, [currentPillarId]);
 
   const handleSubmit = async () => {
-    if (!editedIdea?.text || editedIdea.text.trim() === "") {
-      setError("Text is required.");
+    if (!editedIdea?.text || editedIdea.text.trim() === '') {
+      setErrors({ ideaText: true });
       return;
     }
 
     try {
-      const path = audioBlob
-        ? await processingFilePath(audioBlob, "voice_inputs", "voice")
-        : null;
+      const path = audioBlob ? await processingFilePath(audioBlob, 'voice_inputs', 'voice') : null;
       const audio = audioBlob
         ? await uploadToStorage({
             file: audioBlob,
-            bucketName: "media",
-            pathName: path || "",
+            bucketName: 'media',
+            pathName: path || '',
           })
         : null;
 
-      const updatedIdea = { ...editedIdea, voice_input: audio?.data?.Id || null };
+      const updatedIdea = {
+        ...editedIdea,
+        voice_input: audio?.data?.Id || null,
+        seo_slug: seoSlug ?? null,
+        seo_title_tag: titleTag ?? null,
+        seo_meta_description: metaDescription ?? null,
+      };
       setEditedTexts(updatedIdea); // Updates the parent component's state
       // Wait for the parent's submit handler to execute
       await handleEditSubmit(updatedIdea);
@@ -76,34 +89,57 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
       setEditedTexts({
         ...editedIdea,
         pillar_id: currentPillarId,
-        text: "",
+        text: '',
       });
       setAudioBlob?.(null);
-    } catch (e) {
-      console.error("Error during submission:", e);
-      alert("Submission failed. Please try again.");
+    } catch (error) {
+      console.error('Error during submission:', error);
+      alert('Submission failed. Please try again.');
     }
   };
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         gap: 2,
-        width: "100%",
+        width: '100%',
       }}
     >
-      <Box sx={{ position: "relative" }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+          <TextField
+            label="SEO Slug"
+            value={seoSlug}
+            onKeyDown={(e)=>handleKeyDown(e, setSeoSlug)}
+            onChange={(e)=>handleSeoSlugChange(e, setSeoSlug)}
+            fullWidth
+          />
+
+          <TextField label="Title Tag" value={titleTag} onChange={handleTitleChange} fullWidth />
+        </Box>
+
         <TextField
-          placeholder="Idea Text"
+          label="Meta Descriptions"
+          multiline
+          rows={4}
+          value={metaDescription}
+          onChange={handleMetaDescriptionChange}
+          fullWidth
+        />
+      </Box>
+      <Box sx={{ position: 'relative' }}>
+        <TextField
+          label="Idea Text"
+          required
           multiline
           rows={10}
-          value={editedIdea?.text || idea?.text || ""}
+          value={editedIdea?.text || idea?.text || ''}
           onChange={handleTextChange}
           fullWidth
-          error={!!error}
-          helperText={error}
+          error={errors.ideaText}
+          helperText={errors.ideaText ? 'Idea Text is required' : ''}
         />
       </Box>
 
@@ -111,7 +147,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
         onClick={handleSubmit}
         variant="contained"
         size="large"
-        sx={{ width: "100%", mt: "2rem", backgroundColor: "black" }}
+        sx={{ width: '100%', mt: '2rem', backgroundColor: 'black' }}
       >
         Generate content
       </Button>

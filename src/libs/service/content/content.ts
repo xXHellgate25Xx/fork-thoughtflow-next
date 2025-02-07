@@ -39,6 +39,9 @@ interface ContentUpdatePayload {
   published_url?: string;
   media_id?: string[];
   pillar_id?: string;
+  seo_slug?: string ;
+  seo_title_tag?: string;
+  seo_meta_description?: string;
 }
 
 export interface ContentRes {
@@ -59,6 +62,9 @@ export interface ContentRes {
   media_id: string[];
   pillar_id: string | null;
   channel_id: string | null;
+  seo_slug?: string ;
+  seo_title_tag?: string;
+  seo_meta_description?: string;
 }
 
 export interface getContentResponse {

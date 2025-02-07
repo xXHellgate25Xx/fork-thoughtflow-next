@@ -1,5 +1,6 @@
 import { RichContent } from 'ricos-schema';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { Tags } from 'src/interfaces/seoData-interface';
 import { baseQuery } from '../supabase/baseQuery';
 
 // Define the file response interface
@@ -22,24 +23,23 @@ export interface FileResponse {
   state: string;
 }
 
-
 export interface WixUploadRequest {
-  file: string; 
-  bucketName: string; 
-  destinationPath: string; 
-  displayName: string; 
-  contentType: string; 
+  file: string;
+  bucketName: string;
+  destinationPath: string;
+  displayName: string;
+  contentType: string;
 }
 
 export interface WixDraftPostResponse {
-  data? :{
-  title: string;
-  excerpt: string;
-  featured: boolean;
-  catetegoryId: string[];
-  memberId: string;
-  status: string;
-  richContent: RichContent;
+  data?: {
+    title: string;
+    excerpt: string;
+    featured: boolean;
+    catetegoryId: string[];
+    memberId: string;
+    status: string;
+    richContent: RichContent;
   }[];
   error?: any;
 }
@@ -49,8 +49,10 @@ export interface WixCreatePublishPostRequest {
   richContent: RichContent;
   content_id?: string;
   draftPostId?: string;
+  seo_slug?: string;
+  seo_title_tag?: Tags | null;
+  seo_meta_description?: Tags | null;
 }
-
 
 export const WixApi = createApi({
   reducerPath: 'supabaseApi',
@@ -69,9 +71,12 @@ export const WixApi = createApi({
         },
       }),
     }),
-    CreatePublishToWix: builder.mutation<WixDraftPostResponse, { channel_id: string; CreatePublishReq: WixCreatePublishPostRequest }>({
+    CreatePublishToWix: builder.mutation<
+      WixDraftPostResponse,
+      { channel_id: string; CreatePublishReq: WixCreatePublishPostRequest }
+    >({
       query: ({ channel_id, CreatePublishReq }) => ({
-        url: `functions/v1/api/post/${channel_id}/create-publish`,
+        url: `functions/v1/api/integrations/wix/post/${channel_id}/create-publish`,
         method: 'POST',
         body: CreatePublishReq,
       }),
@@ -80,7 +85,4 @@ export const WixApi = createApi({
 });
 
 // Export hooks for usage in functional components
-export const { 
-  useUploadToWixMutation,
-  useCreatePublishToWixMutation,
-} = WixApi;
+export const { useUploadToWixMutation, useCreatePublishToWixMutation } = WixApi;
