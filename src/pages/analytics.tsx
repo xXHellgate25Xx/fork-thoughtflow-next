@@ -86,7 +86,7 @@ export default function Page() {
 
   useEffect(()=>{
     if(allChannels){
-      setChannelId(allChannels?.data[0].id);
+      setChannelId(allChannels?.data?.[0]?.id);
       setChannelOptions(allChannels?.data
         ?.map((channel: any)=>{
           const reformattedChannel = { id: channel.id, name: channel.name };
