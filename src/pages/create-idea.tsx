@@ -131,10 +131,12 @@ export default function Page() {
       setProgress(30);
 
       const { data: generationData } = await generateContent({
-        idea: ideaToSubmit.text,
-        feedback: '',
-        content: '',
-        action: 'initial'
+        channel_id: channelId,
+        gen_content: {
+          idea: ideaToSubmit.text,
+          feedback: '',
+          content: ''
+        }
       });
 
       setProgress(80);
