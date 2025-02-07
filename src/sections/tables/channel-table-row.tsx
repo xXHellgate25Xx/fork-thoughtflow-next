@@ -24,6 +24,7 @@ export type ChannelProps = {
   name: string;
   url: string;
   prompt: string;
+  content: string;
 };
 
 type ChannelTableRowProps = {
@@ -42,17 +43,17 @@ export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) 
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [modifyChannel] = useModifyChannelMutation();
   const [promptInput, setPromptInput] = useState<string>('');
+  const [rowDataList, setRowDataList] = useState<{tagLabel: string; tagValue: string}[]>([]);
   const textFieldRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(()=>{
     setPromptInput(row.prompt);
+    setRowDataList([
+      {tagLabel: 'title', tagValue: row.name},
+      {tagLabel: 'content', tagValue: row.content},
+      {tagLabel: 'date', tagValue: dayjs().format('YYYY-MM-DD')},
+    ]);
   },[row.prompt]);
-
-  const tagList = [
-    {tagLabel: 'title', tagValue: row.name},
-    {tagLabel: 'content', tagValue: `Specific content for ${row.name}`},
-    {tagLabel: 'date', tagValue: dayjs().format('YYYY-MM-DD')},
-  ];
 
   const handleTagSelection = (tag: {tagLabel: string; tagValue: string}) => {
     if(textFieldRef.current) {
@@ -72,39 +73,39 @@ export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) 
 
   const displayTagsPicker: React.ReactNode = (
     <TagsPicker
-      tagList={tagList}
+      tagList={rowDataList}
       onTagSelect={handleTagSelection}
     />
   );
 
   const handlePromptSubmit = async () => {
     setIsSubmitted(true);
-    const reg = new RegExp(`${tagList.map((tag)=>{
-      const labels = tag.tagLabel;
-      return `\\{\\{${labels}\\}\\}`;
-    }).join("|")}`, "g");
-    console.log(reg);
-    const promptUpload = promptInput.replace(reg, (matched) => 
-      tagList.find((tag) => matched === `{{${tag.tagLabel}}}`)
-      ?.tagValue as string);
-    console.log(promptUpload);
-    const result = await modifyChannel({
+
+    // Code-block to enable dynamic values replacing variable tags in the channel prompt
+
+    // const reg = new RegExp(`${rowDataList.map((tag)=>{
+    //   const labels = tag.tagLabel;
+    //   return `\\{\\{${labels}\\}\\}`;
+    // }).join("|")}`, "g");
+
+    // const promptUpload = promptInput.replace(reg, (matched) => 
+    //   rowDataList.find((tag) => matched === `{{${tag.tagLabel}}}`)
+    //   ?.tagValue as string);
+
+    // TO-DO: confirm the final design for the variable selection
+
+    await modifyChannel({
       channel_id: row.id,
       payload: {
         name: row.name,
         channel_type: row.type,
-        brand_voice_initial: promptUpload
+        brand_voice_initial: promptInput
       }
     });
+
     setIsSubmitted(false);
     
-    const openModal = onChannelSubmit?.();
-    // dispatch(
-    //   api.endpoints.getPosts.initiate(
-    //     { count: 5 },
-    //     { subscribe: false, forceRefetch: true },
-    //   ),
-    // )
+    onChannelSubmit?.();
   };
 
   return (
@@ -142,6 +143,7 @@ export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) 
           </Box>
         </TableCell>
       </TableRow>
+
       <GenericModal
         open={openPopover}
         onClose={()=>setOpenPopover(false)}

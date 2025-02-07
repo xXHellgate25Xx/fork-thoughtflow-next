@@ -51,8 +51,9 @@ export default function Page() {
           ? <Box display="flex" justifyContent="center" alignItems="center" width="100%">
               <CircularProgress size={34} />
             </Box>
-          : allAccount.map((account) => (
+          : allAccount.map((account, index) => (
               <Button
+                key={index}
                 size="large"
                 variant="outlined"
                 color="inherit"

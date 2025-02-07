@@ -26,14 +26,8 @@ import { toPlainText } from 'ricos-content/libs/toPlainText';
 import { RichContent } from 'ricos-schema';
 import Editor from 'src/components/editor/Editor';
 import { handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
+import { channelIcons } from 'src/theme/icons/channel-icons';
 // ----------------------------------------------------------------------
-
-const channelIcons: { [key: string]: string } = {
-  wix: 'simple-icons:wix',
-  linkedin: 'devicon:linkedin',
-  facebook: 'logos:facebook',
-  instagram: 'skill-icons:instagram',
-};
 
 export default function Page() {
   const [createPublishToWix] = useCreatePublishToWixMutation();
@@ -70,7 +64,7 @@ export default function Page() {
   const [createdAt, setCreatedAt] = useState('Loading...');
   const [publishedAt, setPublishedAt] = useState('Loading...');
   const [views, setViews] = useState('Loading...');
-  const [channelType, setChannelType] = useState('wix');
+  const [channelType, setChannelType] = useState<string|null>('');
   const [richContent, setRichContent] = useState(toDraft(fromPlainText('Loading...')));
   const [editorRichContent, setEditorRichContent] = useState<any>(fromPlainText('Loading...'));
 
@@ -94,6 +88,7 @@ export default function Page() {
       setCreatedAt(fDateTime(content.created_at, 'DD MMM YYYY h:mm a') || 'N/A');
       setPublishedAt(fDateTime(content.published_at, 'DD MMM YYYY h:mm a') || 'N/A');
       setPublished(content.status === 'published');
+      setChannelType(content.channel_type);
       setIsLoading(false);
       try {
         const read_richContent =
@@ -215,7 +210,11 @@ export default function Page() {
               <Button color="inherit">
                 <Icon icon="ep:back" width={30} onClick={handleGoBack} />
               </Button>
-              <Icon icon={channelIcons[channelType]} width={30} height={30} />
+              <Icon 
+                icon={channelType && channelIcons[channelType] ? channelIcons[channelType] : ''} 
+                width={30} 
+                height={30} 
+              />
 
               {isEditing ? (
                 <TextField

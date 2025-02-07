@@ -40,15 +40,23 @@ export function getComparator<Key extends keyof any>(
   orderBy: Key
 ): (
   a: {
-    [key in Key]: number | string;
+    [key in Key]: number | string | null;
   },
   b: {
-    [key in Key]: number | string;
+    [key in Key]: number | string | null;
   }
 ) => number {
   return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+    ? (a, b) => descendingComparator(
+      { ...a, [orderBy]: a[orderBy] ?? '' }, 
+      { ...b, [orderBy]: b[orderBy] ?? '' }, 
+      orderBy
+    )
+    : (a, b) => -descendingComparator(
+      { ...a, [orderBy]: a[orderBy] ?? '' }, 
+      { ...b, [orderBy]: b[orderBy] ?? '' }, 
+      orderBy
+    );
 }
 
 // ----------------------------------------------------------------------

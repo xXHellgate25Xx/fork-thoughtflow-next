@@ -7,6 +7,7 @@ import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
 import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
 import { ChannelTableRow, type ChannelProps } from 'src/sections/tables/channel-table-row';
 import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
+import { useGetAllContentsOfUserQuery } from 'src/libs/service/content/content';
 
 import { 
   Box, 
@@ -72,11 +73,18 @@ export function useTable() {
 export default function Page() {
   const router = useRouter();
   const table = useTable();  
+  const [tableData, setTableData] = useState<ChannelProps[]>([]);
   const {
     data: channelData, 
     isFetching: channelIsFetching,
     refetch: channelRefetch,
   } = useGetAllChannelsOfUserQuery(); 
+
+  const {
+    data : allContentsData, 
+    isFetching: contentIsFetching,
+    refetch: refetchAllContent
+  } = useGetAllContentsOfUserQuery();
 
   const [snackbar, setSnackbar] = useState<{
       open: boolean;
@@ -101,16 +109,26 @@ export default function Page() {
     });
   };
 
-  const data: ChannelProps[] = channelData?.data?.map((channel: any) => {
-    const mapping = {
-      id: channel.id, 
-      type: channel.channel_type, 
-      name: channel.name, 
-      url: channel.url,
-      prompt: channel.brand_voice_initial
-    };
-    return mapping;
-  });
+  useEffect(()=>{
+    if(channelData){
+      setTableData(channelData?.data?.map(
+        (channel: any) => {
+          const mapping = {
+            id: channel.id, 
+            type: channel.channel_type, 
+            name: channel.name, 
+            url: channel.url,
+            prompt: channel.brand_voice_initial,
+            content: allContentsData?.data?.find(
+              (contentItem) => 
+                contentItem.channel_id === channel.id
+            )?.content_body ?? '',
+          };
+          return mapping;
+        }) ?? []
+      );
+    }
+  },[channelData, allContentsData]);
 
   return (
     <>
@@ -150,7 +168,7 @@ export default function Page() {
                       <Typography>Fetching channels...</Typography>
                     </Box>
                   ):
-                  data?.slice(
+                  tableData?.slice(
                       table.page * table.rowsPerPage,
                       table.page * table.rowsPerPage + table.rowsPerPage
                     )
@@ -164,7 +182,7 @@ export default function Page() {
 
                   <TableEmptyRows
                     height={68}
-                    emptyRows={emptyRows(table.page, table.rowsPerPage, (data?.length ?? 0))}
+                    emptyRows={emptyRows(table.page, table.rowsPerPage, (tableData?.length ?? 0))}
                   />
 
                 </TableBody>

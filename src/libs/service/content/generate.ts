@@ -21,7 +21,7 @@ const generateContentApi = createApi({
             query: ({ channel_id , gen_content }) => ({
                 url: `functions/v1/api/generate-content/${channel_id}/initial`,
                 method: "POST",
-                body: { gen_content }
+                body: gen_content
             })
         }),
     })

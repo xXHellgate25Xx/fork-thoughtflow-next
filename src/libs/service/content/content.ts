@@ -4,12 +4,16 @@ import { baseQuery } from "../supabase/baseQuery";
 
 export interface ContentApiRes{
     content_id: string;
+    channel_type: string;
     title: string;
     pillar_id: string;
     pillar: string;
     status: string;
     pageviews: number;
     last_modified: string;
+    channel_id: string | null;
+    content_body: string;
+    rich_content: RichContent;
 }
 
 export interface AnalyticsApiRes{
@@ -62,6 +66,7 @@ export interface ContentRes {
   media_id: string[];
   pillar_id: string | null;
   channel_id: string | null;
+  channel_type: string | null;
   seo_slug?: string ;
   seo_title_tag?: string;
   seo_meta_description?: string;

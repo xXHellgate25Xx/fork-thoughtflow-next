@@ -110,8 +110,16 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   };
 
   return (
-    <Box sx={{ maxWidth: '600px', minWidth: '450px', mx: 'auto', p: 2 }}>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ 
+      width: '600px',  // Fixed width
+      minWidth: '450px', 
+      maxWidth: '100%', // Responsive on smaller screens
+      mx: 'auto', 
+      // p: 2,
+      boxSizing: 'border-box', // Include padding in width calculation
+      overflow: 'hidden', // Prevent content from expanding the box
+    }}>
+      <Typography variant="h6" gutterBottom>
         {title}
       </Typography>
 
@@ -192,7 +200,15 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{fontStyle: 'italic'}}>
+                  <TableCell 
+                    colSpan={4}
+                    align="center"
+                    sx={{
+                      fontStyle: 'italic', 
+                      maxWidth: '600px',
+                      width: '100%'
+                    }}
+                  >
                     No content received views during this period
                   </TableCell>
                 </TableRow>

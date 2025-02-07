@@ -120,24 +120,51 @@ export default function Page() {
 
   const handleSubmit = async (updatedIdea?: Partial<IdeaFormat>) => {
     try {
-      const ideaToSubmit = updatedIdea || newIdea;
       setIsGenerating(true);
-      const { data: latestIdeaData } = await createIdea({
-        text: ideaToSubmit.text || '',
-        voice_input: ideaToSubmit.voice_input || null,
-        pillar_id: ideaToSubmit.pillar_id || '',
+      setNewIdea({
+        text: updatedIdea?.text, 
+        voice_input: updatedIdea?.voice_input
       });
+
+      const { 
+        data: latestIdeaData,
+        error: createIdeaError
+       } = await createIdea({
+        text: updatedIdea?.text || '',
+        voice_input: updatedIdea?.voice_input || null,
+        pillar_id: updatedIdea?.pillar_id || '',
+      });
+
+      if(!latestIdeaData){
+        setSnackbar({
+          open: true,
+          message: 'Fail to create to idea!',
+          severity: 'error'
+        });
+        setIsGenerating(false);
+        return;
+      }
 
       setProgress(30);
 
       const { data: generationData } = await generateContent({
         channel_id: channelId,
         gen_content: {
-          idea: ideaToSubmit.text,
+          idea: updatedIdea?.text,
           feedback: '',
           content: ''
         }
       });
+
+      if(!generationData){
+        setSnackbar({
+          open: true,
+          message: 'Fail to generate content from new idea!',
+          severity: 'error'
+        });
+        setIsGenerating(false);
+        return;
+      }
 
       setProgress(80);
       const { data: contentData } = await createIdeaContent({
@@ -149,12 +176,22 @@ export default function Page() {
           excerpt: '',
           status: 'draft',
           content_type: 'Blog Post',
-          seo_meta_description: ideaToSubmit.seo_meta_description || null,
-          seo_slug: ideaToSubmit.seo_slug || null,
-          seo_title_tag: ideaToSubmit.seo_title_tag || null,
+          seo_meta_description: updatedIdea?.seo_meta_description || null,
+          seo_slug: updatedIdea?.seo_slug || null,
+          seo_title_tag: updatedIdea?.seo_title_tag || null,
           channel_id: channelId
         }
       });
+
+      if(!contentData){
+        setSnackbar({
+          open: true,
+          message: 'Fail to save content!',
+          severity: 'error'
+        });
+        setIsGenerating(false);
+        return;
+      }
 
       setProgress(100);
 

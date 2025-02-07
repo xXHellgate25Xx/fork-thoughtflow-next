@@ -11,14 +11,17 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { Iconify } from 'src/components/iconify';
+import { Icon } from '@iconify/react';
 import { Label, LabelColor } from 'src/components/label';
 import { useRouter } from 'src/routes/hooks';
+import { channelIcons } from 'src/theme/icons/channel-icons';
 
 // ----------------------------------------------------------------------
 
 export type ContentProps = {
   id: string;
   title: string;
+  channelType: string;
   pillar: string;
   status: string;
   views: number;
@@ -99,7 +102,13 @@ export function ContentTableRow({ row, onClickRow, onDeleteRow, isDeleting }: Co
             </Typography>
           </Box>
         </TableCell>
-
+        <TableCell>
+          <Icon 
+            icon={row.channelType && channelIcons[row.channelType] ? channelIcons[row.channelType] : 'No Channel'}
+            width={30} 
+            height={30} 
+          />
+        </TableCell>
         <TableCell>{row.pillar}</TableCell>
         <TableCell>
             <Label

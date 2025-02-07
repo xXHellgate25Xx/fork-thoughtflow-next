@@ -40,11 +40,23 @@ export function PillarCardItem({ product, onClick }: { product: PillarItem, onCl
         }
       }}
     >
-      <Stack spacing={2} sx={{ p: 3 }}>
-        <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
+      <Stack spacing={2} minHeight={155} sx={{ p: 3 }}>
+        <Link 
+          color="inherit" 
+          underline="hover" 
+          variant="subtitle2"
+          sx={{
+            display: 'block',
+            overflow: 'hidden',
+            whiteSpace: 'normal', // Allow text to wrap
+            wordBreak: 'break-word' // Ensure long words break
+          }}
+        >
           {product.name}
         </Link>
-
+        
+        {/* <Box sx={{ flexGrow: 1 }} /> */}
+        
         <Box display="flex" alignItems="center" justifyContent="space-between">
           {renderStatus}
         </Box>

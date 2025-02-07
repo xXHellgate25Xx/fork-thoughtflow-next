@@ -391,10 +391,23 @@ export default function Page() {
             />
           </Card>
         
-        
-          <ViewPieChart
+          <Card 
+            sx={{ 
+              padding: '2rem',
+              width: '300',
+              maxWidth: '100%', 
+              mx: 'auto',  // Center the card
+              p: 2,
+              boxSizing: 'border-box',
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center' 
+            }}
+          >
+            <ViewPieChart
               title='Views by Content Pillars'
               data={totalViewsByPillar} />
+          </Card>
         </Box>
       </DashboardContent>
       <Snackbar

@@ -47,6 +47,7 @@ interface updatePillarReq {
 export interface Content{
     content_id: string;
     title: string;
+    channel_type: string;
     pillar_id: string;
     pillar: string;
     status: string;

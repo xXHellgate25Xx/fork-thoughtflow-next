@@ -103,7 +103,12 @@ export default function Page() {
         </Box>
 
         <Grid container spacing={3}>
-          {allPillars?.length ? (
+          {isLoading ? (
+            <Grid xs={12} flex={1} display="flex" alignItems="center" justifyContent="center" gap='2rem'>
+              <CircularProgress color='inherit'/>
+              <Typography>Fetching pillars...</Typography>
+            </Grid>
+          ) : allPillars?.length ? (
             [...allPillars]
             .sort((a, b) => {
               // First, sort by is_active (active pillars first)
@@ -123,8 +128,7 @@ export default function Page() {
             ))
           ) : (
             <Grid xs={12} flex={1} display="flex" alignItems="center" justifyContent="center" gap='2rem'>
-              <CircularProgress color='inherit'/>
-              <Typography>Fetching pillars...</Typography>
+              <Typography color="text.secondary">Waiting for your first pillar.</Typography>
             </Grid>
           )}
         </Grid>

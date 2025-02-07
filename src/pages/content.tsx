@@ -83,6 +83,7 @@ export default function Page() {
     inputs.map((input) => ({
       id: input.content_id,
       title: input.title,
+      channelType: input.channel_type,
       pillar: input.pillar,
       status: input.status,
       views: input.pageviews,
@@ -193,6 +194,7 @@ export default function Page() {
                   onSort={table.onSort}
                   headLabel={[
                     { id: 'title', label: 'Title' },
+                    { id: 'channelType', label: 'Channel Type'},
                     { id: 'pillar', label: 'Pillar' },
                     { id: 'status', label: 'Status' },
                     { id: 'views', label: 'Views' },
