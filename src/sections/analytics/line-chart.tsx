@@ -19,20 +19,26 @@ import {
 } from '@mui/material';
 import GenericSelector from "src/components/selector/generic-selector";
 import dayjs, {Dayjs} from 'dayjs';
+import { WrapText } from "@mui/icons-material";
 
 const customize = {
     height: 400,
-    legend: {
-        hidden: false,
-        position: {
-            vertical: 'top' as any,
-            horizontal: 'middle' as any,
+    slotProps:{
+        legend: {
+            hidden: false,
+            position: {
+                vertical: 'top' as any,
+                horizontal: 'middle' as any,
+            },
+            direction: 'row' as any,
+            itemGap: 45,
+            labelStyle: {
+                fontSize: '0.7rem'
+            },
         },
-        direction: 'row' as any,
-        itemGap: 3,
     },
     margin: {
-        top: 70,
+        top: 130,
         right: 50,
         left: 50,
     },

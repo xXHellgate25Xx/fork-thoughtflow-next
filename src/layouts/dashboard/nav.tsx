@@ -7,6 +7,8 @@ import ListItem from '@mui/material/ListItem';
 import { useTheme } from '@mui/material/styles';
 import ListItemButton from '@mui/material/ListItemButton';
 import Drawer, { drawerClasses } from '@mui/material/Drawer';
+import { Icon } from '@iconify/react';
+import { Typography } from '@mui/material';
 
 import { usePathname } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
@@ -122,7 +124,11 @@ export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
 
   return (
     <>
-      <Logo /> 
+      {/* <Logo />  */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem', my: '1rem', px: '1rem' }}>
+        <Icon icon='fluent-emoji-flat:pen' fontSize='2rem'/>
+        <Typography variant='h4'>ThoughtFlow</Typography>
+      </Box>
 
       {slots?.topArea}
 

@@ -132,14 +132,14 @@ export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) 
               color='inherit'
               onClick={() => setOpenPopover(true)}
             >
-              Prompt
+              Edit prompt
             </Button>
-            <Button
+            {/* <Button
               variant='contained'
               color='inherit'
             >
               Disconnect
-            </Button>
+            </Button> */}
           </Box>
         </TableCell>
       </TableRow>

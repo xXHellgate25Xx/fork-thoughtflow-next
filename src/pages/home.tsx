@@ -56,7 +56,7 @@ export default function Page() {
         <title> {`Home - ${CONFIG.appName}`}</title>
         <meta
           name="description"
-          content="The starting point for your next project with Minimal UI Kit, built on the newest version of Material-UI ©, ready to be customized to your style"
+          content="ThoughtFlow"
         />
         <meta name="keywords" content="react,material,kit,application,dashboard,admin,template" />
       </Helmet>
@@ -66,7 +66,7 @@ export default function Page() {
           <Button
             variant="contained"
             color="primary"
-            startIcon={<Iconify icon="mingcute:add-line" />}
+            startIcon={<Iconify icon="hugeicons:idea-01" />}
             sx={{ fontSize: '1.5rem', padding: '1rem 2rem' }}
             onClick={handleWhatsOnMyMind}
           >

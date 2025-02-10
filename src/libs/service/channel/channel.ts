@@ -31,6 +31,13 @@ const ChannelApi = createApi({
         method: 'GET',
       }),
     }),
+    // ------------------GET CHANNEL BY CHANNEL_ID-------------------------
+    getChannelByID: builder.query<ChannelRes, ChannelReq>({
+      query: (channel_req) => ({
+        url: `/functions/v1/api/channel/${channel_req.channel_id}`,
+        method: 'GET',
+      }),
+    }),
     // -----------------CREATE NEW CHANNEL-------------------
     createChannel: builder.mutation<ChannelRes, ChannelReq>({
       query: ({ payload }) => ({
@@ -52,6 +59,7 @@ const ChannelApi = createApi({
 
 export const { 
     useGetAllChannelsOfUserQuery,
+    useGetChannelByIDQuery,
     useCreateChannelMutation, 
     useModifyChannelMutation 
 } = ChannelApi;

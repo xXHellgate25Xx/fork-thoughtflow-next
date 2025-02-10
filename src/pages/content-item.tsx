@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { CONFIG } from 'src/config-global';
 import { _products } from 'src/_mock';
 
-import { Box, Button, Card, Typography, IconButton } from '@mui/material';
+import { Box, Button, Card, Typography, IconButton, Link } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
 import {
@@ -11,6 +11,12 @@ import {
   useGetContentViewCountQuery,
   useUpdateContentMutation,
 } from 'src/libs/service/content/content';
+import {
+  useGetChannelByIDQuery
+} from 'src/libs/service/channel/channel';
+import {
+  useGetPillarByIdQuery
+} from 'src/libs/service/pillar/pillar-item';
 import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
 import { useParams } from 'react-router-dom';
 import { useRouter } from 'src/routes/hooks';
@@ -60,6 +66,23 @@ export default function Page() {
   const views_obj = viewsData?.data?.[0];
   // console.log(`Views: ${JSON.stringify(views_obj)}`);
 
+  // Load ChannelData
+  const {
+    data: channelData,
+    isLoading: channelLoading,
+    refetch: channelRefetch,
+  } = useGetChannelByIDQuery({ channel_id: content?.channel_id || ""})
+  const channel = channelData?.data?.[0];
+  // console.log(channel);
+
+  // Load ContentPillarData
+  const {
+    data: pillarData,
+    isLoading: pillarLoading,
+    refetch: pillarRefetch,
+  } = useGetPillarByIdQuery({ pillarId: content?.pillar_id || ""})
+  const pillar = pillarData?.data?.[0];
+
   const [published, setPublished] = useState(false);
   const [createdAt, setCreatedAt] = useState('Loading...');
   const [publishedAt, setPublishedAt] = useState('Loading...');
@@ -67,9 +90,13 @@ export default function Page() {
   const [channelType, setChannelType] = useState<string|null>('');
   const [richContent, setRichContent] = useState(toDraft(fromPlainText('Loading...')));
   const [editorRichContent, setEditorRichContent] = useState<any>(fromPlainText('Loading...'));
+  const [pillarName, setPillarName] = useState('Loading...');
+  const [channelName, setChannelName] = useState('Loading...');
+  const [channelUrl, setChannelUrl] = useState('Loading...');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const [seoSlug, setSeoSlug] = useState('');
   const [seoMetaDescription, setMetaDescription] = useState('');
@@ -84,11 +111,15 @@ export default function Page() {
 
   // console.log(createdAt);
   useEffect(() => {
-    if (content) {
+    if (content && channel && pillar) {
       setCreatedAt(fDateTime(content.created_at, 'DD MMM YYYY h:mm a') || 'N/A');
       setPublishedAt(fDateTime(content.published_at, 'DD MMM YYYY h:mm a') || 'N/A');
       setPublished(content.status === 'published');
       setChannelType(content.channel_type);
+
+      setPillarName(pillar.name || 'N/A')
+      setChannelName(channel.name || 'N/A');
+      setChannelUrl(channel.url || 'N/A');
       setIsLoading(false);
       try {
         const read_richContent =
@@ -112,9 +143,11 @@ export default function Page() {
     if (views_obj) {
       setViews(views_obj.view_counts);
     } else {
-      setViews('N/A');
+      setViews('0');
     }
-  }, [content, views_obj]);
+
+
+  }, [content, views_obj, channel, pillar]);
   // console.log(`Content Data: ${JSON.stringify(contentData?.data)}`);
 
   const router = useRouter();
@@ -125,21 +158,30 @@ export default function Page() {
 
   // Function to handle publishing to Wix
   const handlePublish = async () => {
-    if (content) {
+    if (content && contentId) {
+      setIsPublishing(true);
       // console.log(content);
       if (content.channel_id) {
-        const { data: publishData } = await createPublishToWix({
+        const { data: publishData, error: publishError } = await createPublishToWix({
           channel_id: content.channel_id,
           CreatePublishReq: {
             title: content.title,
             richContent: content.rich_content, // Example content
+            content_id: contentId,
             seo_slug: content.seo_slug,
             seo_title_tag: content.seo_title_tag ? createTitleTag(content.seo_title_tag) : null,
             seo_meta_description: content.seo_meta_description
               ? createMetaDescriptionTag(content.seo_meta_description)
               : null,
           },
-        });
+        })
+        if (publishError) {
+          console.error(publishError);
+          setIsPublishing(false);
+        }
+        else {
+        router.refresh();
+        }
       }
     } else {
       console.error(`Content is not loaded!!`);
@@ -205,17 +247,22 @@ export default function Page() {
 
       <DashboardContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* ======================
+          Title and Action Buttons
+          ========================== */}
           <Box>
             <Box display="flex" alignItems="center" mb="1rem" gap="1rem">
+              {/* Back button */}
               <Button color="inherit">
                 <Icon icon="ep:back" width={30} onClick={handleGoBack} />
               </Button>
+              {/* Channel icon */}
               <Icon 
                 icon={channelType && channelIcons[channelType] ? channelIcons[channelType] : ''} 
                 width={30} 
                 height={30} 
               />
-
+              {/* Title */}
               {isEditing ? (
                 <TextField
                   sx={{
@@ -239,6 +286,7 @@ export default function Page() {
               )}
             </Box>
 
+            {/* Timestamps */}
             <Box display="flex" alignItems="center" gap="0.5rem">
               <Box flexGrow={1}>
                 <Typography>
@@ -249,12 +297,13 @@ export default function Page() {
                   <b>Published at:</b> {contentLoading === false ? publishedAt : 'Loading...'}
                 </Typography>
               </Box>
-
+              {/* Views */} 
               <Box display={published ? 'flex' : 'none'} alignItems="center" gap="0.5rem">
                 <Icon icon="carbon:view-filled" width={27} />
                 <Typography mr="1rem">{views}</Typography>
               </Box>
 
+              {/* Action Buttons */}
               {!isEditing && (
                 <>
                   <Button
@@ -262,14 +311,15 @@ export default function Page() {
                     variant="contained"
                     color="inherit"
                     onClick={handlePublish}
-                    disabled={isLoading}
+                    disabled={isLoading || isPublishing}
                     startIcon={<Icon icon="ic:baseline-publish" />}
                   >
-                    Publish
+                    {isPublishing ? "Publishing..." : "Publish"}
                   </Button>
                   <Button
                     sx={{ display: published ? 'flex' : 'none' }}
                     href={content?.published_url || '#'}
+                    target="_blank"
                     variant="contained"
                     color="inherit"
                     startIcon={<Icon icon="cuida:open-in-new-tab-outline" />}
@@ -283,6 +333,7 @@ export default function Page() {
                     startIcon={<Icon icon="mingcute:copy-fill" />}
                     // disabled={isLoading}
                     disabled
+                    sx={{ display: 'none' }}
                   >
                     Repurpose
                   </Button>
@@ -297,7 +348,8 @@ export default function Page() {
                     Edit
                   </Button>
                   <Button
-                    sx={{ display: published ? 'none' : 'flex' }}
+                    // sx={{ display: published ? 'none' : 'flex' }}
+                    sx={{ display: 'none' }}
                     variant="outlined"
                     color="error"
                     startIcon={<Icon icon="solar:archive-bold" />}
@@ -331,7 +383,11 @@ export default function Page() {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+          {/* ======================
+          Editor and Settings sidebar
+          ========================== */}
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: '2rem' }}>
+            {/* Viewer or editor */}
             <Box sx={{ flex: 2 }}>
               <Card sx={{ mt: '1rem', padding: '1rem' }}>
                 {!isEditing ? (
@@ -347,8 +403,35 @@ export default function Page() {
                 )}
               </Card>
             </Box>
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-              <Typography variant="h4">SEO Settings</Typography>
+            {/* Settings sidebar */}
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', mt: '1rem' }}>
+              <Typography variant='h5'>Publishing Details</Typography>
+              <Typography>
+                <b>Content pillar</b>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <Typography onClick={() => {router.replace(`/pillar/${content?.pillar_id}`)}} style={{ cursor: "pointer"}}>
+                    {pillarName}
+                  </Typography >
+                  <Icon icon='fluent:open-12-regular' onClick={() => {router.replace(`/pillar/${content?.pillar_id}`)}} style={{ cursor: "pointer"}}/>
+                </Box>
+              </Typography>
+              <Typography>
+                <b>Channel </b>
+                <Typography>
+                  {channelName}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <Link href={channelUrl} target="_blank" rel="noopener noreferrer">
+                  <Typography>
+                    {channelUrl}
+                  </Typography>
+                  <Icon icon='fluent:open-12-regular'/>
+                  </Link>
+                </Box>
+              </Typography>
+
+              {/* SEO settings */}
+              <Typography variant="h5">SEO Settings</Typography>
               <TextField
                 sx={{ backgroundColor: 'white' }}
                 fullWidth

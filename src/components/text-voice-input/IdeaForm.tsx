@@ -27,9 +27,6 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   onSubmitSuccess,
   currentPillarId,
 }) => {
-  const [titleTag, setTitleTag] = useState<string>('');
-  const [metaDescription, setMetaDescription] = useState<string>('');
-  const [seoSlug, setSeoSlug] = useState<string>('');
   const [uploadToStorage] = useUploadToStorageMutation();
 
   // Error states for validation
@@ -41,16 +38,6 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
     setEditedTexts({ ...editedIdea, text: e.target.value });
     setErrors((prev) => ({ ...prev, ideaText: false })); // Clear error on valid input
   };
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitleTag(e.target.value);
-  };
-
-  const handleMetaDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMetaDescription(e.target.value);
-  };
-
- 
 
   useEffect(() => {
     setEditedTexts({
@@ -78,9 +65,6 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
       const updatedIdea = {
         ...editedIdea,
         voice_input: audio?.data?.Id || null,
-        seo_slug: seoSlug ?? null,
-        seo_title_tag: titleTag ?? null,
-        seo_meta_description: metaDescription ?? null,
       };
       setEditedTexts(updatedIdea); // Updates the parent component's state
       // Wait for the parent's submit handler to execute
@@ -107,28 +91,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
         width: '100%',
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
-          <TextField
-            label="SEO Slug"
-            value={seoSlug}
-            onKeyDown={(e)=>handleKeyDown(e, setSeoSlug)}
-            onChange={(e)=>handleSeoSlugChange(e, setSeoSlug)}
-            fullWidth
-          />
-
-          <TextField label="Title Tag" value={titleTag} onChange={handleTitleChange} fullWidth />
-        </Box>
-
-        <TextField
-          label="Meta Descriptions"
-          multiline
-          rows={4}
-          value={metaDescription}
-          onChange={handleMetaDescriptionChange}
-          fullWidth
-        />
-      </Box>
+      
       <Box sx={{ position: 'relative' }}>
         <TextField
           label="Idea Text"

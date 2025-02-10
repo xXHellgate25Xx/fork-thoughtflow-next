@@ -47,7 +47,7 @@ export interface WixDraftPostResponse {
 export interface WixCreatePublishPostRequest {
   title: string;
   richContent: RichContent;
-  content_id?: string;
+  content_id: string;
   draftPostId?: string;
   seo_slug?: string;
   seo_title_tag?: Tags | null;
