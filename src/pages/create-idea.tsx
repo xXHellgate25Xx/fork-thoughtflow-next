@@ -24,7 +24,7 @@ import { ChannelSelect } from 'src/sections/channel/channel-select';
 import VoiceToTextButton from 'src/components/text-voice-input/VoiceRecorderButton';
 import { useGetAllPillarQuery } from 'src/libs/service/pillar/home';
 import { useCreateIdeaMutation, useCreateIdeaContentMutation } from 'src/libs/service/idea/idea';
-import { useGenerateContentMutation } from 'src/libs/service/content/generate';
+import { useGenerateContentMutation, useGenerateContentWithSEOMutation } from 'src/libs/service/content/generate';
 import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
 import { fromPlainText } from 'ricos-content/libs/fromPlainText';
 import { useGlobalContext } from 'src/GlobalContextProvider';
@@ -44,7 +44,7 @@ export default function Page() {
   }, [navigationState]);
   
   const [createIdea] = useCreateIdeaMutation();
-  const [generateContent] = useGenerateContentMutation();
+  const [generateContent] = useGenerateContentWithSEOMutation();
   const [createIdeaContent] = useCreateIdeaContentMutation();
   const [pillarIdAndName, setPillarIdAndName] = useState<
     { id: string; name: string }[] | undefined
@@ -173,12 +173,12 @@ export default function Page() {
           content_body: generationData?.content,
           rich_content: fromPlainText(generationData?.content || ''),
           title: generationData?.title,
-          excerpt: '',
+          excerpt: generationData?.excerpt || '',
           status: 'draft',
           content_type: 'Blog Post',
-          seo_meta_description: updatedIdea?.seo_meta_description || null,
-          seo_slug: updatedIdea?.seo_slug || null,
-          seo_title_tag: updatedIdea?.seo_title_tag || null,
+          seo_meta_description: generationData?.seo_meta_description || null,
+          seo_slug: generationData?.seo_slug || null,
+          seo_title_tag: generationData?.seo_title_tag || null,
           channel_id: channelId
         }
       });

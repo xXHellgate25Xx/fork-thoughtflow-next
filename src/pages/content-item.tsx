@@ -120,6 +120,11 @@ export default function Page() {
       setPillarName(pillar.name || 'N/A')
       setChannelName(channel.name || 'N/A');
       setChannelUrl(channel.url || 'N/A');
+
+      // SEO
+      setSeoSlug(content.seo_slug || '');
+      setMetaDescription(content.seo_meta_description || '');
+      setSeoTitleTag(content.seo_title_tag || '');
       setIsLoading(false);
       try {
         const read_richContent =

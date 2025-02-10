@@ -91,7 +91,7 @@ export function ContentTableRow({ row, onClickRow, onDeleteRow, isDeleting }: Co
           <Box gap={2} display="flex" alignItems="center">
           <Typography 
               variant="body2" 
-              noWrap 
+              // noWrap 
               sx={{ 
                 maxWidth: 300,
                 overflow: 'hidden',

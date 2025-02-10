@@ -9,7 +9,11 @@ interface GenContentReq {
 
 interface GenContentRes {
     title?: string;
-    content?: string
+    content?: string;
+    excerpt?: string;
+    seo_meta_description?: string;
+    seo_slug?: string;
+    seo_title_tag?: string;
 }
 
 const generateContentApi = createApi({
@@ -24,10 +28,19 @@ const generateContentApi = createApi({
                 body: gen_content
             })
         }),
+        // ----------------------GENERATE CONTENT WITH SEO-----------------------------
+        generateContentWithSEO: builder.mutation<GenContentRes, {channel_id: string; gen_content: GenContentReq}>({
+            query: ({ channel_id , gen_content }) => ({
+                url: `functions/v1/api/generate-content/${channel_id}/generate-full`,
+                method: "POST",
+                body: gen_content
+            })
+        }),
     })
 })
 
 export const {
     useGenerateContentMutation,
+    useGenerateContentWithSEOMutation,
 } = generateContentApi;
 export { generateContentApi };
