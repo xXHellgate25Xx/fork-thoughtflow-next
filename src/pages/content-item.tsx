@@ -33,6 +33,7 @@ import { RichContent } from 'ricos-schema';
 import Editor from 'src/components/editor/Editor';
 import { handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
 import { channelIcons } from 'src/theme/icons/channel-icons';
+import { PublishForm } from 'src/components/publish_message/publish_message';
 // ----------------------------------------------------------------------
 
 export default function Page() {
@@ -84,6 +85,8 @@ export default function Page() {
   const pillar = pillarData?.data?.[0];
 
   const [published, setPublished] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [isPublishFormClicked, setIsPublishFormClicked] = useState(false);
   const [createdAt, setCreatedAt] = useState('Loading...');
   const [publishedAt, setPublishedAt] = useState('Loading...');
   const [views, setViews] = useState('Loading...');
@@ -91,6 +94,7 @@ export default function Page() {
   const [richContent, setRichContent] = useState(toDraft(fromPlainText('Loading...')));
   const [editorRichContent, setEditorRichContent] = useState<any>(fromPlainText('Loading...'));
   const [pillarName, setPillarName] = useState('Loading...');
+
   const [channelName, setChannelName] = useState('Loading...');
   const [channelUrl, setChannelUrl] = useState('Loading...');
 
@@ -162,10 +166,18 @@ export default function Page() {
   };
 
   // Function to handle publishing to Wix
-  const handlePublish = async () => {
+  const handlePublishButton = async () => {
     if (content && contentId) {
       setIsPublishing(true);
       // console.log(content);
+      setIsPublishOpen(true);
+    }
+  };
+
+  // Publish
+  const handlePublish = async () => {
+    if (content && contentId) {
+      setIsPublishFormClicked(true);
       if (content.channel_id) {
         const { data: publishData, error: publishError } = await createPublishToWix({
           channel_id: content.channel_id,
@@ -183,9 +195,13 @@ export default function Page() {
         if (publishError) {
           console.error(publishError);
           setIsPublishing(false);
+          setIsPublishFormClicked(false);
         }
         else {
-        router.refresh();
+          // console.log(publishData);
+          
+          setIsPublishFormClicked(false);
+          setPublished(true);
         }
       }
     } else {
@@ -315,12 +331,36 @@ export default function Page() {
                     sx={{ display: published ? 'none' : 'flex' }}
                     variant="contained"
                     color="inherit"
-                    onClick={handlePublish}
+                    onClick={handlePublishButton}
                     disabled={isLoading || isPublishing}
                     startIcon={<Icon icon="ic:baseline-publish" />}
                   >
                     {isPublishing ? "Publishing..." : "Publish"}
                   </Button>
+                  <PublishForm
+                  open={isPublishOpen}
+                  isLoading={isPublishFormClicked}
+                  isPublished={published}
+                  onPublish={handlePublish}
+                  onClose={() => {
+                    setIsPublishOpen(false);
+                    setIsPublishing(false)
+                  }
+                  }
+                  onOkay={ () => {
+                    router.refresh()
+                  }
+                  }
+                  modalTitle="Publish to this Channel?"
+                  textFieldText="Pillar Name"
+                  buttonText="Publish"
+                  channel_url={channelUrl}
+                  channel_name={channelName}
+                  styling={{
+                    enableCloseButton: true,
+                  }
+                  }
+                  />
                   <Button
                     sx={{ display: published ? 'flex' : 'none' }}
                     href={content?.published_url || '#'}
