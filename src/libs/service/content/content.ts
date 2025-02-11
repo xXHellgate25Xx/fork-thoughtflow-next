@@ -21,6 +21,7 @@ export interface AnalyticsApiRes{
   published: number,
   archived: number,
   draft: number,
+  total: number
 }
 
 interface getAllContentsOfUserRes {

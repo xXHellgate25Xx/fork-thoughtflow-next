@@ -99,7 +99,7 @@ export default function Page() {
       setNumPublished(userStatData.published);
       setNumDraft(userStatData.draft);
       setNumArchived(userStatData.archived);
-      setNumContent(userStatData.published + userStatData.draft + userStatData.archived);
+      setNumContent(userStatData.total);
     }
   }, [userStatData]);
 
@@ -177,10 +177,10 @@ export default function Page() {
             <Label color='info'>DRAFT</Label>
             <Typography variant='h6'>{numDraft}</Typography>
           </Card>
-          <Card sx={{ padding: '2rem', width: '25%' }}>
+          {/* <Card sx={{ padding: '2rem', width: '25%' }}>
             <Label color='default'>ARCHIVED</Label>
             <Typography variant='h6'>{numArchived}</Typography>
-          </Card>
+          </Card> */}
         </Box>
 
         <Card>

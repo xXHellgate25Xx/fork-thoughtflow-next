@@ -22,7 +22,7 @@ export default function Page() {
   
   const availableTypes = [
     { id: 'wix', label: 'Wix' },
-    // { id: 'linkedin', label: 'LinkedIn' },
+    { id: 'linkedin', label: 'LinkedIn' },
     // { id: 'instagram', label: 'Instagram' }
   ]
 
