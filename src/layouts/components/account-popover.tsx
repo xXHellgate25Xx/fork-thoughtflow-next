@@ -57,12 +57,15 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
   );
 
   const handleLogout = useCallback(() => {
+
     store.dispatch(HomePageApi.util.resetApiState());
     store.dispatch(ContentPageApi.util.resetApiState());
     store.dispatch(ChannelApi.util.resetApiState());
     store.dispatch(AnalyticsPageApi.util.resetApiState());
     removeToken();
     removeAccountId();
+    sessionStorage.clear();
+    localStorage.clear()
     router.push('/sign-in')
   }, []);
 

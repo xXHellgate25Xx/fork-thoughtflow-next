@@ -43,42 +43,54 @@ export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) 
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [modifyChannel] = useModifyChannelMutation();
   const [promptInput, setPromptInput] = useState<string>('');
-  const [rowDataList, setRowDataList] = useState<{tagLabel: string; tagValue: string}[]>([]);
-  const textFieldRef = useRef<HTMLInputElement | null>(null);
+  // const [rowDataList, setRowDataList] = useState<{tagLabel: string; tagValue: string}[]>([]);
+  // const textFieldRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(()=>{
     setPromptInput(row.prompt);
-    setRowDataList([
-      {tagLabel: 'title', tagValue: row.name},
-      {tagLabel: 'content', tagValue: row.content},
-      {tagLabel: 'date', tagValue: dayjs().format('YYYY-MM-DD')},
-    ]);
+    // setRowDataList([
+    //   {tagLabel: 'title', tagValue: row.name},
+    //   {tagLabel: 'content', tagValue: row.content},
+    //   {tagLabel: 'date', tagValue: dayjs().format('YYYY-MM-DD')},
+    // ]);
   },[row.prompt]);
 
-  const handleTagSelection = (tag: {tagLabel: string; tagValue: string}) => {
-    if(textFieldRef.current) {
-      const input = textFieldRef.current;
-      if(input) {
-        const startPos = input.selectionStart;
-        const preCursor = promptInput.substring(0, startPos as number);
-        const posCursor = promptInput.substring(input.selectionEnd as number);
-
-        setPromptInput(`${preCursor}{{${tag.tagLabel}}}${posCursor}`);
-
-        input.selectionStart = (startPos as number) + `{{${tag.tagLabel}}}`.length;
-        input.selectionEnd = input.selectionStart;
-      }
-    }
+  const handleOpenPopover = () => {
+    setOpenPopover(true);
   };
 
-  const displayTagsPicker: React.ReactNode = (
-    <TagsPicker
-      tagList={rowDataList}
-      onTagSelect={handleTagSelection}
-    />
-  );
+  const handleClosePopover = () => {
+    setOpenPopover(false);
+  };
 
-  const handlePromptSubmit = async () => {
+  // Code-block for variable tags in the channel prompt
+
+  // const handleTagSelection = (tag: {tagLabel: string; tagValue: string}) => {
+  //   if(textFieldRef.current) {
+  //     const input = textFieldRef.current;
+  //     if(input) {
+  //       const startPos = input.selectionStart;
+  //       const preCursor = promptInput.substring(0, startPos as number);
+  //       const posCursor = promptInput.substring(input.selectionEnd as number);
+
+  //       setPromptInput(`${preCursor}{{${tag.tagLabel}}}${posCursor}`);
+
+  //       input.selectionStart = (startPos as number) + `{{${tag.tagLabel}}}`.length;
+  //       input.selectionEnd = input.selectionStart;
+  //     }
+  //   }
+  // };
+
+  // const displayTagsPicker: React.ReactNode = (
+  //   <TagsPicker
+  //     tagList={rowDataList}
+  //     onTagSelect={handleTagSelection}
+  //   />
+  // );
+
+  // Code-block for variable tags in the channel prompt
+
+  const handlePromptSubmit = async (text: string) => {
     setIsSubmitted(true);
 
     // Code-block to enable dynamic values replacing variable tags in the channel prompt
@@ -99,7 +111,7 @@ export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) 
       payload: {
         name: row.name,
         channel_type: row.type,
-        brand_voice_initial: promptInput
+        brand_voice_initial: text
       }
     });
 
@@ -130,7 +142,7 @@ export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) 
             <Button
               variant='outlined'
               color='inherit'
-              onClick={() => setOpenPopover(true)}
+              onClick={handleOpenPopover}
             >
               Edit prompt
             </Button>
@@ -146,16 +158,17 @@ export function ChannelTableRow({ row, onChannelSubmit }: ChannelTableRowProps) 
 
       <GenericModal
         open={openPopover}
-        onClose={()=>setOpenPopover(false)}
+        onClose={handleClosePopover}
         setParentText={setPromptInput}
+        textFieldValue={promptInput}
         isLoading={isSubmitted}
         onAddItem={handlePromptSubmit}
         modalTitle={`Edit prompt for ${row.name}`}
         modalSubTitle='Customize the prompt for generating content for this channel'
         buttonText='Submit'
-        textFieldValue={promptInput}
-        customChildren={displayTagsPicker} // Variables selection disabled
-        textInputRef={textFieldRef}
+        storageTextVarName={`storedText-${row.id}`}
+        // customChildren={displayTagsPicker} // Variables selection
+        // textInputRef={textFieldRef}
         styling={{
           multiline: true,
           rows: 10,

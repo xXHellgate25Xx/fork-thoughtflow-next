@@ -168,17 +168,13 @@ export default function Page() {
                       <Typography>Fetching channels...</Typography>
                     </Box>
                   ):
-                  tableData?.slice(
-                      table.page * table.rowsPerPage,
-                      table.page * table.rowsPerPage + table.rowsPerPage
-                    )
-                    .map((row) => (
-                      <ChannelTableRow
-                        key={row.id}
-                        row={row}
-                        onChannelSubmit={handlePromptSubmission}
-                      />
-                    ))}
+                  tableData?.map((row) => (
+                    <ChannelTableRow
+                      key={row.id}
+                      row={row}
+                      onChannelSubmit={handlePromptSubmission}
+                    />
+                  ))}
 
                   <TableEmptyRows
                     height={68}

@@ -1,6 +1,7 @@
 import type { ButtonBaseProps } from '@mui/material/ButtonBase';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'src/routes/hooks';
 
 import Box from '@mui/material/Box';
 import Popover from '@mui/material/Popover';
@@ -28,6 +29,8 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
     name: localStorage.getItem('accountName')
   }
   const [workspace, setWorkspace] = useState(defaultData);
+  const router = useRouter();
+
   useEffect(() => {
     if (data.length > 0) {
       setWorkspace(defaultData);
@@ -49,6 +52,7 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
       localStorage.setItem("accountId", newValue.id);
       localStorage.setItem("accountName", newValue.name);
       handleClosePopover();
+      router.push('/');
       window.location.reload();
     },
     [handleClosePopover]

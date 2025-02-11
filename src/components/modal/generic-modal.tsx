@@ -1,5 +1,5 @@
 // src/components/modal/basic-modal.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -26,6 +26,7 @@ interface GenericModalProps {
   customChildren?: React.ReactNode;
   buttonText: string;
   textInputRef?: React.Ref<any>
+  storageTextVarName?: string,
   styling?: {
     buttonColor?: any;
     multiline?: boolean | undefined;
@@ -47,16 +48,19 @@ export function GenericModal({
   customChildren,
   buttonText,
   textInputRef,
+  storageTextVarName='placeholder',
   styling
 }: GenericModalProps) {
   const [text, setText] = useState<string>('');
+  const storedText = sessionStorage.getItem(storageTextVarName);
 
   useEffect(()=>{
-    setText(textFieldValue || '');
-  },[textFieldValue]);
+    setText(storedText || textFieldValue ||  '');
+  },[textFieldValue, storedText]);
 
   const handleAddItem = () => {
     if (text.trim() && !isLoading) {
+      sessionStorage.setItem(storageTextVarName, '');
       onAddItem(text);
     }
   };
@@ -84,6 +88,7 @@ export function GenericModal({
           value={text}
           sx={{color:'inherit'}}
           onChange={(e) => {
+            sessionStorage.setItem(storageTextVarName, e.target.value);
             setText(e.target.value);
             setParentText?.(e.target.value);
           }}
@@ -105,6 +110,7 @@ export function GenericModal({
               onClick={onClose} 
               variant='outlined'
               color={styling?.buttonColor? styling?.buttonColor : "inherit"}
+              disabled={isLoading}
             >
               Cancel
           </Button> : <></>}

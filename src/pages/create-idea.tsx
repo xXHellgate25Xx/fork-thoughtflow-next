@@ -210,6 +210,7 @@ export default function Page() {
 
   const handleTranscription = (texts: string) => {
     setNewIdea({ ...newIdea, text: texts });
+    sessionStorage.setItem('storedIdea', texts);
   };
 
   return (

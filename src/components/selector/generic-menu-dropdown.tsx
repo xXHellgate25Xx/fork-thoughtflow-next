@@ -1,6 +1,6 @@
 import type { ButtonProps } from '@mui/material/Button';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover';
@@ -19,8 +19,21 @@ type GenericMenuDropdownProps = ButtonProps & {
   options: { id: string; name: string }[] | undefined;
 };
 
-export function GenericMenuDropdown({ options, label, selectedId, onSort, sx, ...other }: GenericMenuDropdownProps) {
+export function GenericMenuDropdown({ 
+  options, 
+  label, 
+  selectedId, 
+  onSort, 
+  sx, 
+  ...other 
+}: GenericMenuDropdownProps) {
+
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
+  const [selected, setSelected] = useState<string>('');
+
+  useEffect(()=>{
+    setSelected(selectedId || '');
+  },[selectedId]);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setOpenPopover(event.currentTarget);
@@ -42,7 +55,7 @@ export function GenericMenuDropdown({ options, label, selectedId, onSort, sx, ..
       >
         {`${label}`}:&nbsp;
         <Typography component="span" variant="subtitle2" sx={{ color: 'text.secondary' }}>
-          {options?.find((option) => option.id === selectedId)?.name}
+          {options?.find((option) => option.id === selected)?.name}
         </Typography>
       </Button>
 
@@ -72,7 +85,7 @@ export function GenericMenuDropdown({ options, label, selectedId, onSort, sx, ..
           {options?.map((option) => (
             <MenuItem
               key={option.id}
-              selected={option.id === selectedId}
+              selected={option.id === selected}
               onClick={() => {
                 onSort(option.id);
                 handleClosePopover();

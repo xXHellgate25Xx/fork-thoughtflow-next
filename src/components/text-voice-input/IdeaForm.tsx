@@ -27,7 +27,13 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   onSubmitSuccess,
   currentPillarId,
 }) => {
+  const [text, setText] = useState<string>('');
   const [uploadToStorage] = useUploadToStorageMutation();
+  const storedText = sessionStorage.getItem('storedIdea');
+
+  useEffect(()=>{
+    setText(storedText || idea?.text || editedIdea?.text || '');
+  },[idea?.text, editedIdea?.text, storedText]);
 
   // Error states for validation
   const [errors, setErrors] = useState({
@@ -37,6 +43,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedTexts({ ...editedIdea, text: e.target.value });
     setErrors((prev) => ({ ...prev, ideaText: false })); // Clear error on valid input
+    sessionStorage.setItem('storedIdea', e.target.value);
   };
 
   useEffect(() => {
@@ -47,7 +54,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   }, [currentPillarId]);
 
   const handleSubmit = async () => {
-    if (!editedIdea?.text || editedIdea.text.trim() === '') {
+    if (!text || text.trim() === '') {
       setErrors({ ideaText: true });
       return;
     }
@@ -76,6 +83,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
         text: '',
       });
       setAudioBlob?.(null);
+      sessionStorage.setItem('storedIdea', '');
     } catch (error) {
       console.error('Error during submission:', error);
       alert('Submission failed. Please try again.');
@@ -98,7 +106,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
           required
           multiline
           rows={10}
-          value={editedIdea?.text || idea?.text || ''}
+          value={text}
           onChange={handleTextChange}
           fullWidth
           error={errors.ideaText}
