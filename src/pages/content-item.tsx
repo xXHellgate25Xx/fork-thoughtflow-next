@@ -474,7 +474,7 @@ export default function Page() {
                 </Box>
               </Typography>
               <Typography>
-                <b>Channel </b>
+                <b>Forked Channel </b>
                 <Typography>
                   {channelName}
                 </Typography>
