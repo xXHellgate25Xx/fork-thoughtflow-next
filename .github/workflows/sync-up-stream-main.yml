@@ -21,8 +21,8 @@ jobs:
 
     - name: Configure Git User
       run: |
-        git config --global user.email "khoa.le@talentedge.ai"
-        git config --global user.name "TalentEdge-Khoa Le"
+        git config --global user.email "daitieuminh@gmail.com"
+        git config --global user.name "xXHellgate25Xx"
 
     - name: Sync Fork with Upstream
       run: |
