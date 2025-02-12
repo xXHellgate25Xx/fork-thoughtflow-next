@@ -85,8 +85,6 @@ export default function Page() {
   const pillar = pillarData?.data?.[0];
 
   const [published, setPublished] = useState(false);
-  const [isPublishOpen, setIsPublishOpen] = useState(false);
-  const [isPublishFormClicked, setIsPublishFormClicked] = useState(false);
   const [createdAt, setCreatedAt] = useState('Loading...');
   const [publishedAt, setPublishedAt] = useState('Loading...');
   const [views, setViews] = useState('Loading...');
@@ -105,6 +103,10 @@ export default function Page() {
   const [seoSlug, setSeoSlug] = useState('');
   const [seoMetaDescription, setMetaDescription] = useState('');
   const [seoTitleTag, setSeoTitleTag] = useState('');
+
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [isPublishFormClicked, setIsPublishFormClicked] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState('#');
 
   function convertJson(input: any) {
     return JSON.stringify({
@@ -199,7 +201,15 @@ export default function Page() {
         }
         else {
           // console.log(publishData);
+          const title = publishData?.draftPost?.title;
+          const url = publishData?.draftPost?.url;
+          const published_url = url ? `${url.base}${url.path}` : '#';
+          // console.log(title);
+          // console.log(url);
+          // console.log(published_url)
           
+          setPublishedUrl(published_url)
+          // console.log(publishedUrl);
           setIsPublishFormClicked(false);
           setPublished(true);
         }
@@ -344,18 +354,21 @@ export default function Page() {
                   onPublish={handlePublish}
                   onClose={() => {
                     setIsPublishOpen(false);
-                    setIsPublishing(false)
+                    setIsPublishing(false);
+                    if (published) {
+                      router.refresh();
+                    }
                   }
                   }
                   onOkay={ () => {
-                    router.refresh()
-                  }
-                  }
+                    router.refresh();
+                  }}
                   modalTitle="Publish to this Channel?"
                   textFieldText="Pillar Name"
                   buttonText="Publish"
                   channel_url={channelUrl}
                   channel_name={channelName}
+                  published_url={publishedUrl}
                   styling={{
                     enableCloseButton: true,
                   }

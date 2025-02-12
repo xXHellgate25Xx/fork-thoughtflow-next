@@ -30,17 +30,42 @@ export interface WixUploadRequest {
   displayName: string;
   contentType: string;
 }
+// // Old one
+// export interface WixDraftPostResponse {
+//   data?: {
+//     title: string;
+//     excerpt: string;
+//     featured: boolean;
+//     catetegoryId: string[];
+//     memberId: string;
+//     status: string;
+//     richContent: RichContent;
+//     url: string;
+//   }[];
+//   error?: any;
+// }
 
 export interface WixDraftPostResponse {
-  data?: {
+  draftPost?: {
+    id: string;
     title: string;
-    excerpt: string;
     featured: boolean;
-    catetegoryId: string[];
+    categoryIds: string[];
     memberId: string;
     status: string;
-    richContent: RichContent;
-  }[];
+    url: {
+      base: string;
+      path: string;
+    };
+    seoSlug: string;
+    seoData?: {
+      tags?: Tags[];
+    };
+    minutesToRead: number;
+    firstPublishedDate: string;
+    editedDate: string;
+    hasUnpublishedChanges: boolean;
+  };
   error?: any;
 }
 

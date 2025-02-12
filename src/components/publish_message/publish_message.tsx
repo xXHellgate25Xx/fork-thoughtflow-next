@@ -32,6 +32,7 @@ interface PublishFormProps {
   storageTextVarName?: string,
   channel_name: string,
   channel_url: string,
+  published_url: string,
   styling?: {
     buttonColor?: any;
     multiline?: boolean | undefined;
@@ -58,6 +59,7 @@ export function PublishForm({
   storageTextVarName='placeholder',
   channel_name,
   channel_url,
+  published_url,
   styling
 }: PublishFormProps) {
   const [text, setText] = useState<string>('');
@@ -66,10 +68,6 @@ export function PublishForm({
   useEffect(()=>{
     setText(storedText || textFieldValue ||  '');
   },[textFieldValue, storedText]);
-
-  const handleGoToPost = () => {
-    console.log("Go to Post");
-  };
 
   return (
     <Dialog 
@@ -142,14 +140,14 @@ export function PublishForm({
           sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', p: 2 }}
         >
           {isLoading && <CircularProgress size={34} />}
-          {/* <Button 
-            onClick={handleGoToPost} 
+          <Button 
+            href={published_url}
             variant="contained" 
             color={styling?.buttonColor? styling?.buttonColor : "inherit"}
             disabled={isLoading}
           >
-            {`Go to Post`}
-          </Button> */}
+            Go to Post
+          </Button>
           {styling?.enableCloseButton? 
             <Button 
               onClick={onOkay} 
