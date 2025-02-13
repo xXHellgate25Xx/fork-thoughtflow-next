@@ -464,29 +464,28 @@ export default function Page() {
             {/* Settings sidebar */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', mt: '1rem' }}>
               <Typography variant='h5'>Publishing Details</Typography>
+              {/* Content pillar */}
               <Typography>
                 <b>Content pillar</b>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <Typography onClick={() => {router.replace(`/pillar/${content?.pillar_id}`)}} style={{ cursor: "pointer"}}>
-                    {pillarName}
-                  </Typography >
-                  <Icon icon='fluent:open-12-regular' onClick={() => {router.replace(`/pillar/${content?.pillar_id}`)}} style={{ cursor: "pointer"}}/>
-                </Box>
-              </Typography>
-              <Typography>
-                <b>Channel </b>
-                <Typography>
-                  {channelName}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <Link href={channelUrl} target="_blank" rel="noopener noreferrer">
-                  <Typography>
-                    {channelUrl}
-                  </Typography>
+                <Box 
+                  sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                  onClick={() => {router.replace(`/pillar/${content?.pillar_id}`)}}
+                >
+                  <Typography>{pillarName}</Typography >
                   <Icon icon='fluent:open-12-regular'/>
-                  </Link>
                 </Box>
               </Typography>
+              {/* Channel */}
+              <Box>
+                <Typography fontWeight='fontWeightBold'>Channel</Typography>
+                <Typography>{channelName}</Typography>
+                <Link href={channelUrl} target="_blank" rel="noopener noreferrer">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Typography>{channelUrl}</Typography>
+                    <Icon icon='fluent:open-12-regular'/>
+                  </Box>
+                </Link>
+              </Box>
 
               {/* SEO settings */}
               <Typography variant="h5">SEO Settings</Typography>

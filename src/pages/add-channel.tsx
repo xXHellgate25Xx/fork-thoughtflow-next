@@ -23,7 +23,8 @@ export default function Page() {
   const availableTypes = [
     { id: 'wix', label: 'Wix' },
     { id: 'linkedin', label: 'LinkedIn' },
-    // { id: 'instagram', label: 'Instagram' }
+    { id: 'instagram', label: 'Instagram' },
+    { id: 'facebook', label: 'Facebook' },
   ]
 
   const handleCreateChannel = async () => {
@@ -54,19 +55,31 @@ export default function Page() {
 
         <Card sx={{ padding: '2rem' }}>
           <Box display='flex' flexDirection='column' gap='0.5rem'>
-            <Typography>Name</Typography>
+            {/* Name */}
+            <Box display='flex' gap='0.5rem' alignItems='baseline'>
+              <Typography fontWeight='fontWeightBold'>Name</Typography>
+              <Typography variant='caption'>a descriptive name to identify your channel</Typography>
+            </Box>
             <TextField 
               onChange={(name) => {setChannelName(name.target.value)}}
               fullWidth
             />
 
-            <Typography>URL</Typography>
+            {/* Site domain */}
+            <Box display='flex' gap='0.5rem' alignItems='baseline'>
+              <Typography fontWeight='fontWeightBold'>Site domain</Typography>
+              <Typography variant='caption'>e.g. www.domain.com</Typography>
+            </Box>
             <TextField 
               onChange={(url) => {setChannelUrl(url.target.value)}}
               fullWidth
             />
-
-            <Typography>Channel voice</Typography>
+          
+            {/* Channel voice */}
+            <Box display='flex' gap='0.5rem' alignItems='baseline'>
+              <Typography fontWeight='fontWeightBold'>Channel voice</Typography>
+              <Typography variant='caption'>the unique personality and tone to write content for this channel</Typography>
+            </Box>
             <TextField 
               onChange={(voice) => {setChannelVoice(voice.target.value)}}
               fullWidth 
@@ -74,7 +87,7 @@ export default function Page() {
               rows={10}
             />
 
-            <Typography>Channel type</Typography>
+            <Typography fontWeight='fontWeightBold'>Channel type</Typography>
             <Box display='flex' gap='1rem' mb='0.5rem'>
             {availableTypes.map((card, index) => (
               <Card
@@ -82,6 +95,7 @@ export default function Page() {
                 onClick={() => setChannelType(card.id)}
                 data-active={channelType === card.id ? '' : undefined}
                 sx={{
+                  cursor: 'pointer',
                   padding: '1rem',
                   height: '100%',
                   '&[data-active]': {
