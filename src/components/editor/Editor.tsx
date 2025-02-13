@@ -19,6 +19,26 @@ function Editor({content,callback, channel_id} : {content?: any, callback?: any,
 
   const [uploadToWix] = useUploadToWixMutation();
 
+
+  const getImageSize = (file: File): Promise<{ width: number; height: number }> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+  
+      img.onload = () => {
+        resolve({ width: img.width, height: img.height });
+        URL.revokeObjectURL(objectUrl); // Cleanup
+      };
+  
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
+        URL.revokeObjectURL(objectUrl); // Cleanup in case of error
+      };
+  
+      img.src = objectUrl;
+    });
+
+
   const addCustomImage = async () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -51,6 +71,10 @@ function Editor({content,callback, channel_id} : {content?: any, callback?: any,
               return;
             }
 
+
+            const {width: imgWidth, height: imgHeight} = await getImageSize(file)
+
+
             const imageData = {
               containerData: {
                 alignment: 'CENTER',
@@ -63,8 +87,8 @@ function Editor({content,callback, channel_id} : {content?: any, callback?: any,
                 src: {
                   id: wixData.file.id,
                 },
-                width: 750, // Current default
-                height: 500,
+                width: imgWidth, // Current default
+                height: imgHeight,
               },
               altText: wixData.file.displayName,
             };
