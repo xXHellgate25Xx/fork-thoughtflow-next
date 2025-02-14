@@ -33,6 +33,7 @@ interface createContentProps {
     seo_meta_description?: string | null | undefined;
     content_type: string;
     channel_id: string;
+    long_tail_keyword: string | null | undefined;
 }
 
 interface IdeaRes {

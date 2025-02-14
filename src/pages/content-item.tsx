@@ -46,16 +46,10 @@ export default function Page() {
     isLoading: contentLoading,
     refetch: contentRefetch,
   } = useGetContentQuery({ contentId: contentId || '' });
-  // console.log(`Query: ${JSON.stringify(useGetContentQuery({contentId: contentId || ''}))}`)
-  // console.log(`isLoading: ${JSON.stringify(contentLoading)}`);
-  // console.log(`ContentData : ${JSON.stringify(contentData)}`)
   const content = contentData?.data?.[0];
-  // console.log(`Content: ${JSON.stringify(content)}`);
   const is_published = content?.status === 'published';
   const created_time = content?.created_at;
-  // console.log(created_time);
   const published_time = content?.published_at;
-  // console.log(published_time)
   const channel_id = content?.channel_id;
 
   const {
@@ -65,7 +59,6 @@ export default function Page() {
   } = useGetContentViewCountQuery({ contentId: contentId || '', type_of_agg: 'all' });
 
   const views_obj = viewsData?.data?.[0];
-  // console.log(`Views: ${JSON.stringify(views_obj)}`);
 
   // Load ChannelData
   const {
@@ -74,7 +67,6 @@ export default function Page() {
     refetch: channelRefetch,
   } = useGetChannelByIDQuery({ channel_id: content?.channel_id || ""})
   const channel = channelData?.data?.[0];
-  // console.log(channel);
 
   // Load ContentPillarData
   const {
@@ -103,6 +95,7 @@ export default function Page() {
   const [seoSlug, setSeoSlug] = useState('');
   const [seoMetaDescription, setMetaDescription] = useState('');
   const [seoTitleTag, setSeoTitleTag] = useState('');
+  const [longTailKeyword, setLongTailKeyword] = useState('');
 
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [isPublishFormClicked, setIsPublishFormClicked] = useState(false);
@@ -131,6 +124,7 @@ export default function Page() {
       setSeoSlug(content.seo_slug || '');
       setMetaDescription(content.seo_meta_description || '');
       setSeoTitleTag(content.seo_title_tag || '');
+      setLongTailKeyword(content.long_tail_keyword || '')
       setIsLoading(false);
       try {
         const read_richContent =
@@ -159,7 +153,6 @@ export default function Page() {
 
 
   }, [content, views_obj, channel, pillar]);
-  // console.log(`Content Data: ${JSON.stringify(contentData?.data)}`);
 
   const router = useRouter();
   // Function to handle go back button
@@ -200,16 +193,11 @@ export default function Page() {
           setIsPublishFormClicked(false);
         }
         else {
-          // console.log(publishData);
           const title = publishData?.draftPost?.title;
           const url = publishData?.draftPost?.url;
           const published_url = url ? `${url.base}${url.path}` : '#';
-          // console.log(title);
-          // console.log(url);
-          // console.log(published_url)
           
           setPublishedUrl(published_url)
-          // console.log(publishedUrl);
           setIsPublishFormClicked(false);
           setPublished(true);
         }
@@ -236,9 +224,6 @@ export default function Page() {
       // Ensure plaintext is awaited before proceeding
       const plaintext = await toPlainText(JSON.parse(editorRichContent));
       if (plaintext) {
-        // console.log("PlainText");
-        // console.log(plaintext);
-
         const { data: updateData } = await updateContentSupabase({
           contentId: contentId || '',
           content: {
@@ -250,9 +235,6 @@ export default function Page() {
             seo_title_tag: seoTitleTag,
           },
         });
-        // console.log(editorRichContent);
-        // console.log("Data sent:");
-        // console.log(updateData);
 
         setIsEditing(false);
         router.refresh();
@@ -287,17 +269,11 @@ export default function Page() {
               <Button color="inherit">
                 <Icon icon="ep:back" width={30} onClick={handleGoBack} />
               </Button>
-              {/* Channel icon */}
-              <Icon 
-                icon={channelType && channelIcons[channelType] ? channelIcons[channelType] : ''} 
-                width={30} 
-                height={30} 
-              />
               {/* Title */}
               {isEditing ? (
                 <TextField
                   sx={{
-                    width: '50%', // Adjust width as needed (e.g., '100%' for full width)
+                    width: '100%', // Adjust width as needed (e.g., '100%' for full width)
                     '& .MuiInputBase-root': {
                       height: '35pt', // Adjust height
                     },
@@ -478,7 +454,14 @@ export default function Page() {
               {/* Channel */}
               <Box>
                 <Typography fontWeight='fontWeightBold'>Channel</Typography>
-                <Typography>{channelName}</Typography>
+                <Box display='flex' alignItems='center' gap='0.3rem'>
+                  <Icon 
+                    icon={channelType && channelIcons[channelType] ? channelIcons[channelType] : ''} 
+                    width={25} 
+                    height={25} 
+                  />
+                  <Typography>{channelName}</Typography>
+                </Box>
                 <Link href={channelUrl} target="_blank" rel="noopener noreferrer">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <Typography>{channelUrl}</Typography>
@@ -489,36 +472,45 @@ export default function Page() {
 
               {/* SEO settings */}
               <Typography variant="h5">SEO Settings</Typography>
+
               <TextField
-                sx={{ backgroundColor: 'white' }}
+                multiline
                 fullWidth
-                label="SEO Title "
+                label="Long tail keyword"
                 disabled={!isEditing}
-                variant="outlined"
+                variant="standard"
+                value={longTailKeyword}
+                onChange={(e) => setSeoTitleTag(e.target.value)}
+                autoFocus
+              />
+
+              <TextField
+                multiline
+                fullWidth
+                label="SEO Title"
+                disabled={!isEditing}
+                variant="standard"
                 value={seoTitleTag}
                 onChange={(e) => setSeoTitleTag(e.target.value)}
                 autoFocus
               />
 
               <TextField
-                sx={{ backgroundColor: 'white' }}
                 multiline
-                rows={4}
                 fullWidth
                 label="SEO Meta Description"
                 disabled={!isEditing}
-                variant="outlined"
+                variant="standard"
                 value={seoMetaDescription}
                 onChange={(e) => setMetaDescription(e.target.value)}
                 autoFocus
               />
 
               <TextField
-                sx={{ backgroundColor: 'white' }}
                 fullWidth
                 label="SEO Slug"
                 disabled={!isEditing}
-                variant="outlined"
+                variant="standard"
                 value={seoSlug}
                 onKeyDown={(e) => handleKeyDown(e, setSeoSlug)}
                 onChange={(e) => handleSeoSlugChange(e, setSeoSlug)}

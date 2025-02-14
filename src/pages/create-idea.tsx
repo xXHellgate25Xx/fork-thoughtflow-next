@@ -24,7 +24,7 @@ import { ChannelSelect } from 'src/sections/channel/channel-select';
 import VoiceToTextButton from 'src/components/text-voice-input/VoiceRecorderButton';
 import { useGetAllPillarQuery } from 'src/libs/service/pillar/home';
 import { useCreateIdeaMutation, useCreateIdeaContentMutation } from 'src/libs/service/idea/idea';
-import { useGenerateContentMutation, useGenerateContentWithSEOMutation } from 'src/libs/service/content/generate';
+import { useGenerateContentMutation, useGenerateContentWithSEOMutation, useGenerateContentWithSEOKeywordMutation } from 'src/libs/service/content/generate';
 import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
 import { fromPlainText } from 'ricos-content/libs/fromPlainText';
 import { useGlobalContext } from 'src/GlobalContextProvider';
@@ -45,6 +45,7 @@ export default function Page() {
   
   const [createIdea] = useCreateIdeaMutation();
   const [generateContent] = useGenerateContentWithSEOMutation();
+  const [generateContentWithKeyword] = useGenerateContentWithSEOKeywordMutation();
   const [createIdeaContent] = useCreateIdeaContentMutation();
   const [pillarIdAndName, setPillarIdAndName] = useState<
     { id: string; name: string }[] | undefined
@@ -147,12 +148,12 @@ export default function Page() {
 
       setProgress(30);
 
-      const { data: generationData } = await generateContent({
+      const { data: generationData } = await generateContentWithKeyword({
         channel_id: channelId,
         gen_content: {
           idea: updatedIdea?.text,
-          feedback: '',
-          content: ''
+          pillar_name: pillarIdAndName?.find(item => item.id === pillar)?.name ?? '',
+          keyword: ''
         }
       });
 
@@ -178,8 +179,9 @@ export default function Page() {
           content_type: 'Blog Post',
           seo_meta_description: generationData?.seo_meta_description || null,
           seo_slug: generationData?.seo_slug || null,
-          seo_title_tag: generationData?.seo_title_tag || null,
-          channel_id: channelId
+          seo_title_tag: generationData?.title || null,
+          channel_id: channelId,
+          long_tail_keyword: generationData?.long_tail || null
         }
       });
 
@@ -232,36 +234,29 @@ export default function Page() {
               <LinearProgress
                 variant="determinate"
                 value={progress}
-                sx={{ color: 'black', mt: 1 }}
+                color='inherit'
+                sx={{ mt: 1 }}
               />
             </Box>
             <Card
               sx={{
-                padding: '2rem',
-                border: 1,
-                gap: 1,
-                p: 1,
-                mt: 2,
+                padding: '1.5rem',
+                my: '2rem',
                 width: '70%',
               }}
             >
-              <Typography variant="body1" mb="1rem" align="left" sx={{ color: 'black' }}>
+              <Box display='flex' alignItems='center' mb='1rem'>
                 {progress < 30 ? (
                   <CircularProgress size="1.25rem" sx={{ color: 'black', mr: 2 }} />
                 ) : (
                   <CheckCircleOutlineIcon sx={{ mr: 2 }} />
                 )}
-                Analyzing content requirement
-              </Typography>
-              <Typography
-                variant="body1"
-                mb="1rem"
-                align="left"
-                sx={{ color: progress < 30 ? 'grey' : 'black' }}
-              >
+                <Typography>Analyzing content requirement</Typography>
+              </Box>
+              <Box display='flex' alignItems='center' mb='1rem'>
                 {progress < 80 ? (
                   progress < 30 ? (
-                    <PendingOutlinedIcon sx={{ color: 'black', mr: 2, fontSize: '1.5rem' }} />
+                    <PendingOutlinedIcon sx={{ color: 'grey', mr: 2, fontSize: '1.5rem' }} />
                   ) : (
                     <CircularProgress
                       size="1.25rem"
@@ -271,17 +266,12 @@ export default function Page() {
                 ) : (
                   <CheckCircleOutlineIcon sx={{ color: 'black', mr: 2 }} />
                 )}
-                Writing content draft
-              </Typography>
-              <Typography
-                variant="body1"
-                mb="1rem"
-                align="left"
-                sx={{ color: progress < 80 ? 'grey' : 'black' }}
-              >
+                <Typography sx={{ color: progress < 30 ? 'grey' : 'black' }}>Writing content draft</Typography>
+              </Box>
+              <Box display='flex' alignItems='center'>
                 {progress < 100 ? (
                   progress < 80 ? (
-                    <PendingOutlinedIcon sx={{ color: 'black', mr: 2, fontSize: '1.5rem' }} />
+                    <PendingOutlinedIcon sx={{ color: 'grey', mr: 2, fontSize: '1.5rem' }} />
                   ) : (
                     <CircularProgress
                       size="1.25rem"
@@ -291,8 +281,8 @@ export default function Page() {
                 ) : (
                   <CheckCircleOutlineIcon sx={{ color: 'black', mr: 2 }} />
                 )}
-                Finalize formating
-              </Typography>
+                <Typography sx={{ color: progress < 80 ? 'grey' : 'black' }}>Finalize formating</Typography>
+              </Box>
             </Card>
           </Card>
         ) : (

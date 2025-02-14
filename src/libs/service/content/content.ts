@@ -71,6 +71,7 @@ export interface ContentRes {
   seo_slug?: string ;
   seo_title_tag?: string;
   seo_meta_description?: string;
+  long_tail_keyword?: string;
 }
 
 export interface getContentResponse {

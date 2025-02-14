@@ -3,8 +3,10 @@ import { baseQuery } from "../supabase/baseQuery";
 
 interface GenContentReq {
     idea: string | undefined,
-    feedback: string | undefined;
-    content: string | undefined;
+    pillar_name?: string,
+    keyword?: string,
+    feedback?: string | undefined;
+    content?: string | undefined;
 }
 
 interface GenContentRes {
@@ -14,6 +16,7 @@ interface GenContentRes {
     seo_meta_description?: string;
     seo_slug?: string;
     seo_title_tag?: string;
+    long_tail?: string;
 }
 
 const generateContentApi = createApi({
@@ -36,11 +39,20 @@ const generateContentApi = createApi({
                 body: gen_content
             })
         }),
+        // ----------------------GENERATE CONTENT WITH SEO KEYWORD------------------------
+        generateContentWithSEOKeyword: builder.mutation<GenContentRes, {channel_id: string; gen_content: GenContentReq}>({
+            query: ({ channel_id , gen_content }) => ({
+                url: `functions/v1/api/generate-content/${channel_id}`,
+                method: "POST",
+                body: gen_content
+            })
+        }),
     })
 })
 
 export const {
     useGenerateContentMutation,
     useGenerateContentWithSEOMutation,
+    useGenerateContentWithSEOKeywordMutation,
 } = generateContentApi;
 export { generateContentApi };
