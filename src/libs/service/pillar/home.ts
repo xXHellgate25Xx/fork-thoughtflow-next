@@ -16,13 +16,15 @@ interface ApiResponse {
 }
 
 interface CreatePillarReq {
-    pillar_name: string;
+  pillar_name: string;
+  description: string;
+  keyword: string
 }
 
 interface CreatePillarRes {
-    data?: any;
-    error?: any;
-    message?: string;
+  data?: any;
+  error?: any;
+  message?: string;
 }
 
 const HomePageApi = createApi({
@@ -31,19 +33,21 @@ const HomePageApi = createApi({
   endpoints: (builder) => ({
     // ------------------LIST ALL PILLARS--------------------------
     getAllPillar: builder.query<ApiResponse, void>({
-        query: () => ({        
-            url: `/functions/v1/api/content-pillars`,
-            method: 'GET'
-        }),
+      query: () => ({        
+          url: `/functions/v1/api/content-pillars`,
+          method: 'GET'
+      }),
     }),
     createPillar: builder.mutation<CreatePillarRes, CreatePillarReq>({
-        query: ({ pillar_name }) => ({        
-            url: `/functions/v1/api/content-pillars`,
-            method: 'POST',
-            body: {
-                name : pillar_name
-            }
-        }),
+      query: ({ pillar_name, description, keyword }) => ({        
+        url: `/functions/v1/api/content-pillars`,
+        method: 'POST',
+        body: {
+          name : pillar_name,
+          description,
+          primary_keyword: keyword,
+        }
+      }),
     }),
   }),
 });

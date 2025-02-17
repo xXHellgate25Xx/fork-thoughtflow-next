@@ -480,7 +480,7 @@ export default function Page() {
                 disabled={!isEditing}
                 variant="standard"
                 value={longTailKeyword}
-                onChange={(e) => setSeoTitleTag(e.target.value)}
+                onChange={(e) => setLongTailKeyword(e.target.value)}
                 autoFocus
               />
 

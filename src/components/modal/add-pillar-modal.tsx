@@ -1,73 +1,94 @@
 // src/components/modal/basic-modal.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   TextField,
   Button,
   Box,
-  CircularProgress
 } from '@mui/material';
 
-interface BasicModalProps {
-  open: boolean;
-  onClose: () => void;
-  onAddItem: (name: string) => void;
+
+interface AddPillarProps {
+  open: boolean,
+  onClose: () => void,
   isLoading?: boolean;
+  onAddItem: (name: string, description: string, primaryKeyword: string) => void;
 }
 
-export function BasicModal({ open, onClose, onAddItem, isLoading=false }: BasicModalProps) {
+
+export function AddPillarModal({
+  open,
+  onClose,
+  isLoading,
+  onAddItem
+}: AddPillarProps) {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [primaryKeyword, setPrimaryKeyword] = useState('');
 
   const handleAddItem = () => {
-    if (name.trim() && !isLoading) {
-      onAddItem(name);
-      setName('');
+    if (name.trim() && description.trim() && primaryKeyword.trim() && !isLoading) {
+      onAddItem(name, description, primaryKeyword);
     }
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>Add New Pillar</DialogTitle>
-      
+      <DialogTitle>Add new content pillar</DialogTitle>
       <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Name"
-          type="text"
-          fullWidth
-          variant="outlined"
-          value={name}
-          sx={{color:'inherit'}}
-          onChange={(e) => setName(e.target.value)}
-          disabled={isLoading}
-        />
-      </DialogContent>
-      
-      <DialogActions>
-        <Box 
-          gap='1rem'
-          sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}
-        >
-          {isLoading && <CircularProgress size={34} />}
+        <Box display='flex' flexDirection='column' gap='1rem'>
+          <TextField 
+            required
+            label='Name'
+            type='text'
+            fullWidth
+            variant='standard'
+            onChange={(e) => {
+              setName(e.target.value)
+            }}
+          />
+
+          <TextField 
+            required
+            label='Primary keyword'
+            type='text'
+            fullWidth
+            variant='standard'
+            onChange={(e) => {
+              setPrimaryKeyword(e.target.value)
+            }}
+          />
+
+          <TextField 
+            required
+            label='Description'
+            type='text'
+            fullWidth
+            multiline
+            variant='standard'
+            onChange={(e) => {
+              setDescription(e.target.value)
+            }}
+          />
+
           <Button 
             onClick={handleAddItem} 
             variant="contained" 
-            color="primary"
+            color='inherit'
             disabled={isLoading}
+            sx={{ mt: '1rem' }}
           >
-            {isLoading ? 'Adding...' : 'Add Pillar'}
+            {isLoading ? 'Loading...' : `Submit`}
           </Button>
         </Box>
-      </DialogActions>
+      </DialogContent>
     </Dialog>
   );
 }

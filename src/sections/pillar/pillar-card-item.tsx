@@ -3,6 +3,7 @@ import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import { Label } from 'src/components/label';
+import { Typography } from '@mui/material';
 
 // ----------------------------------------------------------------------
 
@@ -10,6 +11,8 @@ export type PillarItem = {
   id: string;
   name: string;
   is_active?: boolean;
+  description?: string;
+  primary_keyword?: string;
 };
 
 export function PillarCardItem({ product, onClick }: { product: PillarItem, onClick?: () => void }) {
@@ -40,7 +43,7 @@ export function PillarCardItem({ product, onClick }: { product: PillarItem, onCl
         }
       }}
     >
-      <Stack spacing={2} minHeight={155} sx={{ p: 3 }}>
+      <Stack spacing='1rem' minHeight={155} sx={{ p: 3 }}>
         <Link 
           color="inherit" 
           underline="hover" 
@@ -52,10 +55,19 @@ export function PillarCardItem({ product, onClick }: { product: PillarItem, onCl
             wordBreak: 'break-word' // Ensure long words break
           }}
         >
-          {product.name}
+          <Typography variant='h6'>{product.name}</Typography>
         </Link>
         
-        {/* <Box sx={{ flexGrow: 1 }} /> */}
+        <Box>
+          <Box>
+            <Typography variant='caption' fontWeight='fontWeightBold'>Primary keyword: </Typography>
+            <Typography variant='caption'>{product.primary_keyword}</Typography>
+          </Box>
+          <Box>
+            <Typography variant='caption' fontWeight='fontWeightBold'>Description: </Typography>
+            <Typography variant='caption'>{product.description}</Typography>
+          </Box>
+        </Box>
         
         <Box display="flex" alignItems="center" justifyContent="space-between">
           {renderStatus}

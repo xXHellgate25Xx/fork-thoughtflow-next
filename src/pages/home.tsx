@@ -13,6 +13,7 @@ import { CircularProgress } from '@mui/material';
 import { useRouter } from 'src/routes/hooks';
 import { useState, useEffect } from 'react';
 import { GenericModal } from 'src/components/modal/generic-modal';
+import { AddPillarModal } from 'src/components/modal/add-pillar-modal';
 import { 
   useGetAllPillarQuery,
   useCreatePillarMutation
@@ -37,10 +38,10 @@ export default function Page() {
   const [createPillar, { isLoading : createPillarIsLoading }] = useCreatePillarMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmClicked, setIsConfirmClicked] = useState(true);
-  const handleAddItem = async (pillar_name: string) => {
+  const handleAddItem = async (pillar_name: string, description: string, keyword: string) => {
     try {
       setIsConfirmClicked(true);
-      await createPillar({pillar_name}).unwrap();
+      await createPillar({pillar_name, description, keyword}).unwrap();
       setIsModalOpen(false);
       refetch(); // refresh the useGetAllPillarQuery() automatically
     } catch (addItemError) {
@@ -91,14 +92,14 @@ export default function Page() {
           >
             New Pillar
           </Button>
-          <GenericModal 
+          <AddPillarModal 
             open={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onAddItem={handleAddItem}
             isLoading={isConfirmClicked}
-            modalTitle="Add Pillar"
-            textFieldText="Pillar Name"
-            buttonText="Add"
+            // modalTitle="Add Pillar"
+            // textFieldText="Pillar Name"
+            // buttonText="Add"
           />
         </Box>
 
