@@ -11,6 +11,7 @@ import { generateContentApi } from './service/content/generate';
 import { AnalyticsPageApi } from './service/analytics/analytics';
 import { AccountApi } from './service/account/account';
 import { ChannelApi } from './service/channel/channel';
+import { RepurposeApi } from './service/idea/repurpose';
 
 const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ const store = configureStore({
     [AnalyticsPageApi.reducerPath]: AnalyticsPageApi.reducer,
     [AccountApi.reducerPath]: AccountApi.reducer,
     [ChannelApi.reducerPath]: ChannelApi.reducer,
+    [RepurposeApi.reducerPath]: RepurposeApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -41,6 +43,7 @@ const store = configureStore({
       .concat(AnalyticsPageApi.middleware)
       .concat(AccountApi.middleware)
       .concat(ChannelApi.middleware)
+      .concat(RepurposeApi.middleware)
 });
 
 export default store;

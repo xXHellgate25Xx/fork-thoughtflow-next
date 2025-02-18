@@ -16,7 +16,7 @@ function Viewer({ content }: { content: any }) {
         // content={draftcon}
         plugins={[
           pluginImageViewer({disableExpand: true, disableTransition: true, imageProps(src) {
-            console.log(src)
+            // console.log(src)
             return new Image()
           },}),
           pluginTextColorViewer(),

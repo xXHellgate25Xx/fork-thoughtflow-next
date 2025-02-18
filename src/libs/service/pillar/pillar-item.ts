@@ -15,6 +15,8 @@ interface getPillarByIdRes {
         user_id: string;
         is_active: boolean;
         account_id: string | null;
+        description: string | null;
+        primary_keyword: string | null;
     }>;
     count: number | null;
     status: number;
@@ -42,6 +44,8 @@ interface getIdeasOfPillarRes {
 interface updatePillarReq {
     pillarId: string | undefined;
     newName: string;
+    newDesc: string;
+    newKeyword: string;
 }
 
 export interface Content{
@@ -85,11 +89,13 @@ const PillarPageApi = createApi({
       }),
       // ------------------UPDATE PILLAR NAME--------------------------
       updatePillarName: builder.mutation<any, updatePillarReq>({
-        query: ({pillarId, newName}) => ({
+        query: ({pillarId, newName, newDesc, newKeyword}) => ({
             url: `functions/v1/api/content-pillars/${pillarId}`,
             method: 'PUT',
             body: {
-                name : newName
+                name : newName,
+                description: newDesc,
+                primary_keyword: newKeyword
             }
         })
       }),

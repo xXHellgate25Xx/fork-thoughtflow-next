@@ -24,9 +24,10 @@ import { ChannelSelect } from 'src/sections/channel/channel-select';
 import VoiceToTextButton from 'src/components/text-voice-input/VoiceRecorderButton';
 import { useGetAllPillarQuery } from 'src/libs/service/pillar/home';
 import { useCreateIdeaMutation, useCreateIdeaContentMutation } from 'src/libs/service/idea/idea';
-import { useGenerateContentMutation, useGenerateContentWithSEOMutation, useGenerateContentWithSEOKeywordMutation } from 'src/libs/service/content/generate';
+import { useGenerateContentHTMLMutation } from 'src/libs/service/content/generate';
 import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
 import { fromPlainText } from 'ricos-content/libs/fromPlainText';
+import { fromRichTextHtml } from 'ricos-content/libs/server-side-converters';
 import { useGlobalContext } from 'src/GlobalContextProvider';
 import { useLocation } from 'react-router-dom';
 
@@ -44,8 +45,7 @@ export default function Page() {
   }, [navigationState]);
   
   const [createIdea] = useCreateIdeaMutation();
-  const [generateContent] = useGenerateContentWithSEOMutation();
-  const [generateContentWithKeyword] = useGenerateContentWithSEOKeywordMutation();
+  const [generateContentHTML] = useGenerateContentHTMLMutation();
   const [createIdeaContent] = useCreateIdeaContentMutation();
   const [pillarIdAndName, setPillarIdAndName] = useState<
     { id: string; name: string }[] | undefined
@@ -148,7 +148,7 @@ export default function Page() {
 
       setProgress(30);
 
-      const { data: generationData } = await generateContentWithKeyword({
+      const { data: generationData } = await generateContentHTML({
         channel_id: channelId,
         gen_content: {
           idea: updatedIdea?.text,
@@ -172,7 +172,7 @@ export default function Page() {
         ideaId: latestIdeaData?.data?.[0]?.id,
         payload: {
           content_body: generationData?.content,
-          rich_content: fromPlainText(generationData?.content || ''),
+          rich_content: fromRichTextHtml(generationData?.content_html || ''),
           title: generationData?.title,
           excerpt: generationData?.excerpt || '',
           status: 'draft',
@@ -184,7 +184,7 @@ export default function Page() {
           long_tail_keyword: generationData?.long_tail || null
         }
       });
-
+      
       if(!contentData){
         setSnackbar({
           open: true,

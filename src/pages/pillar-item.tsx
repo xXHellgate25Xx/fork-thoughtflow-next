@@ -4,16 +4,14 @@ import { CONFIG } from 'src/config-global';
 import { Scrollbar } from 'src/components/scrollbar';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
-import { IdeaTableRow } from 'src/sections/tables/idea-table-row';
 import { ContentTableRow } from 'src/sections/tables/content-table-row';
 import { CustomTableHead } from 'src/sections/tables/idea-table-head';
 import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
 import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
-import type { IdeaProps } from 'src/sections/tables/idea-table-row';
 import type { ContentProps } from 'src/sections/tables/content-table-row';
 import { Label } from 'src/components/label';
 
-import { Box, Button, Card, Typography, Table, TableBody } from '@mui/material';
+import { Box, Button, Card, Typography, Table, TableBody, TextField, CircularProgress, TableCell } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -85,6 +83,11 @@ export default function Page() {
   const pillar = pillarData?.data[0];
   const pillarIsActive = getPillarIsLoading ? null : pillar?.is_active;
   const [pillarName, setPillarName] = useState<string>('Title of content pillar');
+  const [pillarDesc, setPillarDesc] = useState('');
+  const [pillarKeyword, setPillarKeyword] = useState('');
+  const [tmpName, setTmpName] = useState('');
+  const [tmpDesc, setTmpDesc] = useState('');
+  const [tmpKeyword, setTmpKeyword] = useState('');
   const [isActive, setIsActive] = useState(true);
   const { data: ideasOfPillar, isLoading: getIdeasOfPillarIsLoading } = useGetIdeasOfPillarQuery({
     pillarId,
@@ -110,42 +113,13 @@ export default function Page() {
 
   useEffect(() => {
     setPillarName(pillar?.name ?? "Loading... ");
+    setPillarDesc(pillar?.description ?? '')
+    setPillarKeyword(pillar?.primary_keyword ?? '')
+    setTmpName(pillar?.name ?? '');
+    setTmpDesc(pillar?.description ?? '')
+    setTmpKeyword(pillar?.primary_keyword ?? '')
   }, [pillar]);
-  // const data_: IdeaProps[] = ideasOfPillar?.data.map(idea => ({
-  //   id: idea.id,
-  //   title: idea.title,
-  //   text: idea.text,
-  //   createdAt: idea.created_at,
-  // })) ?? [];
-  // const data: ContentProps[] = [
-  //   {
-  //     id: '1',
-  //     title: 'Title of content 1',
-  //     pillar: 'Pillar 1',
-  //     status: 'published',
-  //     views: 1234,
-  //     updatedAt: '2025-01-21 06:52PM',
-  //     updatedAtFormatted: '21 Jan 2025 06:52 pm',
-  //   },
-  //   {
-  //     id: '2',
-  //     title: 'Title of content 2',
-  //     pillar: 'Pillar 2',
-  //     status: 'draft',
-  //     views: 2345,
-  //     updatedAt: '2025-01-21 06:52PM',
-  //     updatedAtFormatted: '21 Jan 2025 06:52 pm',
-  //   },
-  //   {
-  //     id: '3',
-  //     title: 'Title of content 3',
-  //     pillar: 'Pillar 2',
-  //     status: 'archived',
-  //     views: 2345,
-  //     updatedAt: '2025-01-21 06:52PM',
-  //     updatedAtFormatted: '21 Jan 2025 06:52 pm',
-  //   },
-  // ]
+
   const router = useRouter();
   const handleGoBack = () => {
     router.back();
@@ -161,11 +135,11 @@ export default function Page() {
 
   const [UpdatePillarNameMutation, _] = useUpdatePillarNameMutation();
 
-  const handleAddItem = async (newName: string) => {
+  const handleAddItem = async (newName: string, newKeyword: string, newDesc: string) => {
     try {
       setIsConfirmClicked(true);
-      await UpdatePillarNameMutation({ pillarId, newName }).unwrap();
-      getPillarRefetch();
+      await UpdatePillarNameMutation({ pillarId, newName, newDesc, newKeyword }).unwrap();
+      await getPillarRefetch();
       setIsModalOpen(false);
     } catch (addItemError) {
       console.error('Error creating pillar:', addItemError);
@@ -212,46 +186,117 @@ export default function Page() {
           <Label color={pillarIsActive === null ? 'default' : pillarIsActive ? 'success' : 'info'}>
             {pillarIsActive === null ? 'Loading...' : pillarIsActive ? 'Active' : 'Inactive'}
           </Label>
-          <Typography variant="h4">{pillar?.name}</Typography>
+          {isModalOpen ?
+            <TextField 
+              sx={{
+                width: '100%', // Adjust width as needed (e.g., '100%' for full width)
+                '& .MuiInputBase-root': {
+                  height: '35pt', // Adjust height
+                },
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '1.5rem', // Increase font size
+                },
+              }}
+              variant='outlined'
+              defaultValue={pillar?.name}
+              disabled={isConfirmClicked}
+              onChange={(e) => setTmpName(e.target.value)}
+            />
+            : <Typography variant="h4">{pillar?.name}</Typography>
+          }
         </Box>
 
         {/* Buttons to edit and deactivate */}
-        <Box display="flex" alignItems="center" gap="0.5rem" mb="1rem">
-          <Button
-            variant="outlined"
-            color="inherit"
-            startIcon={<Icon icon="akar-icons:edit" />}
-            onClick={() => {
-              setIsModalOpen(true);
-            }}
-          >
-            Edit
-          </Button>
-          <GenericModal
-            open={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onAddItem={handleAddItem}
-            isLoading={isConfirmClicked}
-            modalTitle="Change Pillar Name"
-            textFieldText="New Name"
-            buttonText="Change"
-          />
-          <Button
-            variant="outlined"
-            color={pillarIsActive ? 'error' : 'inherit'}
-            startIcon={pillarIsActive ? <Icon icon="solar:archive-bold" /> : null}
-            onClick={handleDeactivateButton}
-          >
-            {pillarIsActive ? 'Deactivate' : 'Currently Not Active'}
-          </Button>
-          <Button
-            variant="outlined"
-            color="inherit"
-            startIcon={<Icon icon="akar-icons:circle-plus" />}
-            onClick={handleAddContent}
-          >
-            Add Content
-          </Button>
+        <Box display="flex" alignItems="baseline" gap="0.5rem" mb="1rem">
+          {/* Keyword and description */}
+          <Box display='flex' flexDirection='column' flexGrow={1} gap='1rem' mr='1rem'>
+            <Box>
+              <Typography fontWeight='fontWeightBold'>Primary keyword</Typography>
+              {isModalOpen ?
+                <TextField 
+                  variant='standard'
+                  fullWidth
+                  disabled={isConfirmClicked}
+                  defaultValue={pillarKeyword}
+                  onChange={(e) => setTmpKeyword(e.target.value)}
+                />
+                : <Typography>{pillarKeyword}</Typography>
+              }
+            </Box>
+            <Box>
+              <Typography fontWeight='fontWeightBold'>Description</Typography>
+              {isModalOpen ?
+                <TextField 
+                  multiline
+                  fullWidth
+                  disabled={isConfirmClicked}
+                  variant='standard'
+                  defaultValue={pillarDesc}
+                  onChange={(e) => setTmpDesc(e.target.value)}
+                />
+                : <Typography>{pillarDesc}</Typography>
+              }
+            </Box>
+          </Box>
+          {/* Action buttons */}
+          {isModalOpen ?
+            <Box display='flex' alignItems='center' gap='0.5rem'>
+              <Button
+                variant="outlined"
+                color="secondary"
+                disabled={isConfirmClicked}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setTmpName(pillarName);
+                  setTmpDesc(pillarDesc)
+                  setTmpKeyword(pillarKeyword)
+                }}
+              >
+                Cancel
+              </Button>
+              {isConfirmClicked ? 
+                <CircularProgress color='primary' size='2rem'/>
+                : 
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={isConfirmClicked}
+                  onClick={() => { handleAddItem(tmpName, tmpKeyword, tmpDesc) }}
+                >
+                  Save
+                </Button>
+              }
+            </Box>
+            :
+            <Box display='flex' alignItems='baseline' gap='0.5rem'>
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<Icon icon="akar-icons:edit" />}
+                onClick={() => {
+                  setIsModalOpen(true);
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="outlined"
+                color={pillarIsActive ? 'error' : 'inherit'}
+                startIcon={pillarIsActive ? <Icon icon="solar:archive-bold" /> : null}
+                onClick={handleDeactivateButton}
+              >
+                {pillarIsActive ? 'Deactivate' : 'Currently Not Active'}
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Icon icon="hugeicons:idea-01" />}
+                onClick={handleAddContent}
+              >
+                Create content
+              </Button>
+            </Box>
+          }
         </Box>
 
         <Typography variant="h5" mb="1rem">
@@ -278,7 +323,17 @@ export default function Page() {
                   ]}
                 />
                 <TableBody>
-                  {dataFiltered
+                  {isLoading ?
+                  <TableCell colSpan={6} align='center'>
+                    <CircularProgress color='inherit' size='2rem'/>
+                  </TableCell>
+                  : dataFiltered.length === 0 ?
+                  <TableCell colSpan={6}>
+                    <Box display='flex' justifyContent='center'>
+                      <Typography variant='caption'>No content found</Typography>
+                    </Box>
+                  </TableCell>
+                  : dataFiltered
                     .slice(
                       table.page * table.rowsPerPage,
                       table.page * table.rowsPerPage + table.rowsPerPage

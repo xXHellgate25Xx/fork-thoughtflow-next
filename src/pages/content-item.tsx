@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CONFIG } from 'src/config-global';
 import { _products } from 'src/_mock';
 
@@ -12,11 +12,19 @@ import {
   useUpdateContentMutation,
 } from 'src/libs/service/content/content';
 import {
+  useGetAllChannelsOfUserQuery,
   useGetChannelByIDQuery
 } from 'src/libs/service/channel/channel';
 import {
   useGetPillarByIdQuery
 } from 'src/libs/service/pillar/pillar-item';
+import {
+  useCreateIdeaContentMutation
+} from 'src/libs/service/idea/idea';
+import {
+  useRepurposeContentMutation
+} from 'src/libs/service/idea/repurpose';
+
 import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
 import { useParams } from 'react-router-dom';
 import { useRouter } from 'src/routes/hooks';
@@ -29,16 +37,22 @@ import { toDraft } from 'ricos-content/libs/toDraft';
 import { fromPlainText } from 'ricos-content/libs/fromPlainText';
 import { fromDraft } from 'ricos-content/libs/fromDraft';
 import { toPlainText } from 'ricos-content/libs/toPlainText';
+import { fromRichTextHtml } from 'ricos-content/libs/server-side-converters';
 import { RichContent } from 'ricos-schema';
 import Editor from 'src/components/editor/Editor';
 import { handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
 import { channelIcons } from 'src/theme/icons/channel-icons';
+
 import { PublishForm } from 'src/components/publish_message/publish_message';
+import { RepurposeSelect } from 'src/sections/repurpose/repurpose-select';
+import { RepurposeForm } from 'src/components/repurpose/repurpose';
 // ----------------------------------------------------------------------
 
 export default function Page() {
   const [createPublishToWix] = useCreatePublishToWixMutation();
   const [updateContentSupabase] = useUpdateContentMutation();
+  const [repurposeContent] = useRepurposeContentMutation();
+  const [createContent] = useCreateIdeaContentMutation();
 
   const { 'content-id': contentId } = useParams();
   const {
@@ -47,9 +61,7 @@ export default function Page() {
     refetch: contentRefetch,
   } = useGetContentQuery({ contentId: contentId || '' });
   const content = contentData?.data?.[0];
-  const is_published = content?.status === 'published';
-  const created_time = content?.created_at;
-  const published_time = content?.published_at;
+  // console.log(`Content: ${JSON.stringify(content)}`);
   const channel_id = content?.channel_id;
 
   const {
@@ -68,6 +80,13 @@ export default function Page() {
   } = useGetChannelByIDQuery({ channel_id: content?.channel_id || ""})
   const channel = channelData?.data?.[0];
 
+  // List Channels
+  const {
+    data: channelList,
+    isLoading: channelListLoading,
+    refetch: channelListRefetch,
+  } = useGetAllChannelsOfUserQuery();
+
   // Load ContentPillarData
   const {
     data: pillarData,
@@ -76,6 +95,7 @@ export default function Page() {
   } = useGetPillarByIdQuery({ pillarId: content?.pillar_id || ""})
   const pillar = pillarData?.data?.[0];
 
+  // Display states
   const [published, setPublished] = useState(false);
   const [createdAt, setCreatedAt] = useState('Loading...');
   const [publishedAt, setPublishedAt] = useState('Loading...');
@@ -85,8 +105,18 @@ export default function Page() {
   const [editorRichContent, setEditorRichContent] = useState<any>(fromPlainText('Loading...'));
   const [pillarName, setPillarName] = useState('Loading...');
 
+  // Publish states
   const [channelName, setChannelName] = useState('Loading...');
   const [channelUrl, setChannelUrl] = useState('Loading...');
+  // Options for Repurpose
+  const [channelRepId, setChannelRepId] = useState<string>('Loading...');
+  const channelIdRepRef = useRef(channelRepId);
+  const [channelListIdAndName, setChannelListIdAndName] = useState<
+      {id: string; name: string; url: string}[] | undefined
+    >(undefined);
+  const [channelRep, setChannelRep] = useState<
+      {id: string; name: string, url: string} | undefined
+    >(undefined);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -100,6 +130,9 @@ export default function Page() {
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [isPublishFormClicked, setIsPublishFormClicked] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState('#');
+
+  const [isRepurposeOpen, setIsRepurposeOpen] = useState(false);
+  const [isRepurposeClicked, setIsRepurposeClicked] = useState(false);
 
   function convertJson(input: any) {
     return JSON.stringify({
@@ -153,6 +186,21 @@ export default function Page() {
 
 
   }, [content, views_obj, channel, pillar]);
+
+  useEffect(() => {
+    if(channelList && channel){
+      const formattedChannels = channelList?.data
+      .filter((channel_ele: any) => channel_ele.id !== channel_id) // Exclude the current ID
+      .map((channel_ele: any)=>{
+        const requiredPairs = {id: channel_ele.id, name: channel_ele.name, url: channel_ele.url};
+        return requiredPairs;
+      }) ?? [];
+      setChannelRepId(channel.id || 'Loading...');
+      setChannelListIdAndName(formattedChannels.length > 0?
+        formattedChannels:
+        [{id: '1', name: 'No existing channels'}]);
+    }
+  }, [channelList, channel]);
 
   const router = useRouter();
   // Function to handle go back button
@@ -250,6 +298,63 @@ export default function Page() {
     setEditedTitle(content?.title || '');
   };
 
+  // Function to do Repurpose
+  const handleRepurpose = () => {
+    setIsRepurposeOpen(true);
+  }
+
+  // Handle the Repurpose Form Clicked
+  const handleRepurposeClick = async () => {
+    // console.log("Handle Repurpose Click here: ",channelIdRepRef.current);
+    setIsRepurposeClicked(true);
+    // Generate the new repurposed content
+    const { data: repurposeData } = await repurposeContent({
+      ideaId: content?.idea_id || "",
+      payload: {
+        channel_id: channelRep?.id || "",
+        content_body: content?.content_body || ""
+      }
+    })
+    // Create the new content
+    const { data: createContentData } = await createContent({
+      ideaId: repurposeData?.idea_id,
+      payload: {
+        content_body: repurposeData?.content_body,
+        rich_content: fromRichTextHtml(repurposeData?.content_html || ""),
+        title: repurposeData?.title,
+        excerpt: repurposeData?.excerpt || "",
+        status: repurposeData?.status || "",
+        content_type: repurposeData?.content_type || "",
+        seo_meta_description: repurposeData?.seo_meta_description || null,
+        seo_slug: repurposeData?.seo_slug || null,
+        seo_title_tag: repurposeData?.seo_title_tag || null,
+        long_tail_keyword: repurposeData?.long_tail_keyword,
+        channel_id: repurposeData?.channel_id || "",
+      }
+    })
+    // Navigate to the new content
+    const new_content_id = createContentData?.data?.[0]?.content_id;
+    // console.log(new_content_id);
+    if (new_content_id) {
+      router.replace(`/content/${new_content_id}`)
+    }
+    setIsRepurposeClicked(false);
+    setIsRepurposeOpen(false);
+  }
+
+  const handleSelectChannel = (chosenChannelId: string) => {
+    setChannelRepId(chosenChannelId);
+    const chosen_channel = channelListIdAndName?.find((channel_ele: any) => channel_ele.id === chosenChannelId);
+    setChannelRep(chosen_channel);
+    setTimeout(() => {
+      handleRepurpose();
+    }, 0); // Runs after state update
+  };
+
+  useEffect(() => {
+    channelIdRepRef.current = channelRepId;
+  }, [channelRepId]);
+
   return (
     <>
       <Helmet>
@@ -340,7 +445,7 @@ export default function Page() {
                     router.refresh();
                   }}
                   modalTitle="Publish to this Channel?"
-                  textFieldText="Pillar Name"
+                  textFieldText=""
                   buttonText="Publish"
                   channel_url={channelUrl}
                   channel_name={channelName}
@@ -361,16 +466,36 @@ export default function Page() {
                     Go to post
                   </Button>
 
-                  <Button
-                    variant="contained"
-                    color="inherit"
-                    startIcon={<Icon icon="mingcute:copy-fill" />}
-                    // disabled={isLoading}
-                    disabled
-                    sx={{ display: 'none' }}
-                  >
-                    Repurpose
-                  </Button>
+                  <RepurposeSelect
+                  sx={{ display: published ? 'flex' : 'none' }}
+                  channelId={channelRepId}
+                  onSort={handleSelectChannel}
+                  options={channelListIdAndName}
+                  disabled={isLoading}
+                  />
+                  <RepurposeForm 
+                  open={isRepurposeOpen}
+                  isLoading={isRepurposeClicked}
+                  onPublish={handleRepurposeClick}
+                  onClose={() => {
+                    setIsRepurposeOpen(false);
+
+                    }
+                  }
+                  onOkay={ () => {
+                    router.refresh();
+                  }}
+                  modalTitle="Repurpose to"
+                  buttonText="Repurpose"
+                  channel_url={channelRep?.url || ''}
+                  channel_name={channelRep?.name || ''}
+                  published_url={publishedUrl}
+                  styling={{
+                    enableCloseButton: true,
+                  }
+                  }
+                  />
+
                   <Button
                     sx={{ display: published ? 'none' : 'flex' }}
                     variant="outlined"

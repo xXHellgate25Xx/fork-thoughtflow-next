@@ -12,6 +12,7 @@ interface GenContentReq {
 interface GenContentRes {
     title?: string;
     content?: string;
+    content_html?: string;
     excerpt?: string;
     seo_meta_description?: string;
     seo_slug?: string;
@@ -47,6 +48,14 @@ const generateContentApi = createApi({
                 body: gen_content
             })
         }),
+        // ----------------------GENERATE CONTENT WITH SEO KEYWORD------------------------
+        generateContentHTML: builder.mutation<GenContentRes, {channel_id: string; gen_content: GenContentReq}>({
+            query: ({ channel_id , gen_content }) => ({
+                url: `functions/v1/api/generate-content/${channel_id}/html`,
+                method: "POST",
+                body: gen_content
+            })
+        }),
     })
 })
 
@@ -54,5 +63,6 @@ export const {
     useGenerateContentMutation,
     useGenerateContentWithSEOMutation,
     useGenerateContentWithSEOKeywordMutation,
+    useGenerateContentHTMLMutation,
 } = generateContentApi;
 export { generateContentApi };
