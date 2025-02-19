@@ -11,11 +11,11 @@ const AccountApi = createApi({
               url: `/functions/v1/api/account`,
               method: 'GET'
           }),
-        }),
+        })
     })
 });
 
 export const {
-    useGetAllAccountsQuery,
+    useGetAllAccountsQuery
   } = AccountApi;
   export { AccountApi };

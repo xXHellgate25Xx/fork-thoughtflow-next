@@ -316,11 +316,13 @@ export default function Page() {
       }
     })
     // Create the new content
+    if (repurposeData) {
+    console.log(repurposeData);
     const { data: createContentData } = await createContent({
       ideaId: repurposeData?.idea_id,
       payload: {
         content_body: repurposeData?.content_body,
-        rich_content: fromRichTextHtml(repurposeData?.content_html || ""),
+        rich_content: repurposeData?.rich_content,
         title: repurposeData?.title,
         excerpt: repurposeData?.excerpt || "",
         status: repurposeData?.status || "",
@@ -332,11 +334,16 @@ export default function Page() {
         channel_id: repurposeData?.channel_id || "",
       }
     })
+    
     // Navigate to the new content
     const new_content_id = createContentData?.data?.[0]?.content_id;
     // console.log(new_content_id);
     if (new_content_id) {
       router.replace(`/content/${new_content_id}`)
+    }
+    }
+    else {
+      console.error("Cannot repurpose content!!!")
     }
     setIsRepurposeClicked(false);
     setIsRepurposeOpen(false);

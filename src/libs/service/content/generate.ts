@@ -1,4 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
+import { RichContent } from "ricos-schema";
 import { baseQuery } from "../supabase/baseQuery";
 
 interface GenContentReq {
@@ -18,6 +19,7 @@ interface GenContentRes {
     seo_slug?: string;
     seo_title_tag?: string;
     long_tail?: string;
+    rich_content?: RichContent;
 }
 
 const generateContentApi = createApi({

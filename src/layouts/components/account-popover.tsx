@@ -1,6 +1,6 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -13,7 +13,6 @@ import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 
 import { useRouter, usePathname } from 'src/routes/hooks';
-
 import { _myAccount } from 'src/_mock';
 import { removeToken, removeAccountId } from 'src/utils/auth';
 import store from 'src/libs/stores';
@@ -21,6 +20,9 @@ import { HomePageApi } from 'src/libs/service/pillar/home';
 import { ContentPageApi } from 'src/libs/service/content/content';
 import { ChannelApi } from 'src/libs/service/channel/channel';
 import { AnalyticsPageApi } from 'src/libs/service/analytics/analytics';
+import { RouterLink } from 'src/routes/components';
+import Link from '@mui/material/Link';
+import { useGetProfileQuery } from 'src/libs/service/profile/profile';
 
 // ----------------------------------------------------------------------
 
@@ -33,12 +35,31 @@ export type AccountPopoverProps = IconButtonProps & {
   }[];
 };
 
+interface Profile {
+  id: string;
+  oauth_display_name: string | null;
+  custom_display_name: string;
+  email: string;
+  photo_url: string;
+}
+
 export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps) {
   const router = useRouter();
 
   const pathname = usePathname();
 
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
+  const { data: profileData, isLoading, refetch } = useGetProfileQuery();
+  const [profile, setProfile] = useState<Profile>();
+
+
+  useEffect(() => {
+    if (!isLoading && profileData) {
+      setProfile(profileData.data[0]);
+    }
+  }, [isLoading, profileData]);
+
+
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setOpenPopover(event.currentTarget);
@@ -83,9 +104,9 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         }}
         {...other}
       >
-        <Avatar src={_myAccount.photoURL} alt={_myAccount.displayName} sx={{ width: 1, height: 1 }}>
-          {_myAccount.displayName.charAt(0).toUpperCase()}
-        </Avatar>
+        { profile&&<Avatar src={profile.photo_url} alt={profile.custom_display_name } sx={{ width: 1, height: 1 }}>
+          {profile.custom_display_name} 
+        </Avatar>}
       </IconButton>
 
       <Popover
@@ -100,15 +121,15 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
           },
         }}
       >
-        {/* <Box sx={{ p: 2, pb: 1.5 }}>
+        <Box sx={{ p: 2, pb: 1.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {_myAccount?.displayName}
+            {profile?.custom_display_name}
           </Typography>
 
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            {_myAccount?.email}
+            {profile?.email}
           </Typography>
-        </Box> */}
+        </Box>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
@@ -146,7 +167,16 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         </MenuList>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
-
+        <Box sx={{ p: 1 }}>
+        <Link
+                component={RouterLink}
+                href="profile"
+                color="inherit"
+                sx={{ typography: 'subtitle2' }}
+              >
+                Profile
+        </Link>
+        </Box>
         <Box sx={{ p: 1 }}>
           <Button  onClick={handleLogout} fullWidth color="error" size="medium" variant="text">
             Logout

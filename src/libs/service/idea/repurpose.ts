@@ -23,6 +23,7 @@ interface RepurposeRes {
     seo_slug: string;
     long_tail_keyword: string;
     content_html: string;
+    rich_content: RichContent;
 }
 
 const RepurposeApi = createApi({

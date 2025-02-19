@@ -156,7 +156,6 @@ export default function Page() {
           keyword: ''
         }
       });
-
       if(!generationData){
         setSnackbar({
           open: true,
@@ -172,7 +171,7 @@ export default function Page() {
         ideaId: latestIdeaData?.data?.[0]?.id,
         payload: {
           content_body: generationData?.content,
-          rich_content: fromRichTextHtml(generationData?.content_html || ''),
+          rich_content: generationData?.rich_content || fromPlainText(generationData?.content || ""),
           title: generationData?.title,
           excerpt: generationData?.excerpt || '',
           status: 'draft',

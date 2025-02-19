@@ -11,6 +11,7 @@ import { generateContentApi } from './service/content/generate';
 import { AnalyticsPageApi } from './service/analytics/analytics';
 import { AccountApi } from './service/account/account';
 import { ChannelApi } from './service/channel/channel';
+import { ProfileApi } from './service/profile/profile';
 import { RepurposeApi } from './service/idea/repurpose';
 
 const store = configureStore({
@@ -26,6 +27,7 @@ const store = configureStore({
     [generateContentApi.reducerPath]: generateContentApi.reducer,
     [AnalyticsPageApi.reducerPath]: AnalyticsPageApi.reducer,
     [AccountApi.reducerPath]: AccountApi.reducer,
+    [ProfileApi.reducerPath]: ProfileApi.reducer,
     [ChannelApi.reducerPath]: ChannelApi.reducer,
     [RepurposeApi.reducerPath]: RepurposeApi.reducer,
   },
@@ -42,6 +44,7 @@ const store = configureStore({
       .concat(generateContentApi.middleware)
       .concat(AnalyticsPageApi.middleware)
       .concat(AccountApi.middleware)
+      .concat(ProfileApi.middleware)
       .concat(ChannelApi.middleware)
       .concat(RepurposeApi.middleware)
 });
