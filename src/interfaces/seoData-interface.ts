@@ -1,6 +1,6 @@
 export interface Tags {
     type?: 'title' | 'meta' | 'link' | 'script';
-    prop?: { [key: string]: string }; // struct type
+    props?: { [key: string]: string }; // struct type
     meta?: { [key: string]: string };
     children?: string;
     custom?: boolean;
@@ -33,9 +33,8 @@ export interface Tags {
   export function createMetaDescriptionTag(description: string): Tags {
     return {
       type: 'meta',
-      prop: { name: 'description', content: description },
+      props: { name: 'description', content: description },
       children: description,
-
     };
   }
   

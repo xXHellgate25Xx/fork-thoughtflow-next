@@ -122,6 +122,8 @@ export default function Page() {
   const [isEditing, setIsEditing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+
+  // SEO states
   const [seoSlug, setSeoSlug] = useState('');
   const [seoMetaDescription, setMetaDescription] = useState('');
   const [seoTitleTag, setSeoTitleTag] = useState('');
@@ -281,6 +283,7 @@ export default function Page() {
             seo_slug: seoSlug,
             seo_meta_description: seoMetaDescription,
             seo_title_tag: seoTitleTag,
+            long_tail_keyword: longTailKeyword,
           },
         });
 
@@ -296,6 +299,10 @@ export default function Page() {
   const handleCancelClick = () => {
     setIsEditing(false);
     setEditedTitle(content?.title || '');
+    setLongTailKeyword(content?.long_tail_keyword || '');
+    setSeoTitleTag(content?.seo_title_tag || '');
+    setMetaDescription(content?.seo_meta_description || '');
+    setSeoSlug(content?.seo_slug || '');
   };
 
   // Function to do Repurpose

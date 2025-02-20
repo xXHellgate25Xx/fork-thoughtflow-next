@@ -28,7 +28,7 @@ import { useRouter } from 'src/routes/hooks';
 export function useTable() {
   const [page, setPage] = useState(0);
   const [orderBy, setOrderBy] = useState('createdAt');
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
   const onSort = useCallback(
@@ -221,7 +221,7 @@ export default function Page() {
 
                   <TableEmptyRows
                     height={68}
-                    emptyRows={emptyRows(table.page, table.rowsPerPage, (data?.length ?? 0))}
+                    emptyRows={emptyRows(table.page, table.rowsPerPage, (data?.length ??  0))}
                   />
 
                 </TableBody>
@@ -235,7 +235,7 @@ export default function Page() {
             count={dataFiltered.length}
             rowsPerPage={table.rowsPerPage}
             onPageChange={table.onChangePage}
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[25, 50, 75]}
             onRowsPerPageChange={table.onChangeRowsPerPage}
           />
         </Card>
