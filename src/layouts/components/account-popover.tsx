@@ -104,9 +104,13 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         }}
         {...other}
       >
-        { profile&&<Avatar src={profile.photo_url} alt={profile.custom_display_name } sx={{ width: 1, height: 1 }}>
-          {profile.custom_display_name} 
-        </Avatar>}
+        <Avatar 
+          src={_myAccount.photoURL} 
+          alt={profile?.custom_display_name} 
+          sx={{ width: 1, height: 1 }}
+        >
+          {profile?.custom_display_name}
+        </Avatar>
       </IconButton>
 
       <Popover
@@ -167,16 +171,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         </MenuList>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
-        <Box sx={{ p: 1 }}>
-        <Link
-                component={RouterLink}
-                href="profile"
-                color="inherit"
-                sx={{ typography: 'subtitle2' }}
-              >
-                Profile
-        </Link>
-        </Box>
+
         <Box sx={{ p: 1 }}>
           <Button  onClick={handleLogout} fullWidth color="error" size="medium" variant="text">
             Logout

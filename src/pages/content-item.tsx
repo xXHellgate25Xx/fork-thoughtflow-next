@@ -474,7 +474,6 @@ export default function Page() {
                   </Button>
 
                   <RepurposeSelect
-                  sx={{ display: published ? 'flex' : 'none' }}
                   channelId={channelRepId}
                   onSort={handleSelectChannel}
                   options={channelListIdAndName}

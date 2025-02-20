@@ -138,16 +138,18 @@ export function SignInView() {
     <Box>
       <Box gap={1.5} display="flex" flexDirection="column" alignItems="center" sx={{ mb: 5 }}>
         <Typography variant="h5">Sign In</Typography>
+        {/* TODO: Signup
         <Typography variant="body2" color="text.secondary">
           Don’t have an account?
           <Link href="/sign-up" variant="subtitle2" sx={{ ml: 0.5 }}>
             Get started
           </Link>
-        </Typography>
+        </Typography> */}
       </Box>
 
       {renderForm}
 
+      {/* TODO: 3RD PARTY AUTHENTICATION
       <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
         <Typography
           variant="overline"
@@ -167,7 +169,7 @@ export function SignInView() {
         <IconButton color="inherit" aria-label="Sign in with Twitter">
           <Iconify icon="ri:twitter-x-fill" />
         </IconButton>
-      </Box>
+      </Box> */}
 
       <Snackbar
         open={snackbar.open}
