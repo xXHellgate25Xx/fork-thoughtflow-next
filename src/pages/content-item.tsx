@@ -128,6 +128,8 @@ export default function Page() {
   const [seoMetaDescription, setMetaDescription] = useState('');
   const [seoTitleTag, setSeoTitleTag] = useState('');
   const [longTailKeyword, setLongTailKeyword] = useState('');
+  const seoSlugInputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const seoSlugCursorRef = useRef(0); // Track cursor position without causing re-renders
 
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [isPublishFormClicked, setIsPublishFormClicked] = useState(false);
@@ -203,6 +205,15 @@ export default function Page() {
         [{id: '1', name: 'No existing channels'}]);
     }
   }, [channelList, channel]);
+
+  // Restore cursor position after state update
+  useEffect(() => {
+    if (seoSlugInputRef.current) {
+      seoSlugInputRef.current.selectionStart = seoSlugCursorRef.current;
+      seoSlugInputRef.current.selectionEnd = seoSlugCursorRef.current;
+    }
+  }, [seoSlug]); // Runs AFTER `seoSlug` is updated
+
 
   const router = useRouter();
   // Function to handle go back button
@@ -324,7 +335,7 @@ export default function Page() {
     })
     // Create the new content
     if (repurposeData) {
-    console.log(repurposeData);
+    // console.log(repurposeData);
     const { data: createContentData } = await createContent({
       ideaId: repurposeData?.idea_id,
       payload: {
@@ -650,8 +661,9 @@ export default function Page() {
                 disabled={!isEditing}
                 variant="standard"
                 value={seoSlug}
-                onKeyDown={(e) => handleKeyDown(e, setSeoSlug)}
-                onChange={(e) => handleSeoSlugChange(e, setSeoSlug)}
+                inputRef={seoSlugInputRef} // Attach ref to track cursor position
+                onKeyDown={(e) => handleKeyDown(e, setSeoSlug, seoSlugCursorRef)}
+                onChange={(e) => handleSeoSlugChange(e, setSeoSlug, seoSlugCursorRef)}
                 autoFocus
               />
             </Box>

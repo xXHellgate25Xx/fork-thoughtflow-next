@@ -1,26 +1,48 @@
 export const handleSeoSlugChange = (
-  e: React.ChangeEvent<any>,
-  setState: React.Dispatch<React.SetStateAction<string>>
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  setState: React.Dispatch<React.SetStateAction<string>>,
+  cursorRef: React.MutableRefObject<number>
 ) => {
-  const inputValue = e.target.value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+  const input = e.target;
+  const cursorPos = input.selectionStart ?? 0; // Capture cursor position before modifying text
 
-  setState(inputValue);
+  // Transform value
+  const transformedValue = input.value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .trim()
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-'); // Remove consecutive hyphens
+
+  // Adjust cursor position for deletions
+  if (transformedValue.length < input.value.length) {
+    cursorRef.current = Math.max(cursorPos - 1, 0);
+  } else {
+    cursorRef.current = cursorPos;
+  }
+
+  setState(transformedValue);
 };
+
 
 export const handleKeyDown = (
   e: React.KeyboardEvent<any>,
-  setState: React.Dispatch<React.SetStateAction<string>>
+  setState: React.Dispatch<React.SetStateAction<string>>,
+  cursorRef: React.MutableRefObject<number>
 ) => {
   if (e.key === ' ') {
     e.preventDefault();
+    // Get the current cursor position
+    const input = e.target as HTMLInputElement | HTMLTextAreaElement;
+    const cursorPos = input.selectionStart ?? 0;
+
     setState((prevValue) => {
-      const newValue = prevValue.replace(/-+$/, '');
-      return `${newValue}-`;
+      let newValue = prevValue.replace(/-+$/, ''); // Remove trailing hyphens
+      newValue = `${newValue}-`;
+
+      // Update cursor position based on transformation
+      cursorRef.current = cursorPos + (newValue.length - prevValue.length);
+      return newValue;
     });
   }
 };

@@ -41,9 +41,11 @@ const IdeaForm: React.FC<IdeaFormProps> = ({
   });
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedTexts({ ...editedIdea, text: e.target.value });
-    setErrors((prev) => ({ ...prev, ideaText: false })); // Clear error on valid input
-    sessionStorage.setItem('storedIdea', e.target.value);
+    const newText = e.target.value;
+    setText(newText); // Update local state to prevent cursor jump
+    setEditedTexts({ ...editedIdea, text: newText });
+    setErrors((prev) => ({ ...prev, ideaText: false }));
+    sessionStorage.setItem('storedIdea', newText);
   };
 
   useEffect(() => {
