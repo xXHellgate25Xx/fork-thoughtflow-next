@@ -105,6 +105,7 @@ export default function Page() {
     text: '',
     voice_input: null,
   });
+  const storedText = sessionStorage.getItem('storedIdea');
 
   useEffect(() => {
     if (navigationState?.id) {setPillar(navigationState?.id ?? '');}
@@ -211,7 +212,7 @@ export default function Page() {
 
   const handleTranscription = (texts: string) => {
     setNewIdea({ ...newIdea, text: texts });
-    sessionStorage.setItem('storedIdea', texts);
+    sessionStorage.setItem('storedIdea', `${storedText} ${texts}`);
   };
 
   return (
