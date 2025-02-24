@@ -48,7 +48,7 @@ export default function Page() {
   const [generateContentHTML] = useGenerateContentHTMLMutation();
   const [createIdeaContent] = useCreateIdeaContentMutation();
   const [pillarIdAndName, setPillarIdAndName] = useState<
-    { id: string; name: string }[] | undefined
+    { id: string; name: string; primaryKeyword: string }[] | undefined
   >(undefined);
   const [channelId, setChannelId] = useState<string>('');
   const [channelIdAndName, setChannelIdAndName] = useState<
@@ -62,12 +62,16 @@ export default function Page() {
       const formattedPillars = pillarData?.data
         ?.filter((pillarItem) => pillarItem.is_active)
         .map((pillarItem) => {
-          const selectedFields = { id: pillarItem.id, name: pillarItem.name };
+          const selectedFields = { 
+            id: pillarItem.id, 
+            name: pillarItem.name, 
+            primaryKeyword: pillarItem.primary_keyword 
+          };
           return selectedFields;
         }) ?? [];
       setPillarIdAndName( formattedPillars.length > 0?
         formattedPillars :
-        [{id: '1', name: 'No existing pillar'}]
+        [{id: '1', name: 'No existing pillar', primaryKeyword: ''}]
       );
     }
   }, [pillarData]);
@@ -154,7 +158,7 @@ export default function Page() {
         gen_content: {
           idea: updatedIdea?.text,
           pillar_name: pillarIdAndName?.find(item => item.id === pillar)?.name ?? '',
-          keyword: ''
+          keyword: pillarIdAndName?.find(item => item.id === pillar)?.primaryKeyword ?? ''
         }
       });
       if(!generationData){

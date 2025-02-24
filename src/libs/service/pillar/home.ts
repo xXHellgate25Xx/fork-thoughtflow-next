@@ -7,6 +7,8 @@ interface Pillar {
   created_at: Date;
   is_active: boolean;
   user_id: string;
+  description: string;
+  primary_keyword: string;
 }
 
 interface ApiResponse {
