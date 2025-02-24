@@ -9,6 +9,9 @@ interface Pillar {
   user_id: string;
   description: string;
   primary_keyword: string;
+  n_published: number;
+  n_draft: number;
+  content_views: number;
 }
 
 interface ApiResponse {

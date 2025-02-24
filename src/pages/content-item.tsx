@@ -423,9 +423,35 @@ export default function Page() {
               )}
             </Box>
 
-            {/* Timestamps */}
-            <Box display="flex" alignItems="center" gap="0.5rem">
+            <Box display="flex" alignItems="end" gap="0.5rem">
               <Box flexGrow={1}>
+                {/* Content pillar */}
+                <Box display='flex' alignItems='center' gap='0.3rem'
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => {router.replace(`/pillar/${content?.pillar_id}`)}}
+                >
+                  <Typography fontWeight='fontWeightBold'>Content pillar:</Typography>
+                  <Typography>{pillarName}</Typography>
+                  <Icon icon='fluent:open-12-regular'/>
+                </Box>
+                {/* Channel */}
+                <Box display='flex' alignItems='center' gap='0.3rem'>
+                  <Typography fontWeight='fontWeightBold'>Channel:</Typography>
+                  <Icon 
+                    icon={channelType && channelIcons[channelType] ? channelIcons[channelType] : ''} 
+                    width={25} 
+                    height={25} 
+                  />
+                  <Typography>{channelName}</Typography>
+                  -
+                  <Link href={`https://${channelUrl}`} target="_blank" rel="noopener noreferrer">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Typography>{channelUrl}</Typography>
+                      <Icon icon='fluent:open-12-regular'/>
+                    </Box>
+                  </Link>
+                </Box>
+                {/* Timestamps */}
                 <Typography>
                   <b>Created at:</b> {contentLoading === false ? createdAt : 'Loading...'}
                 </Typography>
@@ -588,37 +614,6 @@ export default function Page() {
             </Box>
             {/* Settings sidebar */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', mt: '1rem' }}>
-              <Typography variant='h5'>Publishing Details</Typography>
-              {/* Content pillar */}
-              <Typography>
-                <b>Content pillar</b>
-                <Box 
-                  sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
-                  onClick={() => {router.replace(`/pillar/${content?.pillar_id}`)}}
-                >
-                  <Typography>{pillarName}</Typography >
-                  <Icon icon='fluent:open-12-regular'/>
-                </Box>
-              </Typography>
-              {/* Channel */}
-              <Box>
-                <Typography fontWeight='fontWeightBold'>Channel</Typography>
-                <Box display='flex' alignItems='center' gap='0.3rem'>
-                  <Icon 
-                    icon={channelType && channelIcons[channelType] ? channelIcons[channelType] : ''} 
-                    width={25} 
-                    height={25} 
-                  />
-                  <Typography>{channelName}</Typography>
-                </Box>
-                <Link href={channelUrl} target="_blank" rel="noopener noreferrer">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Typography>{channelUrl}</Typography>
-                    <Icon icon='fluent:open-12-regular'/>
-                  </Box>
-                </Link>
-              </Box>
-
               {/* SEO settings */}
               <Typography variant="h5">SEO Settings</Typography>
 

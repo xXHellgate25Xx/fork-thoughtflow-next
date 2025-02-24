@@ -103,7 +103,7 @@ export default function Page() {
           />
         </Box>
 
-        <Grid container spacing={3}>
+        <Grid container spacing='1rem'>
           {isLoading ? (
             <Grid xs={12} flex={1} display="flex" alignItems="center" justifyContent="center" gap='2rem'>
               <CircularProgress color='inherit'/>
@@ -120,7 +120,7 @@ export default function Page() {
               return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
             })
             .map((pillar: any) => (
-              <Grid key={pillar.id} xs={12} sm={6} md={3}>
+              <Grid key={pillar.id} xs={12} sm={12} md={12}>
                 <PillarCardItem 
                   product={pillar}
                   onClick={() => router.push(`/pillar/${pillar.id}`)}

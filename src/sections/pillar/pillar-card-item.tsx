@@ -1,9 +1,9 @@
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
 import { Label } from 'src/components/label';
 import { Typography } from '@mui/material';
+import { Icon } from '@iconify/react';
 
 // ----------------------------------------------------------------------
 
@@ -13,6 +13,9 @@ export type PillarItem = {
   is_active?: boolean;
   description?: string;
   primary_keyword?: string;
+  n_published?: number;
+  n_draft?: number;
+  content_views?: number;
 };
 
 export function PillarCardItem({ product, onClick }: { product: PillarItem, onClick?: () => void }) {
@@ -43,36 +46,45 @@ export function PillarCardItem({ product, onClick }: { product: PillarItem, onCl
         }
       }}
     >
-      <Stack spacing='1rem' minHeight={155} sx={{ p: 3 }}>
-        <Link 
-          color="inherit" 
-          underline="hover" 
-          variant="subtitle2"
-          sx={{
-            display: 'block',
-            overflow: 'hidden',
-            whiteSpace: 'normal', // Allow text to wrap
-            wordBreak: 'break-word' // Ensure long words break
-          }}
-        >
-          <Typography variant='h6'>{product.name}</Typography>
-        </Link>
-        
-        <Box>
-          <Box>
-            <Typography variant='caption' fontWeight='fontWeightBold'>Primary keyword: </Typography>
-            <Typography variant='caption'>{product.primary_keyword}</Typography>
+      <Box display='flex' gap='1rem' padding='1.5rem'>
+        <Box flexGrow={1}>
+          <Box display='flex' alignItems='center' gap='0.5rem'>
+            {renderStatus}
+            <Typography variant='h6'>{product.name}</Typography>
           </Box>
+          
           <Box>
-            <Typography variant='caption' fontWeight='fontWeightBold'>Description: </Typography>
-            <Typography variant='caption'>{product.description}</Typography>
+            <Box>
+              <Typography variant='caption' fontWeight='fontWeightBold'>Primary keyword: </Typography>
+              <Typography variant='caption'>{product.primary_keyword}</Typography>
+            </Box>
+            <Box>
+              <Typography variant='caption' fontWeight='fontWeightBold'>Description: </Typography>
+              <Typography variant='caption'>{product.description}</Typography>
+            </Box>
           </Box>
         </Box>
-        
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          {renderStatus}
+
+        <Box display='flex' flexDirection='column' gap='0.5rem' alignItems='baseline'>
+          <Box display='flex' flexDirection='row' gap='0.5rem'>
+            <Box display='flex' gap='0.5rem' alignItems='center'>
+              <Label color='info'>DRAFT</Label>
+              <Typography>{product.n_draft ?? 0}</Typography>
+            </Box>
+            -
+            <Box display='flex' gap='0.5rem' alignItems='center'>
+              <Label color='success'>PUBLISHED</Label>
+              <Typography>{product.n_published ?? 0}</Typography>
+            </Box>
+          </Box>
+          
+          <Box  display='flex' flexDirection='row' gap='0.5rem' alignItems='center'>
+            <Icon icon="carbon:view-filled" width={20}/>
+            <Typography fontWeight='fontWeightBold'>Content views:</Typography>
+            <Typography>{product.content_views ?? 0}</Typography>
+          </Box>
         </Box>
-      </Stack>
+      </Box>
     </Card>
   );
 }

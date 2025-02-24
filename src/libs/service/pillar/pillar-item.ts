@@ -17,6 +17,9 @@ interface getPillarByIdRes {
         account_id: string | null;
         description: string | null;
         primary_keyword: string | null;
+        n_published: number;
+        n_draft: number;
+        content_views: number;
     }>;
     count: number | null;
     status: number;
