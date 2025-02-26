@@ -15,6 +15,7 @@ import { Box, Button, Card, Typography, Table, TableBody, TextField, CircularPro
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 import {
   useGetPillarByIdQuery,
   useGetIdeasOfPillarQuery,
@@ -75,6 +76,9 @@ export function useTable() {
 
 export default function Page() {
   const { 'pillar-id': pillarId } = useParams();
+  // Get allAccountsApiData
+  const {data: allAccountsApiData} = useGetAllAccountsQuery();
+  const accounts_data = allAccountsApiData?.data;
   const {
     data: pillarData,
     isLoading: getPillarIsLoading,
@@ -112,13 +116,21 @@ export default function Page() {
   const data = allContentsApiRes?.data ? mapContentsApiResToTable(allContentsApiRes?.data) : [];
 
   useEffect(() => {
+    if (pillar && accounts_data) {
+      if (pillar?.account_id !== localStorage.getItem('accountId')) {
+      const local_account_id = localStorage.getItem('accountId') || ''
+      const account_name = accounts_data.find((item: any) => item.id === pillar.account_id)?.name;
+      localStorage.setItem('accountId', pillar.account_id || local_account_id);
+      localStorage.setItem('accountName', account_name);
+      }
+    }
     setPillarName(pillar?.name ?? "Loading... ");
     setPillarDesc(pillar?.description ?? '')
     setPillarKeyword(pillar?.primary_keyword ?? '')
     setTmpName(pillar?.name ?? '');
     setTmpDesc(pillar?.description ?? '')
     setTmpKeyword(pillar?.primary_keyword ?? '')
-  }, [pillar]);
+  }, [pillar, accounts_data]);
 
   const router = useRouter();
   const handleGoBack = () => {

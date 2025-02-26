@@ -1,6 +1,6 @@
 import type { ButtonBaseProps } from '@mui/material/ButtonBase';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'src/routes/hooks';
 
 import Box from '@mui/material/Box';
@@ -13,6 +13,7 @@ import { varAlpha } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { Typography } from '@mui/material';
 
 // ----------------------------------------------------------------------
 
@@ -35,7 +36,31 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
     if (data.length > 0) {
       setWorkspace(defaultData);
     }
+
   }, [data]);
+
+  useEffect(() => {
+    let count = 0; // Counter to track iterations
+    const maxIterations = 10; // Change this to limit the number of times it runs
+
+    const interval = setInterval(() => {
+      const storedId = localStorage.getItem("accountId");
+      if (storedId !== workspace.id) {
+        setWorkspace({
+          id: storedId,
+          name: localStorage.getItem("accountName")
+        });
+      }
+
+      count += 1;
+      if (count >= maxIterations) {
+        clearInterval(interval);
+      }
+    }, 1000); // Runs every second
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []); // Runs when `workspace.id` changes
+
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -90,7 +115,6 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
 
         <Iconify width={16} icon="carbon:chevron-sort" sx={{ color: 'text.disabled' }} />
       </ButtonBase>
-
       <Popover open={!!openPopover} anchorEl={openPopover} onClose={handleClosePopover}>
         <MenuList
           disablePadding

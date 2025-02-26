@@ -52,6 +52,7 @@ interface ContentUpdatePayload {
 
 export interface ContentRes {
   uuid: string;
+  account_id: string;
   created_at: string;
   updated_at: string;
   content_id: string;

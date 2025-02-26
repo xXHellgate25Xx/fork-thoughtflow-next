@@ -12,6 +12,8 @@ import { pluginLink } from "wix-rich-content-plugin-link";
 
 import { fromDraft } from 'ricos-content/libs/fromDraft';
 import { RichContent } from 'ricos-schema';
+import { Button } from '@mui/material';
+import { Icon } from '@iconify/react';
 
 function Editor({content,callback, channel_id} : {content?: any, callback?: any, channel_id?: any}) {
   const [editorState, setEditorState] = useState(JSON.parse(content));
@@ -115,7 +117,7 @@ function Editor({content,callback, channel_id} : {content?: any, callback?: any,
   return (
     <>
       <RicosEditor
-        toolbarSettings={{ useStaticTextToolbar: true }}
+        toolbarSettings={{ useStaticTextToolbar: false }}
         content={editorState}
         onChange={(updatedContent: any) => {
           setEditorState(updatedContent);
@@ -124,20 +126,23 @@ function Editor({content,callback, channel_id} : {content?: any, callback?: any,
         ref={(ref: any) => {
           editorRef.current = ref?.getEditorCommands() || null;
         }} // Save editor commands using ref
-        plugins={[pluginImage(), 
+        plugins={[
+          pluginImage(), 
           pluginTextColor(), 
           pluginTextHighlight(), 
           pluginHeadings(), 
           pluginLink()
         ]} // Add plugins if needed
       />
-      <button
-        type="button"
+      <Button
+        variant='contained'
+        color='inherit'
         onClick={addCustomImage}
-        style={{ marginTop: '10px', padding: '8px 16px' }}
+        startIcon={<Icon icon='mdi:camera'/>}
+        sx={{ mt: '1rem' }}
       >
-        Add Custom Image
-      </button>
+        Add Image
+      </Button>
     </>
   );
 }

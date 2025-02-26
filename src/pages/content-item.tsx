@@ -6,6 +6,7 @@ import { _products } from 'src/_mock';
 import { Box, Button, Card, Typography, IconButton, Link } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
+import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 import {
   useGetContentQuery,
   useGetContentViewCountQuery,
@@ -55,6 +56,12 @@ export default function Page() {
   const [createContent] = useCreateIdeaContentMutation();
 
   const { 'content-id': contentId } = useParams();
+
+  // Get allAccountsApiData
+  const {data: allAccountsApiData} = useGetAllAccountsQuery();
+  const accounts_data = allAccountsApiData?.data;
+
+  // Get contentData
   const {
     data: contentData,
     isLoading: contentLoading,
@@ -144,6 +151,16 @@ export default function Page() {
       metadata: input.metadata,
     });
   }
+
+  useEffect(() => {
+    if (content && accounts_data) {
+      if (content.account_id !== localStorage.getItem("accountId")) {
+        localStorage.setItem("accountId", content.account_id);
+        const account_name = accounts_data.find((item: any) => item.id === content.account_id)?.name;
+        localStorage.setItem("accountName", account_name);
+      }
+    }
+  }, [content, accounts_data])
 
   // console.log(createdAt);
   useEffect(() => {
