@@ -16,7 +16,7 @@ import { Button } from '@mui/material';
 import { Icon } from '@iconify/react';
 
 function Editor({content,callback, channel_id} : {content?: any, callback?: any, channel_id?: any}) {
-  const [editorState, setEditorState] = useState(JSON.parse(content));
+  const [editorState, setEditorState] = useState(content);
   const editorRef = useRef<EditorCommands | null>(null);
 
   const [uploadToWix] = useUploadToWixMutation();

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { CONFIG } from 'src/config-global';
 import { _products } from 'src/_mock';
 
-import { Box, Button, Card, Typography, IconButton, Link } from '@mui/material';
+import { Box, Button, Card, Typography, IconButton, Link, List, ListItem, FormControlLabel, Checkbox } from '@mui/material';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
@@ -41,7 +41,7 @@ import { toPlainText } from 'ricos-content/libs/toPlainText';
 import { fromRichTextHtml } from 'ricos-content/libs/server-side-converters';
 import { RichContent } from 'ricos-schema';
 import Editor from 'src/components/editor/Editor';
-import { handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
+import { handleKeyDown, handleSeoSlugChange, checkSEO } from 'src/utils/seo';
 import { channelIcons } from 'src/theme/icons/channel-icons';
 
 import { PublishForm } from 'src/components/publish_message/publish_message';
@@ -145,6 +145,29 @@ export default function Page() {
   const [isRepurposeOpen, setIsRepurposeOpen] = useState(false);
   const [isRepurposeClicked, setIsRepurposeClicked] = useState(false);
 
+  // SEO Checklist states
+  const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const checklist = [
+    "Add focus keyword to title tag",
+    "Add focus keyword to H1 (post's title)",
+    "Add an image or video to this post",
+    "Write alt text for all images",
+    "Add focus keyword to body text",
+    "Write meta description with focus keyword",
+    "Add focus keyword to URL slug",
+  ];
+
+  const check_list_explanation = [
+    "The title tag includes the focus keyword and is now optimized for searches.",
+    "The H1 (post’s title) includes the focus keyword and is now optimized for search engines.",
+    "This post has visual content, which can drive more traffic and engagement.",
+    "All of the images in this post include alt text, which helps search engines and screen reader users understand them.",
+    "The body text includes the focus keyword at least once, which helps visitors and search engines better understand what this post is about.",
+    "The meta description includes the focus keyword.",
+    "The URL slug includes the focus keyword.",
+  ]
+  const [seoCheckListHoveredIndex, setSeoCheckListHoveredIndex] = useState<number | null>(null);
+
   function convertJson(input: any) {
     return JSON.stringify({
       nodes: input.nodes,
@@ -205,6 +228,12 @@ export default function Page() {
       setViews('0');
     }
 
+    // Check SEO Checklist
+    if (content && pillar && editorRichContent.nodes[0].nodes[0].textData.text !== "Loading...") {
+      const primary_keyword = pillar.primary_keyword || "";
+      const auto_check_list = checkSEO(checklist, editorRichContent, content.title, seoMetaDescription, seoSlug, primary_keyword);
+      setCheckedItems(auto_check_list);
+    }
 
   }, [content, views_obj, channel, pillar]);
 
@@ -231,6 +260,13 @@ export default function Page() {
     }
   }, [seoSlug]); // Runs AFTER `seoSlug` is updated
 
+  useEffect(() => {
+    channelIdRepRef.current = channelRepId;
+  }, [channelRepId]);
+
+  // useEffect(() => {
+  //   console.log(checkedItems);
+  // }, [checkedItems]);
 
   const router = useRouter();
   // Function to handle go back button
@@ -300,7 +336,7 @@ export default function Page() {
     try {
       setIsLoading(true);
       // Ensure plaintext is awaited before proceeding
-      const plaintext = await toPlainText(JSON.parse(editorRichContent));
+      const plaintext = await toPlainText(editorRichContent);
       if (plaintext) {
         const { data: updateData } = await updateContentSupabase({
           contentId: contentId || '',
@@ -393,9 +429,11 @@ export default function Page() {
     }, 0); // Runs after state update
   };
 
-  useEffect(() => {
-    channelIdRepRef.current = channelRepId;
-  }, [channelRepId]);
+  // const handleSEOChecklistItemClick = (item: any) => {
+  //   setCheckedItems((prev) =>
+  //     prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+  //   );
+  // };
 
   return (
     <>
@@ -621,7 +659,7 @@ export default function Page() {
                 ) : (
                   <Editor
                     callback={(e: any) => {
-                      setEditorRichContent(convertJson(e));
+                      setEditorRichContent(e);
                     }}
                     content={editorRichContent}
                     channel_id={channel_id}
@@ -678,6 +716,64 @@ export default function Page() {
                 onChange={(e) => handleSeoSlugChange(e, setSeoSlug, seoSlugCursorRef)}
                 autoFocus
               />
+              {/* SEO Checklist */}
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', mt: '1rem' }}>
+                {/* SEO Checklist */}
+                <Typography variant="h5">SEO Checklist</Typography>
+                <List>
+                  {checklist.map((item, index) => (
+                    <ListItem key={item} sx={{ display: "block" }}> 
+                    <Box
+                    onMouseEnter={() => setSeoCheckListHoveredIndex(index)}
+                    onMouseLeave={() => setSeoCheckListHoveredIndex(null)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "10px",
+                      width: "100%",
+                      cursor: "pointer",
+                      borderRadius: "8px",
+                      transition: "background 0.2s",
+                      "&:hover": { backgroundColor: "#f0f0f0" }, // Light background on hover
+                    }}
+                    >
+                    <FormControlLabel
+                    key={item}
+                    control={
+                      <Checkbox
+                        checked={checkedItems.includes(item)}
+                        disabled
+                      />
+                    }
+                    label={
+                      <Typography 
+                      sx={{ color: checkedItems.includes(item) ? "gray" : "black", cursor: "pointer" } }
+                      >
+                        {item}
+                      </Typography>
+                    }
+                  />
+                  </Box>
+                  {/* Hover explanation directly under the item */}
+                  {seoCheckListHoveredIndex === index && (
+                    <Typography 
+                      sx={{ 
+                        mt: 1, 
+                        p: 1, 
+                        backgroundColor: "#f5f5f5", 
+                        borderRadius: 2, 
+                        border: "1px solid #ddd",
+                        fontSize: "0.9rem",
+                        color: "#555"
+                      }}
+                    >
+                      {check_list_explanation[index]}
+                    </Typography>
+                  )}
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
             </Box>
           </Box>
         </Box>

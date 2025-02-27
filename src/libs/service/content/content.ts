@@ -36,7 +36,7 @@ interface getAllStatsOfUserRes {
 
 interface ContentUpdatePayload {
   content_body?: string;
-  rich_content?: string;
+  rich_content?: RichContent;
   title?: string;
   excerpt?: string;
   status?: 'draft' | 'published';
@@ -116,6 +116,15 @@ const ContentPageApi = createApi({
         query: ({contentId}) => ({        
             url: `/functions/v1/api/content/${contentId}`,
             method: 'GET'
+        }),
+        transformResponse: (response: getContentResponse) => ({
+          ...response,
+          data: response.data.map(item => ({
+            ...item,
+            rich_content: typeof item.rich_content === 'string'
+              ? JSON.parse(item.rich_content)
+              : item.rich_content
+          })),
         }),
       }),
       // -----------------GET CONTENT VIEW COUNT BY ID--------------------
