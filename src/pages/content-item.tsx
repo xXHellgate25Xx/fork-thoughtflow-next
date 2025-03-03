@@ -292,7 +292,7 @@ export default function Page() {
           channel_id: content.channel_id,
           CreatePublishReq: {
             title: content.title,
-            richContent: content.rich_content, // Example content
+            richContent: JSON.stringify(content.rich_content), // Rich Content
             content_id: contentId,
             seo_slug: content.seo_slug,
             seo_title_tag: content.seo_title_tag ? createTitleTag(content.seo_title_tag) : null,

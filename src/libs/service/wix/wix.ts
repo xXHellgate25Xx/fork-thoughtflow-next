@@ -71,7 +71,7 @@ export interface WixDraftPostResponse {
 
 export interface WixCreatePublishPostRequest {
   title: string;
-  richContent: RichContent;
+  richContent: string; // Will revert back to RichContent if we choose to refactor our Backend API
   content_id: string;
   draftPostId?: string;
   seo_slug?: string;
