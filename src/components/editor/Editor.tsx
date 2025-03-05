@@ -12,12 +12,13 @@ import { pluginLink } from "wix-rich-content-plugin-link";
 
 import { fromDraft } from 'ricos-content/libs/fromDraft';
 import { RichContent } from 'ricos-schema';
-import { Button } from '@mui/material';
+import { Button, CircularProgress } from '@mui/material';
 import { Icon } from '@iconify/react';
 
 function Editor({content,callback, channel_id, content_id} : {content?: any, callback?: any, channel_id?: any, content_id?: any}) {
   const [editorState, setEditorState] = useState(content);
   const editorRef = useRef<EditorCommands | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [uploadToWix] = useUploadToWixMutation();
   const [uploadToSupabase] = useUploadToSupabaseMutation();
@@ -116,6 +117,7 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
       const file = (event.target as HTMLInputElement)?.files?.[0];
       if (file) {
         try {
+          setIsLoading(true);
           const bucketName = 'content_media';
           const pathName = await processingFilePath(file, content_id, file.name.split('.')[0]);
 
@@ -163,11 +165,14 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
             setTimeout(() => { // Wait for wix to have image
               editorCommands.insertBlock(IMAGE_TYPE, imageData);
             }, 1000);
+            setIsLoading(false);
           } else {
             console.error('Upload failed:', response.error);
+            setIsLoading(false);
           }
         } catch (error) {
           console.error('Error uploading image:', error);
+          setIsLoading(false);
         }
       }
     };
@@ -205,7 +210,10 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
         color='inherit'
         // onClick={addCustomImage}
         onClick={addCustomImageNoWix}
-        startIcon={<Icon icon='mdi:camera'/>}
+        disabled={isLoading}
+        startIcon={
+          isLoading ? <CircularProgress size={24} /> : <Icon icon="mdi:camera" />
+      }
         sx={{ mt: '1rem' }}
       >
         Add Image
