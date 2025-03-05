@@ -13,7 +13,7 @@ import {
   Snackbar,
   InputAdornment,
 } from "@mui/material"
-import MuiAlert, { AlertProps } from "@mui/material/Alert"
+import MuiAlert, { type AlertProps } from "@mui/material/Alert"
 import EditIcon from "@mui/icons-material/Edit"
 import Visibility from "@mui/icons-material/Visibility"
 import VisibilityOff from "@mui/icons-material/VisibilityOff"
@@ -21,11 +21,13 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff"
 import { CONFIG } from "src/config-global"
 import {
   useGetProfileQuery,
+  useUpdateDisplayImageMutation,
   useUpdateDisplayNameMutation,
   useUpdatePasswordMutation,
 } from "src/libs/service/profile/profile"
 import type { ProfileProps } from "src/interfaces/profile-interfaces"
-import { getRefreshToken } from 'src/utils/auth';
+import { getRefreshToken } from "src/utils/auth"
+import { toBase64 } from "src/utils/encodeFileToBase64"
 
 // Alert component using MuiAlert
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>((props, ref) => (
@@ -67,11 +69,138 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
   />
 )
 
+
+interface AvatarChangeProps {
+  onSuccess?: (message: string) => void
+  onError?: (message: string) => void
+}
+
+
+const AvatarChange: React.FC<AvatarChangeProps> = ({ onSuccess, onError }) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [isEditingAvatar, setIsEditingAvatar] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [updateDisplayImage] = useUpdateDisplayImageMutation()
+  const { data: profileData } = useGetProfileQuery()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setSelectedFile(file)
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+      setIsEditingAvatar(true)
+    }
+  }
+
+  const handleCancelAvatarChange = () => {
+    setSelectedFile(null)
+    setPreviewUrl(null)
+    setIsEditingAvatar(false)
+  }
+
+  const handleConfirmAvatarChange = async () => {
+    if (!selectedFile) return
+
+    try {
+      setIsUploading(true)
+      const base64File = await toBase64(selectedFile);
+      const displayName = profileData?.data[0]?.custom_display_name || "user"
+      console.log(profileData)
+      console.log("displayName", displayName)
+      // Random uuid for the file
+      const fileName = `${displayName}-${Date.now()}`
+      console.log("base64File" )
+      console.log( base64File)
+      const response = await updateDisplayImage({
+        file: base64File,
+        bucketName: "media",
+        destinationPath: `profile_pictures`,
+        displayName: fileName, // Using property shorthand here
+        contentType: selectedFile.type,
+      })
+
+      if ("error" in response) {
+        throw new Error("Failed to update profile image")
+      }
+
+      setIsEditingAvatar(false)
+      if (onSuccess) {
+        onSuccess("Profile image updated successfully")
+      }
+    } catch (error) {
+      console.error("Error updating avatar:", error)
+      if (onError) {
+        onError("Failed to update profile image")
+      }
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (profileData?.data[0]?.photo_url) {
+      setPreviewUrl(profileData.data[0].photo_url)
+    }
+  }, [profileData])
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" gutterBottom>
+        Avatar
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {previewUrl ? (
+          <img
+            src={previewUrl || "/placeholder.svg"}
+            alt="Avatar preview"
+            style={{
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+              objectFit: "cover",
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+              backgroundColor: "#ccc",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Typography variant="body2">No Avatar</Typography>
+          </Box>
+        )}
+        <Button variant="outlined" color="primary" component="label" style={{ cursor: "pointer" }}>
+          Choose File
+          <input accept="image/*" hidden type="file" onChange={handleFileChange} />
+        </Button>
+        {isEditingAvatar && (
+          <>
+            <Button variant="contained" color="primary" onClick={handleConfirmAvatarChange} disabled={isUploading}>
+              {isUploading ? "Uploading..." : "Confirm"}
+            </Button>
+            <Button variant="outlined" color="secondary" onClick={handleCancelAvatarChange}>
+              Cancel
+            </Button>
+          </>
+        )}
+      </Box>
+    </Box>
+  )
+}
+
 export default function Page() {
   const { data: profileData, isLoading } = useGetProfileQuery()
   const [profile, setProfile] = useState<ProfileProps | undefined>()
   const [updateDisplayName] = useUpdateDisplayNameMutation()
   const [updatePassword] = useUpdatePasswordMutation()
+  const [updateDisplayImage] = useUpdateDisplayImageMutation()
 
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false)
@@ -97,8 +226,7 @@ export default function Page() {
       setProfile(profileData.data[0])
       setNewDisplayName(profileData.data[0].custom_display_name)
       const token_refresh = getRefreshToken()
-
-      if (token_refresh){
+      if (token_refresh) {
         setRefreshTokenData(token_refresh)
       }
     }
@@ -125,18 +253,22 @@ export default function Page() {
       setSnackbarMessage("New Password does not match Confirm Password")
       setSnackbarSeverity("error")
     } else {
-      const response = await updatePassword({ current_password: currentPassword, new_password: newPassword, refresh_token: refreshTokenData })
-      const {data, error: pwdError} = response.data
+      const response = await updatePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
+        refresh_token: refreshTokenData,
+      })
+      const { data, error: pwdError } = response.data
 
       if (data) {
         setSnackbarMessage("Password updated successfully")
         setSnackbarSeverity("success")
       } else if (pwdError) {
-        if((pwdError as any).code === 'same_password'){
+        if ((pwdError as any).code === "same_password") {
           setSnackbarMessage("Same Password with current password")
-        } else if ((pwdError as any).code === 'weak_password'){
+        } else if ((pwdError as any).code === "weak_password") {
           setSnackbarMessage("Password must be at least 6 characters")
-        } else if ((pwdError as any).code === 'Current Password does not match'){
+        } else if ((pwdError as any).code === "Current Password does not match") {
           setSnackbarMessage("Current Password does not match")
         } else {
           setSnackbarMessage("Cannot update new password")
@@ -219,7 +351,7 @@ export default function Page() {
               </IconButton>
             </Typography>
             {isEditingDisplayName ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <TextField
                   value={newDisplayName}
                   onChange={(e) => setNewDisplayName(e.target.value)}
@@ -237,6 +369,20 @@ export default function Page() {
               <Typography variant="body1">{profile.custom_display_name}</Typography>
             )}
           </Box>
+
+          {/* Avatar Change Section */}
+          <AvatarChange
+            onSuccess={(message) => {
+              setSnackbarMessage(message)
+              setSnackbarSeverity("success")
+              setSnackbarOpen(true)
+            }}
+            onError={(message) => {
+              setSnackbarMessage(message)
+              setSnackbarSeverity("error")
+              setSnackbarOpen(true)
+            }}
+          />
 
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" gutterBottom>
@@ -270,7 +416,7 @@ export default function Page() {
                     togglePasswordVisibility={() => handleTogglePasswordVisibility("confirm")}
                   />
                 </Box>
-                <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box sx={{ display: "flex", gap: 2 }}>
                   <Button variant="contained" color="primary" onClick={handleConfirmPassword}>
                     Confirm
                   </Button>

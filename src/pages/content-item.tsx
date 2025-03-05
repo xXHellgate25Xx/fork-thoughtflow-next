@@ -147,6 +147,7 @@ export default function Page() {
 
   // SEO Checklist states
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  
   const checklist = [
     "Add focus keyword to title tag",
     "Add focus keyword to H1 (post's title)",
@@ -228,14 +229,16 @@ export default function Page() {
       setViews('0');
     }
 
+  }, [content, views_obj, channel, pillar]);
+
+  useEffect(() => {
     // Check SEO Checklist
     if (content && pillar && editorRichContent.nodes[0].nodes[0].textData.text !== "Loading...") {
       const primary_keyword = pillar.primary_keyword || "";
       const auto_check_list = checkSEO(checklist, editorRichContent, content.title, seoMetaDescription, seoSlug, primary_keyword);
       setCheckedItems(auto_check_list);
     }
-
-  }, [content, views_obj, channel, pillar]);
+  }, [content, views_obj, channel, pillar, editorRichContent])
 
   useEffect(() => {
     if(channelList && channel){
@@ -663,6 +666,7 @@ export default function Page() {
                     }}
                     content={editorRichContent}
                     channel_id={channel_id}
+                    content_id={contentId}
                   />
                 )}
               </Card>

@@ -7,6 +7,8 @@ interface JWTAuthWrapperProps {
   children: ReactNode;
 }
 
+const excludePaths = ['/sign-in', '/sign-up'];
+
 const JWTAuthWrapper: React.FC<JWTAuthWrapperProps> = ({ children }) => {
   const router = useRouter();
 
@@ -17,7 +19,9 @@ const JWTAuthWrapper: React.FC<JWTAuthWrapperProps> = ({ children }) => {
       setJwtToken(token);
     } else {
       removeToken();
-      router.push('/sign-in');
+      if (!excludePaths.includes(window.location.pathname)){
+        router.push('/sign-in');
+      }
     }
   }, [router,setJwtToken]);
 

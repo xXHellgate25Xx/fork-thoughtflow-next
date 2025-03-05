@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Divider from '@mui/material/Divider';
@@ -7,14 +6,14 @@ import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
+import Button from '@mui/material/Button';
 import InputAdornment from '@mui/material/InputAdornment';
+import { Snackbar, Alert, AlertColor } from '@mui/material';
 
 import { useRouter } from 'src/routes/hooks';
-
 import { Iconify } from 'src/components/iconify';
 import { useSignInWithEmailAndPasswordMutation } from 'src/libs/service/auth/auth';
 import { setToken } from 'src/utils/auth';
-import { Snackbar, Alert, AlertColor } from '@mui/material';
 
 export function SignInView() {
   const router = useRouter();
@@ -138,19 +137,24 @@ export function SignInView() {
     <Box>
       <Box gap={1.5} display="flex" flexDirection="column" alignItems="center" sx={{ mb: 5 }}>
         <Typography variant="h5">Sign In</Typography>
-        {/* TODO: Signup
         <Typography variant="body2" color="text.secondary">
           Don’t have an account?
-          <Link href="/sign-up" variant="subtitle2" sx={{ ml: 0.5 }}>
-            Get started
-          </Link>
-        </Typography> */}
+          <Link
+              variant="subtitle2"
+              sx={{ ml: 0.5, cursor: 'pointer' }}
+              onClick={(e) => {
+                console.log('Link clicked');
+                router.push('/sign-up');
+              }}
+            >
+              Get started
+            </Link>
+        </Typography>
       </Box>
 
       {renderForm}
-
-      {/* TODO: 3RD PARTY AUTHENTICATION
-      <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
+      {/* TODO */}
+      {/* <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
         <Typography
           variant="overline"
           sx={{ color: 'text.secondary', fontWeight: 'fontWeightMedium' }}

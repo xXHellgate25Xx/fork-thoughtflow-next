@@ -105,7 +105,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         {...other}
       >
         <Avatar 
-          src={_myAccount.photoURL} 
+          src={profile?.photo_url} 
           alt={profile?.custom_display_name} 
           sx={{ width: 1, height: 1 }}
         >

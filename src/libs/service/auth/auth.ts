@@ -101,6 +101,7 @@ type AuthResponse = AuthSuccessResponse | AuthErrorResponse;
 interface SignUpRequest {
   email: string;
   password: string;
+  displayName: string
 }
 
 interface SignInRequest {
@@ -122,12 +123,13 @@ export const authApi = createApi({
   baseQuery, // Use your custom baseQuery
   endpoints: (builder) => ({
     signUpWithEmailAndPassword: builder.mutation<AuthResponse, SignUpRequest>({
-      query: ({ email, password }) => ({
+      query: ({ email, password, displayName }) => ({
         url: 'functions/v1/api/auth/signUpWithPassword',
         method: 'POST',
         body: {
           email,
           password,
+          displayName
         },
       }),
     }),

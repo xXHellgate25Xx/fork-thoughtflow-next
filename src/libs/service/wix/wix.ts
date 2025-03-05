@@ -23,12 +23,19 @@ export interface FileResponse {
   state: string;
 }
 
+export interface SupFileResponse {
+  mimeType: string;
+  publicUrl: string;
+  displayName: string;
+}
+
 export interface WixUploadRequest {
   file: string;
   bucketName: string;
   destinationPath: string;
   displayName: string;
   contentType: string;
+  contentId?: string;
 }
 // // Old one
 // export interface WixDraftPostResponse {
@@ -96,6 +103,20 @@ export const WixApi = createApi({
         },
       }),
     }),
+    uploadToSupabase: builder.mutation<{ file: SupFileResponse }, {channelId: string ; fileData: WixUploadRequest}>({
+      query: ({channelId, fileData}) => ({
+        url: `functions/v1/api/upload-file/${channelId}/upload-image-no-wix`,
+        method: 'POST',
+        body: {
+          file: fileData.file,
+          bucketName: fileData.bucketName,
+          destinationPath: fileData.destinationPath,
+          displayName: fileData.displayName,
+          contentType: fileData.contentType,
+          contentId: fileData.contentId,
+        },
+      }),
+    }),
     CreatePublishToWix: builder.mutation<
       WixDraftPostResponse,
       { channel_id: string; CreatePublishReq: WixCreatePublishPostRequest }
@@ -110,4 +131,7 @@ export const WixApi = createApi({
 });
 
 // Export hooks for usage in functional components
-export const { useUploadToWixMutation, useCreatePublishToWixMutation } = WixApi;
+export const { 
+  useUploadToWixMutation,
+  useUploadToSupabaseMutation,
+  useCreatePublishToWixMutation } = WixApi;

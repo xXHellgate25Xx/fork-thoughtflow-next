@@ -1,6 +1,16 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../supabase/baseQuery";
 
+
+interface UpdateProfileImageRequest {
+  file: string;
+  bucketName: string;
+  destinationPath: string;
+  displayName: string;
+  contentType: string;
+}
+
+
 const ProfileApi = createApi({
     reducerPath: "profileApi",
     baseQuery,
@@ -36,12 +46,31 @@ const ProfileApi = createApi({
                 },
               }),
             }),
+          //   ------------------Update Display Image--------------------------
+          updateDisplayImage: builder.mutation<any, UpdateProfileImageRequest>({
+            query: ({file,
+              bucketName,
+              destinationPath,
+              displayName,
+              contentType}) => ({
+                url: `/functions/v1/api/profile/change-photo`,
+                method: 'PUT',
+                body: {
+                  file,
+                  bucketName,
+                  destinationPath,
+                  displayName,
+                  contentType
+              },
+            }),
+          }),
     })
 });
 
 export const {
     useGetProfileQuery,
     useUpdateDisplayNameMutation,
-    useUpdatePasswordMutation
+    useUpdatePasswordMutation,
+    useUpdateDisplayImageMutation
   } = ProfileApi;
   export { ProfileApi };
