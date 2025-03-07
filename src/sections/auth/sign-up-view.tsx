@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useCallback } from "react"
 import Box from "@mui/material/Box"
 import Link from "@mui/material/Link"
@@ -112,7 +110,7 @@ export function SignUpView() {
       <TextField
         fullWidth
         name="displayName"
-        label="Display Name"
+        label="Full Name"
         value={displayName}
         onChange={(e) => setDisplayName(e.target.value)}
         InputLabelProps={{ shrink: true }}

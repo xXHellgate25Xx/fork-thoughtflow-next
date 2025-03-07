@@ -207,7 +207,7 @@ export default function Page() {
   const [snackbarMessage, setSnackbarMessage] = useState("")
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success")
 
-  // Editing state for display name and password
+  // Editing state for Full Name and password
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false)
   const [isEditingPassword, setIsEditingPassword] = useState(false)
   const [newDisplayName, setNewDisplayName] = useState("")
@@ -236,11 +236,11 @@ export default function Page() {
     if (newDisplayName !== profile?.custom_display_name) {
       const { error } = await updateDisplayName({ custom_display_name: newDisplayName })
       if (error) {
-        setSnackbarMessage("Error updating display name")
+        setSnackbarMessage("Error updating Full Name")
         setSnackbarSeverity("error")
       } else {
         setProfile((prev) => (prev ? { ...prev, custom_display_name: newDisplayName } : prev))
-        setSnackbarMessage("Display name updated successfully")
+        setSnackbarMessage("Full Name updated successfully")
         setSnackbarSeverity("success")
       }
       setSnackbarOpen(true)
@@ -345,7 +345,7 @@ export default function Page() {
 
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Display Name
+              Full Name
               <IconButton size="small" onClick={() => setIsEditingDisplayName((prev) => !prev)}>
                 <EditIcon fontSize="small" />
               </IconButton>
