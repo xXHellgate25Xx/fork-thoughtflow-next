@@ -110,6 +110,7 @@ export default function Page() {
   const [channelType, setChannelType] = useState<string|null>('');
   const [richContent, setRichContent] = useState(toDraft(fromPlainText('Loading...')));
   const [editorRichContent, setEditorRichContent] = useState<any>(fromPlainText('Loading...'));
+  const [isInitRichContent, setIisInitRichContent] = useState(true);
   const [pillarName, setPillarName] = useState('Loading...');
 
   // Publish states
@@ -215,6 +216,7 @@ export default function Page() {
           parsedContent = toDraft(read_richContent);
         }
         setRichContent(parsedContent);
+        setIisInitRichContent(false);
       } catch (error) {
         console.error('Error parsing richContent:', error);
         setRichContent(toDraft(fromPlainText('Error loading content')));
@@ -233,12 +235,12 @@ export default function Page() {
 
   useEffect(() => {
     // Check SEO Checklist
-    if (content && pillar && editorRichContent.nodes[0].nodes[0].textData.text !== "Loading...") {
-      const primary_keyword = pillar.primary_keyword || "";
-      const auto_check_list = checkSEO(checklist, editorRichContent, content.title, seoMetaDescription, seoSlug, primary_keyword);
+    if (content && pillar && !isInitRichContent) {
+      // const primary_keyword = pillar.primary_keyword || "";
+      const auto_check_list = checkSEO(checklist, editorRichContent, content.title, seoTitleTag, seoMetaDescription, seoSlug, longTailKeyword);
       setCheckedItems(auto_check_list);
     }
-  }, [content, views_obj, channel, pillar, editorRichContent])
+  }, [content, views_obj, channel, pillar, isInitRichContent])
 
   useEffect(() => {
     if(channelList && channel){

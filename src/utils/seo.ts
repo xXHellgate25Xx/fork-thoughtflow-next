@@ -118,29 +118,22 @@ function extractTextData(content: RichContent): ExtractedText[] {
 }
 
 const checkFocusKeyH1 = (
-  rich_content: RichContent,
-  primary_keyword: string
+  title: string,
+  focus_keyword: string
 ) => {
-  const extractedData = extractTextData(rich_content);
-  const has_focus_key_in_h1 = extractedData.some(
-    (item) =>
-      item.type === Node_Type.HEADING &&
-      item.headingLevel === "h1" &&
-      item.text.toLowerCase().includes(primary_keyword.toLowerCase())
-  );
-  
-  return has_focus_key_in_h1
+  const has_focus_in_title = title.toLowerCase().includes(focus_keyword.toLowerCase());
+  return has_focus_in_title;
 }
 
 const hasFocusKeyBody = (
   rich_content: RichContent,
-  primary_keyword: string
+  focus_keyword: string
 ) => {
   const extractedData = extractTextData(rich_content);
   const has_focus_key_in_body = extractedData.some(
     (item) =>
       item.type === Node_Type.PARAGRAPH &&
-      item.text.toLowerCase().includes(primary_keyword.toLowerCase())
+      item.text.toLowerCase().includes(focus_keyword.toLowerCase())
   );
   
   return has_focus_key_in_body
@@ -172,44 +165,51 @@ const hasImageAltText = (rich_content: RichContent): boolean =>
 
 const checkFocusKeyTitleTag = (
   title: string,
-  primary_keyword: string
+  focus_keyword: string
 ) => {
-  const has_focus_in_title = title.toLowerCase().includes(primary_keyword.toLowerCase());
+  const has_focus_in_title = title.toLowerCase().includes(focus_keyword.toLowerCase());
   return has_focus_in_title;
 }
 
 
 const hasFocusKeyMetaDescription = (
   seo_meta_description: string,
-  primary_keyword: string
+  focus_keyword: string
 ) => {
-  const has_focus_in_meta = seo_meta_description.toLowerCase().includes(primary_keyword.toLowerCase());
+  const has_focus_in_meta = seo_meta_description.toLowerCase().includes(focus_keyword.toLowerCase());
   return has_focus_in_meta;
 }
 
 const hasFocusKeyURLSlug = (
   seo_slug: string,
-  primary_keyword: string
+  focus_keyword: string
 ) => {
-  const has_focus_in_slug = seo_slug.includes(primary_keyword.toLowerCase());
-  return has_focus_in_slug;
+    // Normalize keyword: Convert to lowercase, remove 's, and replace non-alphanumeric characters with spaces
+    const normalizedKeyword = focus_keyword.toLowerCase().replace(/'s/g, "s").replace(/[^a-z0-9]+/g, " ").trim();
+    
+    // Normalize slug: Convert to lowercase and replace hyphens with spaces
+    const normalizedSlug = seo_slug.toLowerCase().replace(/-/g, " ").trim();
+    
+    // Check if the keyword exists as a contiguous substring in the slug
+    return normalizedSlug.includes(normalizedKeyword);
 }
 
 export const checkSEO = (
   checklist: string[],
   rich_content: RichContent,
   title: string,
+  seo_title_tag: string,
   seo_meta_description: string,
   seo_slug: string,
-  primary_keyword: string
+  long_tail_keyword: string
 ) => {
   const return_checklist: string[] = [];
 
-  if (checkFocusKeyTitleTag(title,primary_keyword) && primary_keyword !== "") {
+  if (checkFocusKeyTitleTag(seo_title_tag,long_tail_keyword) && long_tail_keyword !== "") {
     return_checklist.push(checklist[0]);
   }
 
-  if (checkFocusKeyH1(rich_content, primary_keyword) && primary_keyword !== "") {
+  if (checkFocusKeyH1(title, long_tail_keyword) && long_tail_keyword !== "") {
     return_checklist.push(checklist[1]);
   }
 
@@ -221,15 +221,15 @@ export const checkSEO = (
     return_checklist.push(checklist[3]);
   }
 
-  if (hasFocusKeyBody(rich_content, primary_keyword) && primary_keyword !== "") {
+  if (hasFocusKeyBody(rich_content, long_tail_keyword) && long_tail_keyword !== "") {
     return_checklist.push(checklist[4]);
   }
 
-  if (hasFocusKeyMetaDescription(seo_meta_description, primary_keyword) && primary_keyword !== "") {
+  if (hasFocusKeyMetaDescription(seo_meta_description, long_tail_keyword) && long_tail_keyword !== "") {
     return_checklist.push(checklist[5]);
   }
 
-  if (hasFocusKeyURLSlug(seo_slug, primary_keyword) && primary_keyword !== "") {
+  if (hasFocusKeyURLSlug(seo_slug, long_tail_keyword) && long_tail_keyword !== "") {
     return_checklist.push(checklist[6]);
   }
 
