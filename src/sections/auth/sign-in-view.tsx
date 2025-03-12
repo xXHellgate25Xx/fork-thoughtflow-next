@@ -1,19 +1,23 @@
-import { useState, useCallback } from 'react';
-import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
-import Divider from '@mui/material/Divider';
-import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
+import type { AlertColor } from '@mui/material';
+
+import { useCallback, useState } from 'react';
+
 import LoadingButton from '@mui/lab/LoadingButton';
-import Button from '@mui/material/Button';
+import { Alert, Snackbar } from '@mui/material';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
-import { Snackbar, Alert, AlertColor } from '@mui/material';
+import Link from '@mui/material/Link';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 
 import { useRouter } from 'src/routes/hooks';
-import { Iconify } from 'src/components/iconify';
-import { useSignInWithEmailAndPasswordMutation } from 'src/libs/service/auth/auth';
+
 import { setToken } from 'src/utils/auth';
+
+import { useSignInWithEmailAndPasswordMutation } from 'src/libs/service/auth/auth';
+
+import { Iconify } from 'src/components/iconify';
 
 export function SignInView() {
   const router = useRouter();
@@ -68,6 +72,11 @@ export function SignInView() {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleGetStartedClick = useCallback(() => {
+    console.log('Link clicked');
+    router.push('/auth/sign-up');
+  }, [router]);
+
   const renderForm = (
     <Box
       component="form"
@@ -90,14 +99,6 @@ export function SignInView() {
         required
       />
 
-      <Link
-        href="/forgot-password"
-        variant="body2"
-        color="inherit"
-        sx={{ alignSelf: 'start', mb: 1.5 }}
-      >
-        Forgot password?
-      </Link>
 
       <TextField
         fullWidth
@@ -116,10 +117,18 @@ export function SignInView() {
             </InputAdornment>
           ),
         }}
-        sx={{ mb: 3 }}
+        sx={{ mb: 1.5 }}
         required
       />
 
+      <Link
+        component="button"
+        onClick={() => router.push('/auth/reset-password-request')}
+        variant="subtitle2"
+        sx={{ alignSelf: 'start', ml: 1, mb: 3 }}
+      >
+        Forgot password?
+      </Link>
       <LoadingButton
         fullWidth
         size="large"
@@ -138,17 +147,14 @@ export function SignInView() {
       <Box gap={1.5} display="flex" flexDirection="column" alignItems="center" sx={{ mb: 5 }}>
         <Typography variant="h5">Sign In</Typography>
         <Typography variant="body2" color="text.secondary">
-          Don’t have an account?
+          {`Don't have an account?`}
           <Link
-              variant="subtitle2"
-              sx={{ ml: 0.5, cursor: 'pointer' }}
-              onClick={(e) => {
-                console.log('Link clicked');
-                router.push('/sign-up');
-              }}
-            >
-              Get started
-            </Link>
+            variant="subtitle2"
+            sx={{ ml: 0.5, cursor: 'pointer' }}
+            onClick={handleGetStartedClick}
+          >
+            Get started
+          </Link>
         </Typography>
       </Box>
 

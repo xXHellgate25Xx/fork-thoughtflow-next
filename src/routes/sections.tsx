@@ -1,12 +1,12 @@
 import { lazy, Suspense } from 'react';
-import { Outlet, Navigate, useRoutes } from 'react-router-dom';
+import { Navigate, Outlet, useRoutes } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 
-import { varAlpha } from 'src/theme/styles';
 import { AuthLayout } from 'src/layouts/auth';
 import { DashboardLayout } from 'src/layouts/dashboard';
+import { varAlpha } from 'src/theme/styles';
 
 // ----------------------------------------------------------------------
 
@@ -16,6 +16,8 @@ export const UserPage = lazy(() => import('src/pages/user'));
 export const ProfilePage = lazy(() => import('src/pages/profile'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const SignUpPage = lazy(() => import('src/pages/sign-up'));
+export const ResetPasswordRequestPage = lazy(() => import('src/pages/reset-password-request'));
+export const ResetPasswordPage = lazy(() => import('src/pages/reset-password'));
 export const ProductsPage = lazy(() => import('src/pages/products'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
 export const CreateIdeaPage = lazy(() => import('src/pages/create-idea'));
@@ -69,20 +71,20 @@ export function Router() {
       ],
     },
     {
-      path: 'sign-in',
+      path: 'auth',
       element: (
         <AuthLayout>
-          <SignInPage />
+          <Suspense fallback={renderFallback}>
+            <Outlet />
+          </Suspense>
         </AuthLayout>
       ),
-    },
-    {
-      path: 'sign-up',
-      element: (
-        <AuthLayout>
-          <SignUpPage />
-        </AuthLayout>
-      ),
+      children: [
+        { path: 'sign-in', element: <SignInPage /> },
+        { path: 'sign-up', element: <SignUpPage /> },
+        { path: 'reset-password-request', element: <ResetPasswordRequestPage /> },
+        { path: 'reset-password', element: <ResetPasswordPage /> },
+      ],
     },
     {
       path: 'select-account',

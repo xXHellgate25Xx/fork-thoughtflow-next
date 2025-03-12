@@ -1,17 +1,17 @@
-import { useState, useCallback } from "react"
-import Box from "@mui/material/Box"
-import Link from "@mui/material/Link"
-import Divider from "@mui/material/Divider"
-import TextField from "@mui/material/TextField"
-import IconButton from "@mui/material/IconButton"
-import Typography from "@mui/material/Typography"
 import LoadingButton from "@mui/lab/LoadingButton"
+import { Alert, type AlertColor, Button, Snackbar } from "@mui/material"
+import Box from "@mui/material/Box"
+import IconButton from "@mui/material/IconButton"
 import InputAdornment from "@mui/material/InputAdornment"
-import { Snackbar, Alert, type AlertColor, Button } from "@mui/material"
+import Link from "@mui/material/Link"
+import TextField from "@mui/material/TextField"
+import Typography from "@mui/material/Typography"
+import { useCallback, useState } from "react"
 
-import { useRouter } from "src/routes/hooks"
 import { Iconify } from "src/components/iconify"
 import { useSignUpWithEmailAndPasswordMutation } from "src/libs/service/auth/auth"
+import { useRouter } from "src/routes/hooks"
+import { hashPassword } from "src/utils/ecrypt"
 
 export function SignUpView() {
   const router = useRouter()
@@ -48,7 +48,9 @@ export function SignUpView() {
     }
 
     try {
-      const result = await signUp({ email, password, displayName }).unwrap()
+      // Hash the password before sending
+      const hashedPassword = await hashPassword(password);
+      const result = await signUp({ email, password: hashedPassword, displayName }).unwrap()
       console.log("result: ", result)
       if (result.error) {
         setSnackbar({
@@ -82,7 +84,7 @@ export function SignUpView() {
 
   const handleGoToSignIn = () => {
     handleCloseSnackbar()
-    router.push("/sign-in")
+    router.push("/auth/sign-in")
   }
 
   const renderForm = (
@@ -172,7 +174,7 @@ export function SignUpView() {
         <Typography variant="h5">Sign Up</Typography>
         <Typography variant="body2" color="text.secondary">
           Already have an account?
-          <Link href="/sign-in" variant="subtitle2" sx={{ ml: 0.5 }}>
+          <Link href="/auth/sign-in" variant="subtitle2" sx={{ ml: 0.5 }}>
             Sign In
           </Link>
         </Typography>

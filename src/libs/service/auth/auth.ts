@@ -118,6 +118,16 @@ interface VerifyOtpRequest {
   otp: string;
 }
 
+interface RequestResetPasswordRequest {
+  email: string;
+}
+
+interface ResetPasswordRequest {
+  accessToken: string;
+  refreshToken: string;
+  password: string;
+}
+
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery, // Use your custom baseQuery
@@ -162,13 +172,33 @@ export const authApi = createApi({
         },
       }),
     }),
+    requestResetPassword: builder.mutation<void, RequestResetPasswordRequest>({
+      query: ({ email }) => ({
+        url: 'functions/v1/api/auth/requestResetPassword',
+        method: 'POST',
+        body: { email },
+      }),
+    }),
+    resetPassword: builder.mutation<AuthResponse, ResetPasswordRequest>({
+      query: ({ accessToken, refreshToken, password }) => ({
+        url: 'functions/v1/api/auth/resetPassword',
+        method: 'POST',
+        body: { 
+          accessToken,
+          refreshToken,
+          password,
+        }, 
+      }),
+    }),
   }),
 });
 
-// Export hooks for usage in functionsal components
+// Export hooks for usage in functional components
 export const {
   useSignUpWithEmailAndPasswordMutation,
   useSignInWithEmailAndPasswordMutation,
   useSendOtpMutation,
   useVerifyOtpMutation,
+  useRequestResetPasswordMutation,
+  useResetPasswordMutation,
 } = authApi;
