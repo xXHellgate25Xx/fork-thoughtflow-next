@@ -48,6 +48,7 @@ interface ContentUpdatePayload {
   seo_title_tag?: string;
   seo_meta_description?: string;
   long_tail_keyword?: string;
+  content_html?: string;
 }
 
 export interface ContentRes {

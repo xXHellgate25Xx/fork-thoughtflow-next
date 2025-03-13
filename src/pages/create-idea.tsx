@@ -185,7 +185,8 @@ export default function Page() {
           seo_slug: generationData?.seo_slug || null,
           seo_title_tag: generationData?.title || null,
           channel_id: channelId,
-          long_tail_keyword: generationData?.long_tail || null
+          long_tail_keyword: generationData?.long_tail || null,
+          content_html: generationData?.content_html,
         }
       });
       

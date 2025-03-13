@@ -38,7 +38,7 @@ import { toDraft } from 'ricos-content/libs/toDraft';
 import { fromPlainText } from 'ricos-content/libs/fromPlainText';
 import { fromDraft } from 'ricos-content/libs/fromDraft';
 import { toPlainText } from 'ricos-content/libs/toPlainText';
-import { fromRichTextHtml } from 'ricos-content/libs/server-side-converters';
+import { fromRichTextHtml, toHtml } from 'ricos-content/libs/server-side-converters';
 import { RichContent } from 'ricos-schema';
 import Editor from 'src/components/editor/Editor';
 import { handleKeyDown, handleSeoSlugChange, checkSEO } from 'src/utils/seo';
@@ -342,6 +342,7 @@ export default function Page() {
       setIsLoading(true);
       // Ensure plaintext is awaited before proceeding
       const plaintext = await toPlainText(editorRichContent);
+      const contentHtml = toHtml(editorRichContent);
       if (plaintext) {
         const { data: updateData } = await updateContentSupabase({
           contentId: contentId || '',
@@ -353,6 +354,7 @@ export default function Page() {
             seo_meta_description: seoMetaDescription,
             seo_title_tag: seoTitleTag,
             long_tail_keyword: longTailKeyword,
+            content_html: contentHtml,
           },
         });
 
@@ -408,6 +410,7 @@ export default function Page() {
         seo_title_tag: repurposeData?.seo_title_tag || null,
         long_tail_keyword: repurposeData?.long_tail_keyword,
         channel_id: repurposeData?.channel_id || "",
+        content_html: repurposeData?.content_html,
       }
     })
     

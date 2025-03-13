@@ -34,6 +34,7 @@ interface createContentProps {
     content_type: string;
     channel_id: string;
     long_tail_keyword: string | null | undefined;
+    content_html: string | undefined;
 }
 
 interface IdeaRes {
