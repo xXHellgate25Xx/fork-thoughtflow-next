@@ -18,7 +18,6 @@ import { setToken } from 'src/utils/auth';
 import { useSignInWithEmailAndPasswordMutation } from 'src/libs/service/auth/auth';
 
 import { Iconify } from 'src/components/iconify';
-import { hashPassword } from 'src/utils/ecrypt';
 
 export function SignInView() {
   const router = useRouter();
@@ -40,8 +39,7 @@ export function SignInView() {
 
   const handleSignIn = useCallback(async () => {
     try {
-      const hashedPassword = await hashPassword(password);
-      const result = await signIn({ email, password: hashedPassword }).unwrap();
+      const result = await signIn({ email, password }).unwrap();
 
       if (result.error) {
         setSnackbar({

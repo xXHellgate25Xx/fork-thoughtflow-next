@@ -12,7 +12,8 @@ import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-te
 
 import { Icon } from '@iconify/react';
 import { Button, CircularProgress } from '@mui/material';
-import './editor.css';
+import { RicosEditorRef } from 'ricos-editor/dist/src/RicosEditorRef';
+import { RichContent } from 'ricos-schema';
 
 function Editor({ content, callback, channel_id, content_id }: { content?: any, callback?: any, channel_id?: any, content_id?: any }) {
   const [editorState, setEditorState] = useState(content);
@@ -186,30 +187,30 @@ function Editor({ content, callback, channel_id, content_id }: { content?: any, 
 
   return (
     <>
-      <div className="editor-container">
-        <RicosEditor
-          toolbarSettings={{ useStaticTextToolbar: false }}
-          content={editorState}
-          onChange={(updatedContent: any) => {
-            setEditorState(updatedContent);
-            callback((updatedContent))
-          }}
-          ref={(ref: any) => {
-            editorRef.current = ref?.getEditorCommands() || null;
-          }}
-          plugins={[
-            pluginImage(),
-            pluginTextColor(),
-            pluginTextHighlight(),
-            pluginHeadings(),
-            pluginLink()
-          ]}
-        />
-      </div>
-
+      <RicosEditor
+        toolbarSettings={{ useStaticTextToolbar: false }}
+        content={editorState}
+        onChange={(updatedContent: RichContent) => {
+          setEditorState(updatedContent);
+          callback((updatedContent))
+        }}
+        ref={(ref: RicosEditorRef) => {
+          if (ref) {
+            editorRef.current = ref.getEditorCommands() || null;
+          }
+        }} // Save editor commands using ref
+        plugins={[
+          pluginImage(),
+          pluginTextColor(),
+          pluginTextHighlight(),
+          pluginHeadings(),
+          pluginLink()
+        ]} // Add plugins if needed
+      />
       <Button
         variant='contained'
         color='inherit'
+        // onClick={addCustomImage}
         onClick={addCustomImageNoWix}
         disabled={isLoading}
         startIcon={
