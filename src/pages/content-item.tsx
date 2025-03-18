@@ -1,52 +1,51 @@
+import { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useState, useEffect, useRef } from 'react';
 import { CONFIG } from 'src/config-global';
-import { _products } from 'src/_mock';
 
-import { Box, Button, Card, Typography, IconButton, Link, List, ListItem, FormControlLabel, Checkbox } from '@mui/material';
-import { DashboardContent } from 'src/layouts/dashboard';
 import { Icon } from '@iconify/react';
+import { Box, Button, Card, Checkbox, FormControlLabel, Link, List, ListItem, Typography } from '@mui/material';
+import { DashboardContent } from 'src/layouts/dashboard';
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
+import {
+  useGetAllChannelsOfUserQuery,
+  useGetChannelByIDQuery
+} from 'src/libs/service/channel/channel';
 import {
   useGetContentQuery,
   useGetContentViewCountQuery,
   useUpdateContentMutation,
 } from 'src/libs/service/content/content';
 import {
-  useGetAllChannelsOfUserQuery,
-  useGetChannelByIDQuery
-} from 'src/libs/service/channel/channel';
-import {
-  useGetPillarByIdQuery
-} from 'src/libs/service/pillar/pillar-item';
-import {
   useCreateIdeaContentMutation
 } from 'src/libs/service/idea/idea';
 import {
   useRepurposeContentMutation
 } from 'src/libs/service/idea/repurpose';
+import {
+  useGetPillarByIdQuery
+} from 'src/libs/service/pillar/pillar-item';
 
-import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
 import { useParams } from 'react-router-dom';
+import TextField from 'src/components/text-field/text-field';
+import { createMetaDescriptionTag, createTitleTag } from 'src/interfaces/seoData-interface';
+import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
 import { useRouter } from 'src/routes/hooks';
 import { fDateTime } from 'src/utils/format-time';
-import { createMetaDescriptionTag, createTitleTag } from 'src/interfaces/seoData-interface';
-import TextField from 'src/components/text-field/text-field';
 
-import Viewer from 'src/components/editor/Viewer';
-import { toDraft } from 'ricos-content/libs/toDraft';
 import { fromPlainText } from 'ricos-content/libs/fromPlainText';
-import { fromDraft } from 'ricos-content/libs/fromDraft';
+import { toHtml } from 'ricos-content/libs/server-side-converters';
+import { toDraft } from 'ricos-content/libs/toDraft';
 import { toPlainText } from 'ricos-content/libs/toPlainText';
-import { fromRichTextHtml, toHtml } from 'ricos-content/libs/server-side-converters';
 import { RichContent } from 'ricos-schema';
 import Editor from 'src/components/editor/Editor';
-import { handleKeyDown, handleSeoSlugChange, checkSEO } from 'src/utils/seo';
+import Viewer from 'src/components/editor/Viewer';
 import { channelIcons } from 'src/theme/icons/channel-icons';
+import { deepCloneAs } from 'src/utils/object-utils';
+import { checkSEO, handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
 
 import { PublishForm } from 'src/components/publish_message/publish_message';
-import { RepurposeSelect } from 'src/sections/repurpose/repurpose-select';
 import { RepurposeForm } from 'src/components/repurpose/repurpose';
+import { RepurposeSelect } from 'src/sections/repurpose/repurpose-select';
 // ----------------------------------------------------------------------
 
 export default function Page() {
@@ -58,7 +57,7 @@ export default function Page() {
   const { 'content-id': contentId } = useParams();
 
   // Get allAccountsApiData
-  const {data: allAccountsApiData} = useGetAllAccountsQuery();
+  const { data: allAccountsApiData } = useGetAllAccountsQuery();
   const accounts_data = allAccountsApiData?.data;
 
   // Get contentData
@@ -84,7 +83,7 @@ export default function Page() {
     data: channelData,
     isLoading: channelLoading,
     refetch: channelRefetch,
-  } = useGetChannelByIDQuery({ channel_id: content?.channel_id || ""})
+  } = useGetChannelByIDQuery({ channel_id: content?.channel_id || "" })
   const channel = channelData?.data?.[0];
 
   // List Channels
@@ -99,7 +98,7 @@ export default function Page() {
     data: pillarData,
     isLoading: pillarLoading,
     refetch: pillarRefetch,
-  } = useGetPillarByIdQuery({ pillarId: content?.pillar_id || ""})
+  } = useGetPillarByIdQuery({ pillarId: content?.pillar_id || "" })
   const pillar = pillarData?.data?.[0];
 
   // Display states
@@ -107,9 +106,9 @@ export default function Page() {
   const [createdAt, setCreatedAt] = useState('Loading...');
   const [publishedAt, setPublishedAt] = useState('Loading...');
   const [views, setViews] = useState('Loading...');
-  const [channelType, setChannelType] = useState<string|null>('');
+  const [channelType, setChannelType] = useState<string | null>('');
   const [richContent, setRichContent] = useState(toDraft(fromPlainText('Loading...')));
-  const [editorRichContent, setEditorRichContent] = useState<any>(fromPlainText('Loading...'));
+  const [editorRichContent, setEditorRichContent] = useState<RichContent>(fromPlainText('Loading...'));
   const [isInitRichContent, setIisInitRichContent] = useState(true);
   const [pillarName, setPillarName] = useState('Loading...');
 
@@ -120,11 +119,11 @@ export default function Page() {
   const [channelRepId, setChannelRepId] = useState<string>('Loading...');
   const channelIdRepRef = useRef(channelRepId);
   const [channelListIdAndName, setChannelListIdAndName] = useState<
-      {id: string; name: string; url: string}[] | undefined
-    >(undefined);
+    { id: string; name: string; url: string }[] | undefined
+  >(undefined);
   const [channelRep, setChannelRep] = useState<
-      {id: string; name: string, url: string} | undefined
-    >(undefined);
+    { id: string; name: string, url: string } | undefined
+  >(undefined);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -148,7 +147,7 @@ export default function Page() {
 
   // SEO Checklist states
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
-  
+
   const checklist = [
     "Add focus keyword to title tag",
     "Add focus keyword to H1 (post's title)",
@@ -161,7 +160,7 @@ export default function Page() {
 
   const check_list_explanation = [
     "The title tag includes the focus keyword and is now optimized for searches.",
-    "The H1 (post’s title) includes the focus keyword and is now optimized for search engines.",
+    "The H1 (post's title) includes the focus keyword and is now optimized for search engines.",
     "This post has visual content, which can drive more traffic and engagement.",
     "All of the images in this post include alt text, which helps search engines and screen reader users understand them.",
     "The body text includes the focus keyword at least once, which helps visitors and search engines better understand what this post is about.",
@@ -243,17 +242,17 @@ export default function Page() {
   }, [content, views_obj, channel, pillar, isInitRichContent])
 
   useEffect(() => {
-    if(channelList && channel){
+    if (channelList && channel) {
       const formattedChannels = channelList?.data
-      .filter((channel_ele: any) => channel_ele.id !== channel_id) // Exclude the current ID
-      .map((channel_ele: any)=>{
-        const requiredPairs = {id: channel_ele.id, name: channel_ele.name, url: channel_ele.url};
-        return requiredPairs;
-      }) ?? [];
+        .filter((channel_ele: any) => channel_ele.id !== channel_id) // Exclude the current ID
+        .map((channel_ele: any) => {
+          const requiredPairs = { id: channel_ele.id, name: channel_ele.name, url: channel_ele.url };
+          return requiredPairs;
+        }) ?? [];
       setChannelRepId(channel.id || 'Loading...');
-      setChannelListIdAndName(formattedChannels.length > 0?
-        formattedChannels:
-        [{id: '1', name: 'No existing channels'}]);
+      setChannelListIdAndName(formattedChannels.length > 0 ?
+        formattedChannels :
+        [{ id: '1', name: 'No existing channels' }]);
     }
   }, [channelList, channel]);
 
@@ -315,7 +314,7 @@ export default function Page() {
           const title = publishData?.draftPost?.title;
           const url = publishData?.draftPost?.url;
           const published_url = url ? `${url.base}${url.path}` : '#';
-          
+
           setPublishedUrl(published_url)
           setIsPublishFormClicked(false);
           setPublished(true);
@@ -340,9 +339,9 @@ export default function Page() {
   const handleSaveClick = async () => {
     try {
       setIsLoading(true);
-      // Ensure plaintext is awaited before proceeding
+
       const plaintext = await toPlainText(editorRichContent);
-      const contentHtml = toHtml(editorRichContent);
+      const contentHtml = toHtml(deepCloneAs<RichContent, RichContent>(editorRichContent));
       if (plaintext) {
         const { data: updateData } = await updateContentSupabase({
           contentId: contentId || '',
@@ -395,31 +394,31 @@ export default function Page() {
     })
     // Create the new content
     if (repurposeData) {
-    // console.log(repurposeData);
-    const { data: createContentData } = await createContent({
-      ideaId: repurposeData?.idea_id,
-      payload: {
-        content_body: repurposeData?.content_body,
-        rich_content: repurposeData?.rich_content,
-        title: repurposeData?.title,
-        excerpt: repurposeData?.excerpt || "",
-        status: repurposeData?.status || "",
-        content_type: repurposeData?.content_type || "",
-        seo_meta_description: repurposeData?.seo_meta_description || null,
-        seo_slug: repurposeData?.seo_slug || null,
-        seo_title_tag: repurposeData?.seo_title_tag || null,
-        long_tail_keyword: repurposeData?.long_tail_keyword,
-        channel_id: repurposeData?.channel_id || "",
-        content_html: repurposeData?.content_html,
+      // console.log(repurposeData);
+      const { data: createContentData } = await createContent({
+        ideaId: repurposeData?.idea_id,
+        payload: {
+          content_body: repurposeData?.content_body,
+          rich_content: repurposeData?.rich_content,
+          title: repurposeData?.title,
+          excerpt: repurposeData?.excerpt || "",
+          status: repurposeData?.status || "",
+          content_type: repurposeData?.content_type || "",
+          seo_meta_description: repurposeData?.seo_meta_description || null,
+          seo_slug: repurposeData?.seo_slug || null,
+          seo_title_tag: repurposeData?.seo_title_tag || null,
+          long_tail_keyword: repurposeData?.long_tail_keyword,
+          channel_id: repurposeData?.channel_id || "",
+          content_html: repurposeData?.content_html,
+        }
+      })
+
+      // Navigate to the new content
+      const new_content_id = createContentData?.data?.[0]?.content_id;
+      // console.log(new_content_id);
+      if (new_content_id) {
+        router.replace(`/content/${new_content_id}`)
       }
-    })
-    
-    // Navigate to the new content
-    const new_content_id = createContentData?.data?.[0]?.content_id;
-    // console.log(new_content_id);
-    if (new_content_id) {
-      router.replace(`/content/${new_content_id}`)
-    }
     }
     else {
       console.error("Cannot repurpose content!!!")
@@ -491,26 +490,26 @@ export default function Page() {
                 {/* Content pillar */}
                 <Box display='flex' alignItems='center' gap='0.3rem'
                   sx={{ cursor: 'pointer' }}
-                  onClick={() => {router.replace(`/pillar/${content?.pillar_id}`)}}
+                  onClick={() => { router.replace(`/pillar/${content?.pillar_id}`) }}
                 >
                   <Typography fontWeight='fontWeightBold'>Content pillar:</Typography>
                   <Typography>{pillarName}</Typography>
-                  <Icon icon='fluent:open-12-regular'/>
+                  <Icon icon='fluent:open-12-regular' />
                 </Box>
                 {/* Channel */}
                 <Box display='flex' alignItems='center' gap='0.3rem'>
                   <Typography fontWeight='fontWeightBold'>Channel:</Typography>
-                  <Icon 
-                    icon={channelType && channelIcons[channelType] ? channelIcons[channelType] : ''} 
-                    width={25} 
-                    height={25} 
+                  <Icon
+                    icon={channelType && channelIcons[channelType] ? channelIcons[channelType] : ''}
+                    width={25}
+                    height={25}
                   />
                   <Typography>{channelName}</Typography>
                   -
                   <Link href={`https://${channelUrl}`} target="_blank" rel="noopener noreferrer">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                       <Typography>{channelUrl}</Typography>
-                      <Icon icon='fluent:open-12-regular'/>
+                      <Icon icon='fluent:open-12-regular' />
                     </Box>
                   </Link>
                 </Box>
@@ -523,7 +522,7 @@ export default function Page() {
                   <b>Published at:</b> {contentLoading === false ? publishedAt : 'Loading...'}
                 </Typography>
               </Box>
-              {/* Views */} 
+              {/* Views */}
               <Box display={published ? 'flex' : 'none'} alignItems="center" gap="0.5rem">
                 <Icon icon="carbon:view-filled" width={27} />
                 <Typography mr="1rem">{views}</Typography>
@@ -543,31 +542,31 @@ export default function Page() {
                     {isPublishing ? "Publishing..." : "Publish"}
                   </Button>
                   <PublishForm
-                  open={isPublishOpen}
-                  isLoading={isPublishFormClicked}
-                  isPublished={published}
-                  onPublish={handlePublish}
-                  onClose={() => {
-                    setIsPublishOpen(false);
-                    setIsPublishing(false);
-                    if (published) {
-                      router.refresh();
+                    open={isPublishOpen}
+                    isLoading={isPublishFormClicked}
+                    isPublished={published}
+                    onPublish={handlePublish}
+                    onClose={() => {
+                      setIsPublishOpen(false);
+                      setIsPublishing(false);
+                      if (published) {
+                        router.refresh();
+                      }
                     }
-                  }
-                  }
-                  onOkay={ () => {
-                    router.refresh();
-                  }}
-                  modalTitle="Publish to this Channel?"
-                  textFieldText=""
-                  buttonText="Publish"
-                  channel_url={channelUrl}
-                  channel_name={channelName}
-                  published_url={publishedUrl}
-                  styling={{
-                    enableCloseButton: true,
-                  }
-                  }
+                    }
+                    onOkay={() => {
+                      router.refresh();
+                    }}
+                    modalTitle="Publish to this Channel?"
+                    textFieldText=""
+                    buttonText="Publish"
+                    channel_url={channelUrl}
+                    channel_name={channelName}
+                    published_url={publishedUrl}
+                    styling={{
+                      enableCloseButton: true,
+                    }
+                    }
                   />
                   <Button
                     sx={{ display: published ? 'flex' : 'none' }}
@@ -581,32 +580,32 @@ export default function Page() {
                   </Button>
 
                   <RepurposeSelect
-                  channelId={channelRepId}
-                  onSort={handleSelectChannel}
-                  options={channelListIdAndName}
-                  disabled={isLoading}
+                    channelId={channelRepId}
+                    onSort={handleSelectChannel}
+                    options={channelListIdAndName}
+                    disabled={isLoading}
                   />
-                  <RepurposeForm 
-                  open={isRepurposeOpen}
-                  isLoading={isRepurposeClicked}
-                  onPublish={handleRepurposeClick}
-                  onClose={() => {
-                    setIsRepurposeOpen(false);
+                  <RepurposeForm
+                    open={isRepurposeOpen}
+                    isLoading={isRepurposeClicked}
+                    onPublish={handleRepurposeClick}
+                    onClose={() => {
+                      setIsRepurposeOpen(false);
 
                     }
-                  }
-                  onOkay={ () => {
-                    router.refresh();
-                  }}
-                  modalTitle="Repurpose to"
-                  buttonText="Repurpose"
-                  channel_url={channelRep?.url || ''}
-                  channel_name={channelRep?.name || ''}
-                  published_url={publishedUrl}
-                  styling={{
-                    enableCloseButton: true,
-                  }
-                  }
+                    }
+                    onOkay={() => {
+                      router.refresh();
+                    }}
+                    modalTitle="Repurpose to"
+                    buttonText="Repurpose"
+                    channel_url={channelRep?.url || ''}
+                    channel_name={channelRep?.name || ''}
+                    published_url={publishedUrl}
+                    styling={{
+                      enableCloseButton: true,
+                    }
+                    }
                   />
 
                   <Button
@@ -666,7 +665,7 @@ export default function Page() {
                   <Viewer content={richContent} />
                 ) : (
                   <Editor
-                    callback={(e: any) => {
+                    callback={(e: RichContent) => {
                       setEditorRichContent(e);
                     }}
                     content={editorRichContent}
@@ -731,54 +730,54 @@ export default function Page() {
                 <Typography variant="h5">SEO Checklist</Typography>
                 <List>
                   {checklist.map((item, index) => (
-                    <ListItem key={item} sx={{ display: "block" }}> 
-                    <Box
-                    onMouseEnter={() => setSeoCheckListHoveredIndex(index)}
-                    onMouseLeave={() => setSeoCheckListHoveredIndex(null)}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "10px",
-                      width: "100%",
-                      cursor: "pointer",
-                      borderRadius: "8px",
-                      transition: "background 0.2s",
-                      "&:hover": { backgroundColor: "#f0f0f0" }, // Light background on hover
-                    }}
-                    >
-                    <FormControlLabel
-                    key={item}
-                    control={
-                      <Checkbox
-                        checked={checkedItems.includes(item)}
-                        disabled
-                      />
-                    }
-                    label={
-                      <Typography 
-                      sx={{ color: checkedItems.includes(item) ? "gray" : "black", cursor: "pointer" } }
+                    <ListItem key={item} sx={{ display: "block" }}>
+                      <Box
+                        onMouseEnter={() => setSeoCheckListHoveredIndex(index)}
+                        onMouseLeave={() => setSeoCheckListHoveredIndex(null)}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "10px",
+                          width: "100%",
+                          cursor: "pointer",
+                          borderRadius: "8px",
+                          transition: "background 0.2s",
+                          "&:hover": { backgroundColor: "#f0f0f0" }, // Light background on hover
+                        }}
                       >
-                        {item}
-                      </Typography>
-                    }
-                  />
-                  </Box>
-                  {/* Hover explanation directly under the item */}
-                  {seoCheckListHoveredIndex === index && (
-                    <Typography 
-                      sx={{ 
-                        mt: 1, 
-                        p: 1, 
-                        backgroundColor: "#f5f5f5", 
-                        borderRadius: 2, 
-                        border: "1px solid #ddd",
-                        fontSize: "0.9rem",
-                        color: "#555"
-                      }}
-                    >
-                      {check_list_explanation[index]}
-                    </Typography>
-                  )}
+                        <FormControlLabel
+                          key={item}
+                          control={
+                            <Checkbox
+                              checked={checkedItems.includes(item)}
+                              disabled
+                            />
+                          }
+                          label={
+                            <Typography
+                              sx={{ color: checkedItems.includes(item) ? "gray" : "black", cursor: "pointer" }}
+                            >
+                              {item}
+                            </Typography>
+                          }
+                        />
+                      </Box>
+                      {/* Hover explanation directly under the item */}
+                      {seoCheckListHoveredIndex === index && (
+                        <Typography
+                          sx={{
+                            mt: 1,
+                            p: 1,
+                            backgroundColor: "#f5f5f5",
+                            borderRadius: 2,
+                            border: "1px solid #ddd",
+                            fontSize: "0.9rem",
+                            color: "#555"
+                          }}
+                        >
+                          {check_list_explanation[index]}
+                        </Typography>
+                      )}
                     </ListItem>
                   ))}
                 </List>

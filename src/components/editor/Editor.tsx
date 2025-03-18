@@ -1,21 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { IMAGE_TYPE } from 'ricos-content';
 import { RicosEditor } from 'ricos-editor';
 import { EditorCommands } from 'ricos-types';
-import { useUploadToWixMutation, useUploadToSupabaseMutation } from 'src/libs/service/wix/wix';
+import { useUploadToSupabaseMutation, useUploadToWixMutation } from 'src/libs/service/wix/wix';
 import { toBase64 } from 'src/utils/encodeFileToBase64';
 import { processingFilePath } from 'src/utils/file-path-with-hash';
-import { pluginImage } from 'wix-rich-content-plugin-image';
-import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-text-color';
 import { pluginHeadings } from "wix-rich-content-plugin-headings";
+import { pluginImage } from 'wix-rich-content-plugin-image';
 import { pluginLink } from "wix-rich-content-plugin-link";
+import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-text-color';
 
-import { fromDraft } from 'ricos-content/libs/fromDraft';
-import { RichContent } from 'ricos-schema';
-import { Button, CircularProgress } from '@mui/material';
 import { Icon } from '@iconify/react';
+import { Button, CircularProgress } from '@mui/material';
+import { RicosEditorRef } from 'ricos-editor/dist/src/RicosEditorRef';
+import { RichContent } from 'ricos-schema';
 
-function Editor({content,callback, channel_id, content_id} : {content?: any, callback?: any, channel_id?: any, content_id?: any}) {
+function Editor({ content, callback, channel_id, content_id }: { content?: any, callback?: any, channel_id?: any, content_id?: any }) {
   const [editorState, setEditorState] = useState(content);
   const editorRef = useRef<EditorCommands | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,17 +28,17 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
     new Promise((resolve, reject) => {
       const img = new Image();
       const objectUrl = URL.createObjectURL(file);
-  
+
       img.onload = () => {
         resolve({ width: img.width, height: img.height });
         URL.revokeObjectURL(objectUrl); // Cleanup
       };
-  
+
       img.onerror = () => {
         reject(new Error('Failed to load image'));
         URL.revokeObjectURL(objectUrl); // Cleanup in case of error
       };
-  
+
       img.src = objectUrl;
     });
 
@@ -56,7 +56,7 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
 
           const encodedFile = await toBase64(file);
           const response = await uploadToWix({
-            channelId : channel_id,
+            channelId: channel_id,
             fileData: {
               bucketName,
               file: encodedFile,
@@ -75,7 +75,7 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
             }
 
 
-            const {width: imgWidth, height: imgHeight} = await getImageSize(file)
+            const { width: imgWidth, height: imgHeight } = await getImageSize(file)
 
 
             const imageData = {
@@ -123,7 +123,7 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
 
           const encodedFile = await toBase64(file);
           const response = await uploadToSupabase({
-            channelId : channel_id,
+            channelId: channel_id,
             fileData: {
               bucketName,
               file: encodedFile,
@@ -142,7 +142,7 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
             }
 
 
-            const {width: imgWidth, height: imgHeight} = await getImageSize(file)
+            const { width: imgWidth, height: imgHeight } = await getImageSize(file)
 
             const imageData = {
               containerData: {
@@ -190,18 +190,20 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
       <RicosEditor
         toolbarSettings={{ useStaticTextToolbar: false }}
         content={editorState}
-        onChange={(updatedContent: any) => {
+        onChange={(updatedContent: RichContent) => {
           setEditorState(updatedContent);
           callback((updatedContent))
         }}
-        ref={(ref: any) => {
-          editorRef.current = ref?.getEditorCommands() || null;
+        ref={(ref: RicosEditorRef) => {
+          if (ref) {
+            editorRef.current = ref.getEditorCommands() || null;
+          }
         }} // Save editor commands using ref
         plugins={[
-          pluginImage(), 
-          pluginTextColor(), 
-          pluginTextHighlight(), 
-          pluginHeadings(), 
+          pluginImage(),
+          pluginTextColor(),
+          pluginTextHighlight(),
+          pluginHeadings(),
           pluginLink()
         ]} // Add plugins if needed
       />
@@ -213,7 +215,7 @@ function Editor({content,callback, channel_id, content_id} : {content?: any, cal
         disabled={isLoading}
         startIcon={
           isLoading ? <CircularProgress size={24} /> : <Icon icon="mdi:camera" />
-      }
+        }
         sx={{ mt: '1rem' }}
       >
         Add Image
