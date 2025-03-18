@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IMAGE_TYPE } from 'ricos-content';
 import { RicosEditor } from 'ricos-editor';
 import { EditorCommands } from 'ricos-types';
@@ -12,10 +12,10 @@ import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-te
 
 import { Icon } from '@iconify/react';
 import { Button, CircularProgress } from '@mui/material';
-import { RicosEditorRef } from 'ricos-editor/dist/src/RicosEditorRef';
-import { RichContent } from 'ricos-schema';
+import './editor.css';
 
 function Editor({ content, callback, channel_id, content_id }: { content?: any, callback?: any, channel_id?: any, content_id?: any }) {
+  const isInitialMount = useRef(true);
   const [editorState, setEditorState] = useState(content);
   const editorRef = useRef<EditorCommands | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +23,17 @@ function Editor({ content, callback, channel_id, content_id }: { content?: any, 
   const [uploadToWix] = useUploadToWixMutation();
   const [uploadToSupabase] = useUploadToSupabaseMutation();
 
+  useEffect(() => {
+    // Make sure we're not overriding user edits after initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (content !== undefined && JSON.stringify(content) !== JSON.stringify(editorState)) {
+      console.log("Content prop changed, updating editor state", content);
+      setEditorState(content);
+    }
+  }, [content]);
 
   const getImageSize = (file: File): Promise<{ width: number; height: number }> =>
     new Promise((resolve, reject) => {
@@ -187,30 +198,32 @@ function Editor({ content, callback, channel_id, content_id }: { content?: any, 
 
   return (
     <>
-      <RicosEditor
-        toolbarSettings={{ useStaticTextToolbar: false }}
-        content={editorState}
-        onChange={(updatedContent: RichContent) => {
-          setEditorState(updatedContent);
-          callback((updatedContent))
-        }}
-        ref={(ref: RicosEditorRef) => {
-          if (ref) {
-            editorRef.current = ref.getEditorCommands() || null;
-          }
-        }} // Save editor commands using ref
-        plugins={[
-          pluginImage(),
-          pluginTextColor(),
-          pluginTextHighlight(),
-          pluginHeadings(),
-          pluginLink()
-        ]} // Add plugins if needed
-      />
+      <div className="editor-container">
+        <RicosEditor
+          content={editorState}
+          onChange={(updatedContent: any) => {
+            setEditorState(updatedContent);
+            if (JSON.stringify(updatedContent) !== JSON.stringify(content)) {
+              callback(updatedContent);
+            }
+          }}
+          ref={(ref: any) => {
+            editorRef.current = ref?.getEditorCommands() || null;
+          }}
+          plugins={[
+            pluginImage(),
+            pluginTextColor(),
+            pluginTextHighlight(),
+            pluginHeadings(),
+            pluginLink()
+          ]}
+          key={JSON.stringify(content)?.substring(0, 50)}
+        />
+      </div>
+
       <Button
         variant='contained'
         color='inherit'
-        // onClick={addCustomImage}
         onClick={addCustomImageNoWix}
         disabled={isLoading}
         startIcon={

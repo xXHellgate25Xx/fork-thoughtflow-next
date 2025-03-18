@@ -16,6 +16,9 @@ import {
   useUpdateContentMutation,
 } from 'src/libs/service/content/content';
 import {
+  useGenerateContentWithFeedbackMutation
+} from 'src/libs/service/content/generate';
+import {
   useCreateIdeaContentMutation
 } from 'src/libs/service/idea/idea';
 import {
@@ -53,6 +56,7 @@ export default function Page() {
   const [updateContentSupabase] = useUpdateContentMutation();
   const [repurposeContent] = useRepurposeContentMutation();
   const [createContent] = useCreateIdeaContentMutation();
+  const [generateContentWithFeedback, { isLoading: isFeedbackLoading }] = useGenerateContentWithFeedbackMutation();
 
   const { 'content-id': contentId } = useParams();
 
@@ -111,6 +115,7 @@ export default function Page() {
   const [editorRichContent, setEditorRichContent] = useState<RichContent>(fromPlainText('Loading...'));
   const [isInitRichContent, setIisInitRichContent] = useState(true);
   const [pillarName, setPillarName] = useState('Loading...');
+  const [originalContent, setOriginalContent] = useState<RichContent>(fromPlainText('Loading...'));
 
   // Publish states
   const [channelName, setChannelName] = useState('Loading...');
@@ -144,6 +149,7 @@ export default function Page() {
 
   const [isRepurposeOpen, setIsRepurposeOpen] = useState(false);
   const [isRepurposeClicked, setIsRepurposeClicked] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
   // SEO Checklist states
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
@@ -208,6 +214,7 @@ export default function Page() {
         const read_richContent =
           content.rich_content ?? JSON.stringify(fromPlainText(content.content_body));
         setEditorRichContent(read_richContent);
+        setOriginalContent(read_richContent);
         let parsedContent;
         if (typeof read_richContent === 'string') {
           parsedContent = toDraft(JSON.parse(read_richContent));
@@ -368,6 +375,7 @@ export default function Page() {
   // Function to cancel editing
   const handleCancelClick = () => {
     setIsEditing(false);
+    setEditorRichContent(originalContent);
     setEditedTitle(content?.title || '');
     setLongTailKeyword(content?.long_tail_keyword || '');
     setSeoTitleTag(content?.seo_title_tag || '');
@@ -441,6 +449,79 @@ export default function Page() {
   //     prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
   //   );
   // };
+  // Function to handle feedback submission
+  const handleFeedbackSubmit = async () => {
+    if (feedback.trim() && channel_id && content) {
+      try {
+        const plaintext = await toPlainText(editorRichContent);
+
+        const { data: feedbackResponse } = await generateContentWithFeedback({
+          channel_id,
+          gen_content: {
+            idea: content.idea_id, // Make sure to include the idea ID
+            feedback,
+            content: plaintext
+          }
+        });
+
+        console.log('Received feedback response:', feedbackResponse);
+
+        if (feedbackResponse) {
+
+          if (feedbackResponse.rich_content) {
+            console.log('Updating editor with new rich content');
+            let processedRichContent;
+            if (typeof feedbackResponse.rich_content === 'string') {
+              try {
+                processedRichContent = JSON.parse(feedbackResponse.rich_content);
+              } catch (e) {
+                console.error('Error parsing rich_content string:', e);
+                processedRichContent = feedbackResponse.rich_content;
+              }
+            } else {
+              processedRichContent = feedbackResponse.rich_content;
+            }
+            // Update the editor content state
+            setEditorRichContent(processedRichContent);
+
+            // Log the content update
+            console.log('Content updated with feedback response');
+          } else {
+            console.warn('No rich_content in feedback response');
+          }
+
+          // Update the title if provided
+          if (feedbackResponse.title) {
+            console.log('Updating title:', feedbackResponse.title);
+            setEditedTitle(feedbackResponse.title);
+          }
+
+          // Update other fields
+          if (feedbackResponse.seo_meta_description) {
+            setMetaDescription(feedbackResponse.seo_meta_description);
+          }
+          if (feedbackResponse.seo_slug) {
+            setSeoSlug(feedbackResponse.seo_slug);
+          }
+          if (feedbackResponse.seo_title_tag) {
+            setSeoTitleTag(feedbackResponse.seo_title_tag);
+          }
+          if (feedbackResponse.long_tail) {
+            setLongTailKeyword(feedbackResponse.long_tail);
+          }
+        }
+      } catch (error) {
+        console.error('Error sending feedback:', error);
+      }
+    } else {
+      console.warn('Cannot send feedback: missing required data', {
+        hasFeedback: !!feedback.trim(),
+        hasChannelId: !!channel_id,
+        hasContent: !!content
+      });
+    }
+    setFeedback('');
+  };
 
   return (
     <>
@@ -663,7 +744,7 @@ export default function Page() {
               <Card sx={{ mt: '1rem', padding: '1rem' }}>
                 {!isEditing ? (
                   <Viewer content={richContent} />
-                ) : (
+                ) : (<>
                   <Editor
                     callback={(e: RichContent) => {
                       setEditorRichContent(e);
@@ -672,6 +753,41 @@ export default function Page() {
                     channel_id={channel_id}
                     content_id={contentId}
                   />
+                  <div style={{
+                    marginTop: '1.5rem',
+                  }}>
+                    <Box sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem'
+                    }}>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="Enter your feedback to improve the content..."
+                        variant="outlined"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            fontSize: '0.9rem',
+                          }
+                        }}
+                      />
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                          variant="contained"
+                          onClick={handleFeedbackSubmit}
+                          disabled={isFeedbackLoading || !feedback.trim()}
+                          sx={{ minWidth: '140px' }}
+                        >
+                          {isFeedbackLoading ? 'Processing...' : 'Send Feedback'}
+                        </Button>
+                      </Box>
+                    </Box>
+                  </div></>
+
                 )}
               </Card>
             </Box>

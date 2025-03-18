@@ -2,57 +2,82 @@
 
 /* Main editor container styles */
 .editor-container {
-  height: 500px;
-  overflow: hidden;
+  height: 500px; /* Fixed height as per boss's requirement */
   padding: 4px;
-  position: relative; /* For positioning the toolbar properly */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: visible; /* Allow toolbar to be visible outside container */
 } 
 
+/* Adjust footer toolbar top margin */
 .editor-container [data-hook="footerToolbar"] { 
-  margin-top: 8px; 
+  margin-top: 2px !important; /* Further reduced margin */
+  margin-bottom: 2px !important; /* Add bottom margin as well */
+  padding: 0 !important; /* Remove padding */
+}
+
+/* Adjust toolbar button sizes if needed */
+.editor-container [data-hook="footerToolbar"] button {
+  padding: 4px !important; /* More compact buttons */
 }
 
 /* Customize the actual content area */
 .editor-container [data-hook="ricos-tiptap-editor"] { 
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-  height: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  flex-grow: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Take full height within flex container */
+  position: relative; /* Maintain positioning context for toolbar */
 }
 
 /* Style for the ProseMirror editor */
 .editor-container .tiptap.ProseMirror { 
   padding: 8px 12px;
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 200px; /* Ensure minimum height */
 }
 
-/* Set a max-width for images to prevent overflow */
+/* Improve editor appearance */
 .editor-container .image-component img {
   max-width: 100%;
   height: auto;
 }
 
-/* Ensure images don't break layout */
 .editor-container [data-hook="imageViewer"] {
   max-width: 100%;
   overflow: hidden;
 }
 
 /* Improve scrolling behavior for the editor content */
-.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar {
+.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar,
+.editor-container .tiptap.ProseMirror::-webkit-scrollbar {
   width: 8px;
 }
 
-.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-track {
+.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-track,
+.editor-container .tiptap.ProseMirror::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 4px;
 }
 
-.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-thumb {
+.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-thumb,
+.editor-container .tiptap.ProseMirror::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 4px;
 }
 
-.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-thumb:hover {
+.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-thumb:hover,
+.editor-container .tiptap.ProseMirror::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* Hide the plus button */
+.editor-container button[data-hook="addPluginFloatingToolbar"]  {
+  display: none !important;
 } 

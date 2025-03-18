@@ -18,6 +18,9 @@
 /* chart */
 @import './components/chart/styles.css';
 
+/* editor */
+@import './components/editor/editor.css';
+
 /** **************************************
 * Baseline
 *************************************** */
