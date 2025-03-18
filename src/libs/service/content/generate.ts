@@ -3,7 +3,7 @@ import { RichContent } from "ricos-schema";
 import { baseQuery } from "../supabase/baseQuery";
 
 interface GenContentReq {
-    idea: string | undefined,
+    idea?: string | undefined,
     pillar_name?: string,
     keyword?: string,
     feedback?: string | undefined;
@@ -58,6 +58,13 @@ const generateContentApi = createApi({
                 body: gen_content
             })
         }),
+        generateContentWithFeedback: builder.mutation<GenContentRes, {channel_id: string; gen_content: GenContentReq}>({
+            query: ({ channel_id , gen_content }) => ({
+                url: `functions/v1/api/generate-content/${channel_id}/feedback`,
+                method: "POST",
+                body: gen_content
+            })
+        })
     })
 })
 
@@ -66,5 +73,7 @@ export const {
     useGenerateContentWithSEOMutation,
     useGenerateContentWithSEOKeywordMutation,
     useGenerateContentHTMLMutation,
+    useGenerateContentWithFeedbackMutation,
 } = generateContentApi;
 export { generateContentApi };
+

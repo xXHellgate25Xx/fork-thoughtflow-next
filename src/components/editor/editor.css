@@ -1,0 +1,58 @@
+/* Editor component styles */
+
+/* Main editor container styles */
+.editor-container {
+  height: 500px;
+  overflow: hidden;
+  padding: 4px;
+  position: relative; /* For positioning the toolbar properly */
+} 
+
+.editor-container [data-hook="footerToolbar"] { 
+  margin-top: 8px; 
+}
+
+/* Customize the actual content area */
+.editor-container [data-hook="ricos-tiptap-editor"] { 
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Style for the ProseMirror editor */
+.editor-container .tiptap.ProseMirror { 
+  padding: 8px 12px;
+}
+
+/* Set a max-width for images to prevent overflow */
+.editor-container .image-component img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure images don't break layout */
+.editor-container [data-hook="imageViewer"] {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Improve scrolling behavior for the editor content */
+.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+} 

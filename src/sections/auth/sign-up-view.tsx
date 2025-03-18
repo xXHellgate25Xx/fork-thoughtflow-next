@@ -22,6 +22,7 @@ export function SignUpView() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [displayName, setDisplayName] = useState("")
+  const [isSignUpSuccess, setIsSignUpSuccess] = useState(false)
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean
@@ -59,6 +60,7 @@ export function SignUpView() {
           severity: "error",
         })
       } else if (result.data) {
+        setIsSignUpSuccess(true)
         setSnackbar({
           open: true,
           message: "Sign up successfully!\nPlease check your mailbox for a verification email.",
@@ -172,16 +174,37 @@ export function SignUpView() {
     <Box>
       <Box gap={1.5} display="flex" flexDirection="column" alignItems="center" sx={{ mb: 5 }}>
         <Typography variant="h5">Sign Up</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Already have an account?
-          <Link href="/auth/sign-in" variant="subtitle2" sx={{ ml: 0.5 }}>
-            Sign In
-          </Link>
-        </Typography>
+        {!isSignUpSuccess && (
+          <Typography variant="body2" color="text.secondary">
+            Already have an account?
+            <Link href="/auth/sign-in" variant="subtitle2" sx={{ ml: 0.5 }}>
+              Sign In
+            </Link>
+          </Typography>
+        )}
       </Box>
 
-      {renderForm}
-
+      {isSignUpSuccess ? (
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+          <Iconify icon="mdi:check-circle" color="success.main" width={64} height={64} />
+          <Typography variant="h6" textAlign="center">
+            Registration Successful!
+          </Typography>
+          <Typography variant="body2" color="text.secondary" textAlign="center">
+            Please check your email to verify your account.
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleGoToSignIn}
+            sx={{ mt: 2 }}
+          >
+            Go to Sign In
+          </Button>
+        </Box>
+      ) : (
+        renderForm
+      )}
 
       {/* Optionally, social signup buttons can be added here */}
 
