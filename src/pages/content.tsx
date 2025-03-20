@@ -111,7 +111,7 @@ export default function Page() {
   });
 
   const onClickContent = (content_id:string) => {
-    router.push(content_id)
+    router.push(`content/${content_id}`)
   }
 
   const [DeleteContentMutation, ] = useDeleteContentMutation();
