@@ -151,7 +151,7 @@ export default function Page() {
             color='primary'
             startIcon={<Icon icon='hugeicons:idea-01'/>}
             onClick={() => router.replace(`/create`)}
-          >What&apos;s on your mind?
+          >New Content
           </Button>
           <Button 
             size='large'

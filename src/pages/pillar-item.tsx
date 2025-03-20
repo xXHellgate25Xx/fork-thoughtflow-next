@@ -282,6 +282,14 @@ export default function Page() {
             :
             <Box display='flex' alignItems='baseline' gap='0.5rem'>
               <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Icon icon="hugeicons:idea-01" />}
+                onClick={handleAddContent}
+              >
+                New Content
+              </Button>
+              <Button
                 variant="outlined"
                 color="inherit"
                 startIcon={<Icon icon="akar-icons:edit" />}
@@ -294,18 +302,12 @@ export default function Page() {
               <Button
                 variant="outlined"
                 color={pillarIsActive ? 'error' : 'inherit'}
-                startIcon={pillarIsActive ? <Icon icon="solar:archive-bold" /> : null}
+                startIcon={pillarIsActive ? 
+                  <Icon icon="solar:archive-bold" /> 
+                  : <Icon icon='lsicon:check-disabled-outline'/>}
                 onClick={handleDeactivateButton}
               >
                 {pillarIsActive ? 'Deactivate' : 'Currently Not Active'}
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Icon icon="hugeicons:idea-01" />}
-                onClick={handleAddContent}
-              >
-                Create content
               </Button>
             </Box>
           }

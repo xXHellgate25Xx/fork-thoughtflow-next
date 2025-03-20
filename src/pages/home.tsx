@@ -63,26 +63,26 @@ export default function Page() {
       </Helmet>
 
       <DashboardContent>
-        <Box display="flex" alignItems="center" justifyContent='center' mb={5} mt={5}>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Iconify icon="hugeicons:idea-01" />}
-            sx={{ fontSize: '1.5rem', padding: '1rem 2rem' }}
-            onClick={handleWhatsOnMyMind}
-          >
-            What&apos;s on your mind?
-          </Button>
-        </Box>
-
-        <Box display="flex" alignItems="center" mb='2rem'>
+        <Box display="flex" alignItems="center" mb='2rem' gap='0.5rem'>
           <Typography variant="h4" flexGrow={1}>
-          Content Pillars
+          Strategy
           </Typography>
 
           <Button
             variant="contained"
+            color="primary"
+            size='large'
+            startIcon={<Iconify icon="hugeicons:idea-01" />}
+            sx={{ fontSize: '1rem' }}
+            onClick={handleWhatsOnMyMind}
+          >
+            New Content
+          </Button>
+
+          <Button
+            variant="contained"
             color="inherit"
+            size='large'
             startIcon={<Iconify icon="mingcute:add-line" />}
             sx={{ fontSize: '1rem' }}
             onClick={() => {
