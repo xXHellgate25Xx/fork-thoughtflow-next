@@ -4,6 +4,7 @@ import { Navigate, Outlet, useRoutes } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 
+import ComingSoonPage from 'src/components/ComingSoonPage';
 import { AuthLayout } from 'src/layouts/auth';
 import { DashboardLayout } from 'src/layouts/dashboard';
 import { varAlpha } from 'src/theme/styles';
@@ -28,7 +29,8 @@ export const AnalyticsPage = lazy(() => import('src/pages/analytics'));
 export const SettingsPage = lazy(() => import('src/pages/settings'));
 export const AddChannelPage = lazy(() => import('src/pages/add-channel'));
 export const SelectAccountPage = lazy(() => import('src/pages/select-account'));
-
+export const CRMPage = lazy(() => import('src/pages/CRMPage'));
+export const OpportunitiesCRMPage = lazy(() => import('src/pages/OpportunitiesCRMPage'));
 
 // ----------------------------------------------------------------------
 
@@ -66,6 +68,17 @@ export function Router() {
         { path: 'content/:content-id', element: <ContentItemPage /> },
         { path: 'pillar/:pillar-id', element: <PillarItemPage /> },
         { path: 'add-channel', element: <AddChannelPage /> },
+        {
+          path: 'crm',
+          element: <CRMPage />,
+          children: [
+            { path: '', element: <Navigate to="/crm/opportunities" replace /> },
+            { path: 'opportunities', element: <OpportunitiesCRMPage /> },
+            { path: 'contacts', element: <ComingSoonPage /> },
+            { path: 'leads', element: <ComingSoonPage /> },
+            { path: 'deals', element: <ComingSoonPage /> },
+          ]
+        },
       ],
     },
     {

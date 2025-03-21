@@ -1,31 +1,26 @@
-import type { Theme, SxProps, Breakpoint } from '@mui/material/styles';
+import type { Breakpoint, SxProps, Theme } from '@mui/material/styles';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 
-import { _langs, _notifications } from 'src/_mock';
 
 import { Iconify } from 'src/components/iconify';
 
+import { useLocation } from 'react-router-dom';
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 import { useRouter } from 'src/routes/hooks';
-import { useLocation } from 'react-router-dom';
 
-import { Main } from './main';
 import { layoutClasses } from '../classes';
-import { NavMobile, NavDesktop } from './nav';
-import { navData } from '../config-nav-dashboard';
-import { Searchbar } from '../components/searchbar';
-import { _workspaces } from '../config-nav-workspace';
-import { MenuButton } from '../components/menu-button';
-import { LayoutSection } from '../core/layout-section';
-import { HeaderSection } from '../core/header-section';
 import { AccountPopover } from '../components/account-popover';
-import { LanguagePopover } from '../components/language-popover';
-import { NotificationsPopover } from '../components/notifications-popover';
+import { MenuButton } from '../components/menu-button';
+import { navData } from '../config-nav-dashboard';
+import { HeaderSection } from '../core/header-section';
+import { LayoutSection } from '../core/layout-section';
+import { DashboardContent, Main } from './main';
+import { NavDesktop, NavMobile } from './nav';
 
 // ----------------------------------------------------------------------
 
@@ -157,7 +152,11 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
         ...sx,
       }}
     >
-      <Main>{children}</Main>
+      <Main>
+        <DashboardContent>
+          {children}
+        </DashboardContent>
+      </Main>
     </LayoutSection>
   );
 }

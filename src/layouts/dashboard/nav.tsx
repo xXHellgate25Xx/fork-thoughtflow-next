@@ -1,37 +1,38 @@
-import type { Theme, SxProps, Breakpoint } from '@mui/material/styles';
+import type { Breakpoint, SxProps, Theme } from '@mui/material/styles';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import Box from '@mui/material/Box';
-import ListItem from '@mui/material/ListItem';
-import { useTheme } from '@mui/material/styles';
-import ListItemButton from '@mui/material/ListItemButton';
-import Drawer, { drawerClasses } from '@mui/material/Drawer';
 import { Icon } from '@iconify/react';
-import { Typography } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { Collapse, List, Typography } from '@mui/material';
+import Box from '@mui/material/Box';
+import Drawer, { drawerClasses } from '@mui/material/Drawer';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import { useTheme } from '@mui/material/styles';
 
-import { usePathname } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
+import { usePathname } from 'src/routes/hooks';
 
 import { varAlpha } from 'src/theme/styles';
 
-import { Logo } from 'src/components/logo';
 import { Scrollbar } from 'src/components/scrollbar';
 
-import { NavUpgrade } from '../components/nav-upgrade';
 import { WorkspacesPopover } from '../components/workspaces-popover';
-
-import type { WorkspacesPopoverProps } from '../components/workspaces-popover';
 
 // ----------------------------------------------------------------------
 
+export type NavItem = {
+  path: string;
+  title: string;
+  icon: React.ReactNode;
+  info?: React.ReactNode;
+  children?: NavItem[];
+};
+
 export type NavContentProps = {
-  data: {
-    path: string;
-    title: string;
-    icon: React.ReactNode;
-    info?: React.ReactNode;
-  }[];
+  data: NavItem[];
   slots?: {
     topArea?: React.ReactNode;
     bottomArea?: React.ReactNode;
@@ -121,12 +122,153 @@ export function NavMobile({
 
 export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
   const pathname = usePathname();
+  const [openItems, setOpenItems] = useState<{ [key: string]: boolean }>({});
+
+  // Automatically expand the parent item if a child is active
+  useEffect(() => {
+    const newOpenItems = { ...openItems };
+    data.forEach((item) => {
+      if (item.children) {
+        const isChildActive = item.children.some((child) => pathname === child.path);
+        if (isChildActive) {
+          newOpenItems[item.title] = true;
+        }
+      }
+    });
+    setOpenItems(newOpenItems);
+  }, [pathname]);
+
+  const handleToggle = (title: string) => {
+    setOpenItems((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
+
+  const renderNavItem = (item: NavItem) => {
+    const isParentActive = item.children
+      ? item.children.some((child) => pathname === child.path)
+      : false;
+    const isActive = item.path === pathname || isParentActive;
+    const isOpen = openItems[item.title] || false;
+
+    if (item.children) {
+      return (
+        <Box key={item.title} sx={{ mb: 0.5 }}>
+          <ListItemButton
+            disableGutters
+            onClick={() => handleToggle(item.title)}
+            sx={{
+              pl: 2,
+              py: 1,
+              gap: 2,
+              pr: 1.5,
+              borderRadius: 1,
+              typography: 'body2',
+              fontWeight: 'fontWeightMedium',
+              bgcolor: isOpen ? 'action.selected' : 'transparent',
+              color: isActive ? 'primary.main' : 'text.primary',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            <Box component="span" sx={{ width: 24, height: 24, color: isActive ? 'primary.main' : 'text.secondary' }}>
+              {item.icon}
+            </Box>
+
+            <Box component="span" flexGrow={1} sx={{ color: isActive ? 'primary.main' : 'text.primary' }}>
+              {item.title}
+            </Box>
+
+            {isOpen ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
+          </ListItemButton>
+
+          <Collapse in={isOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {item.children.map((child) => {
+                const isChildActive = child.path === pathname;
+
+                return (
+                  <ListItemButton
+                    key={child.title}
+                    disableGutters
+                    component={RouterLink}
+                    href={child.path}
+                    sx={{
+                      pl: 2,
+                      py: 1,
+                      ml: 3,
+                      gap: 2,
+                      pr: 1.5,
+                      borderRadius: 1,
+                      typography: 'body2',
+                      fontWeight: 'fontWeightMedium',
+                      bgcolor: isChildActive ? 'action.selected' : 'transparent',
+                      color: isChildActive ? 'primary.main' : 'text.primary',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                      },
+                    }}
+                  >
+                    <Box component="span" sx={{ width: 24, height: 24, color: isChildActive ? 'primary.main' : 'text.secondary' }}>
+                      {child.icon}
+                    </Box>
+
+                    <Box component="span" flexGrow={1} sx={{ color: isChildActive ? 'primary.main' : 'text.primary' }}>
+                      {child.title}
+                    </Box>
+
+                    {child.info && child.info}
+                  </ListItemButton>
+                );
+              })}
+            </List>
+          </Collapse>
+        </Box>
+      );
+    }
+
+    return (
+      <ListItem disableGutters disablePadding key={item.title} sx={{ mb: 0.5 }}>
+        <ListItemButton
+          disableGutters
+          component={RouterLink}
+          href={item.path}
+          sx={{
+            pl: 2,
+            py: 1,
+            gap: 2,
+            pr: 1.5,
+            borderRadius: 1,
+            typography: 'body2',
+            fontWeight: 'fontWeightMedium',
+            color: isActive ? 'primary.main' : 'text.primary',
+            bgcolor: isActive ? 'action.selected' : 'transparent',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
+        >
+          <Box component="span" sx={{ width: 24, height: 24, color: isActive ? 'primary.main' : 'text.secondary' }}>
+            {item.icon}
+          </Box>
+
+          <Box component="span" flexGrow={1} sx={{ color: isActive ? 'primary.main' : 'text.primary' }}>
+            {item.title}
+          </Box>
+
+          {item.info && item.info}
+        </ListItemButton>
+      </ListItem>
+    );
+  };
 
   return (
     <>
       {/* <Logo />  */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem', my: '1rem', px: '1rem' }}>
-        <Icon icon='fluent-emoji-flat:pen' fontSize='2rem'/>
+        <Icon icon='fluent-emoji-flat:pen' fontSize='2rem' />
         <Typography variant='h4'>ThoughtFlow</Typography>
       </Box>
 
@@ -137,48 +279,7 @@ export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
       <Scrollbar fillContent>
         <Box component="nav" display="flex" flex="1 1 auto" flexDirection="column" sx={sx}>
           <Box component="ul" gap={0.5} display="flex" flexDirection="column">
-            {data.map((item) => {
-              const isActived = item.path === pathname;
-
-              return (
-                <ListItem disableGutters disablePadding key={item.title}>
-                  <ListItemButton
-                    disableGutters
-                    component={RouterLink}
-                    href={item.path}
-                    sx={{
-                      pl: 2,
-                      py: 1,
-                      gap: 2,
-                      pr: 1.5,
-                      borderRadius: 0.75,
-                      typography: 'body2',
-                      fontWeight: 'fontWeightMedium',
-                      color: 'var(--layout-nav-item-color)',
-                      minHeight: 'var(--layout-nav-item-height)',
-                      ...(isActived && {
-                        fontWeight: 'fontWeightSemiBold',
-                        bgcolor: 'var(--layout-nav-item-active-bg)',
-                        color: 'var(--layout-nav-item-active-color)',
-                        '&:hover': {
-                          bgcolor: 'var(--layout-nav-item-hover-bg)',
-                        },
-                      }),
-                    }}
-                  >
-                    <Box component="span" sx={{ width: 24, height: 24 }}>
-                      {item.icon}
-                    </Box>
-
-                    <Box component="span" flexGrow={1}>
-                      {item.title}
-                    </Box>
-
-                    {item.info && item.info}
-                  </ListItemButton>
-                </ListItem>
-              );
-            })}
+            {data.map(renderNavItem)}
           </Box>
         </Box>
       </Scrollbar>
