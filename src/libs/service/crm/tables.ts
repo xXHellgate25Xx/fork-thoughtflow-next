@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { KanbanColumn, KanbanRecord } from '../../../types/kanbanTypes';
+import { KanbanColumn, KanbanRecord } from '../../../types/kanban';
 import { baseQuery } from '../supabase/baseQuery';
 
 // Utility function to validate priority
@@ -14,16 +14,13 @@ const validatePriority = (priority: string): 'high' | 'medium' | 'low' => {
 const transformRecord = (record: any): KanbanRecord => ({
   id: record.id,
   title: record.fields.Title || '',
-  status: record.fields.Status || 'todo',
-  createdAt: record.fields.Created || '',
-  updatedAt: record.fields.Updated || '',
-  // Standard fields
   description: record.fields.Description || '',
+  status: record.fields.Status || 'todo',
   priority: validatePriority(record.fields.Priority || 'medium'),
   assignee: record.fields.Assignee || '',
   dueDate: record.fields['Due Date'] || '',
-  // Additional dynamic fields from the record
-  ...record.fields
+  createdAt: record.fields.Created || '',
+  updatedAt: record.fields.Updated || '',
 });
 
 // Type for creating a new record

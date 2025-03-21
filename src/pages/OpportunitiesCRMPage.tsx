@@ -1,57 +1,55 @@
-import { Box, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, MenuItem, Button as MuiButton, Select, TextField } from '@mui/material';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DynamicKanban } from 'src/components/ui/kanban/DynamicKanban';
-import { useCreateActivityLog, useOpportunities, usePipelineStages } from 'src/hooks/tablehooks';
-import { KanbanColumn, KanbanRecord } from 'src/types/kanbanTypes';
+import { useEffect, useState } from 'react';
+import { useOpportunity } from 'src/hooks/useOpportunity';
 import DynamicTable, { ColumnDef } from '../components/DynamicTable';
 import EditDrawer, { FieldDef } from '../components/EditDrawer';
 import { Iconify } from '../components/iconify';
-import StageTransitionForm from '../components/StageTransitionForm';
+import { Button } from '../components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
-import { supabase } from '../lib/supabase';
-import { Pipeline_StagesRecord } from '../types/supabase';
+import type { KanbanRecord } from '../types/kanban';
 
-// Create a simple toast implementation if react-hot-toast isn't available
-const toast = ({ title, status }: { title: string, status: 'success' | 'error' }) => {
-    console.log(`[${status}] ${title}`);
+// Status label mapping
+const statusLabels: Record<string, string> = {
+    '01-lead': '01 - Lead',
+    '04-roadmap-call': '04 - Roadmap Call',
+    '05-passport-requested': '05 - Passport Requested',
+    '06-agreement-sent': '06 - Agreement Sent',
+    '07-agreement-signed': '07 - Agreement Signed',
+    '10-disqualified': '10 - Disqualified',
+    '11-sale-lost': '11 - Sale lost',
+    '13-on-hold': '13 - On Hold',
 };
 
-type ViewType = 'list' | 'kanban';
-const OpportunitiesCRMPage = memo(() => {
-    const { records: opportunities, isLoading, isError, error, refetch } = useOpportunities();
-    const { records: stages, isLoading: stagesLoading, isError: stagesError } = usePipelineStages();
+export default function OpportunitiesCRMPage() {
+    const { opportunities, isLoading, isError, error, refetch } = useOpportunity();
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const [activityModalOpen, setActivityModalOpen] = useState(false);
-    const [activityFormValues, setActivityFormValues] = useState<Record<string, any>>({});
     const [sortField, setSortField] = useState<string>('Last Name');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [sortedData, setSortedData] = useState<any[]>([]);
     const [formValues, setFormValues] = useState<Record<string, any>>({});
-    const [viewType, setViewType] = useState<ViewType>('list');
-    const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
-    const [groupByField, setGroupByField] = useState<string>('Stage ID');
-    const kanbanColumnsRef = useRef<any[]>([]);
-    const [stageTransitionModalOpen, setStageTransitionModalOpen] = useState(false);
-    const [isCreatingActivity, setIsCreatingActivity] = useState(false);
-    const { mutate: createActivityLogMutation, isLoading: activityLoading } = useCreateActivityLog();
+    const [selectedOpportunity, setSelectedOpportunity] = useState<
+        | (KanbanRecord & {
+            prospectId?: string;
+            email?: string;
+            generalNotes?: string;
+            company?: string;
+            jobTitle?: string;
+            phone?: string;
+            sourceChannel?: string;
+            spouse?: string;
+        })
+        | null
+    >(null);
 
-    // Map stages to statusLabels
-    const statusLabels = stages.reduce((acc, stage) => {
-        if (stage.id && stage["Stage ID"]) {
-            acc[stage.id] = stage["Stage ID"]; // Assuming stage has 'id' and 'label' properties
-            return acc;
-        }
-        return acc;
-    }, {} as Record<string, string>);
+    // Sort the data when opportunities, sortField or sortDirection change
+    useEffect(() => {
+        if (!opportunities) return;
 
-    // Memoize sorted data
-    const sortedData = useMemo(() => {
-        if (!opportunities) return [];
-        return [...opportunities].sort((a, b) => {
+        const sorted = [...opportunities].sort((a, b) => {
             // Use type assertion since we know these fields exist
             const aValue = a[sortField as keyof typeof a];
             const bValue = b[sortField as keyof typeof b];
@@ -73,6 +71,8 @@ const OpportunitiesCRMPage = memo(() => {
                 ? aString.localeCompare(bString)
                 : bString.localeCompare(aString);
         });
+
+        setSortedData(sorted);
     }, [opportunities, sortField, sortDirection]);
 
     const formatCurrency = (value?: number) => {
@@ -89,7 +89,7 @@ const OpportunitiesCRMPage = memo(() => {
         console.log('Add opportunity');
     };
 
-    const handleRowClick = useCallback((opportunity: any) => {
+    const handleRowClick = (opportunity: any) => {
         // Set selected opportunity
         setSelectedOpportunity(opportunity);
 
@@ -112,16 +112,16 @@ const OpportunitiesCRMPage = memo(() => {
 
         // Open drawer
         setDrawerOpen(true);
-    }, []);
+    };
 
-    const handleCloseDrawer = useCallback(() => {
+    const handleCloseDrawer = () => {
         setDrawerOpen(false);
         // Clear states after drawer is closed
         setTimeout(() => {
             setSelectedOpportunity(null);
             setFormValues({});
         }, 300); // Small delay to ensure drawer animation completes
-    }, []);
+    };
 
     const handleInputChange = (field: string, value: any) => {
         // Update form values
@@ -170,23 +170,23 @@ const OpportunitiesCRMPage = memo(() => {
     };
 
     // Define table columns
-    const columnsConfig: ColumnDef<any>[] = [
+    const columns: ColumnDef<any>[] = [
         {
-            field: 'Prospect ID',
-            headerName: 'Prospect ID',
+            field: 'Prospect ID (old)',
+            headerName: 'Prospect ID (old)',
             sortable: true,
             renderHeader: () => (
                 <button
                     type="button"
                     className="flex items-center hover:text-blue-700"
-                    onClick={() => handleHeaderClick('Prospect ID')}
+                    onClick={() => handleHeaderClick('Prospect ID (old)')}
                 >
-                    Prospect ID
-                    {sortField === 'Prospect ID' && (
+                    Prospect ID (old)
+                    {sortField === 'Prospect ID (old)' && (
                         <Iconify
                             icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
+                            width={16}
+                            height={16}
                             className="ml-1.5"
                         />
                     )}
@@ -208,8 +208,8 @@ const OpportunitiesCRMPage = memo(() => {
                     {sortField === 'Last Name' && (
                         <Iconify
                             icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
+                            width={16}
+                            height={16}
                             className="ml-1.5"
                         />
                     )}
@@ -224,29 +224,24 @@ const OpportunitiesCRMPage = memo(() => {
             renderHeader: () => (
                 <button
                     type="button"
-                    className="flex items-center hover:text-blue-700 "
+                    className="flex items-center hover:text-blue-700"
                     onClick={() => handleHeaderClick('Email')}
                 >
                     Email
                     {sortField === 'Email' && (
                         <Iconify
                             icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
+                            width={16}
+                            height={16}
                             className="ml-1.5"
                         />
                     )}
                 </button>
             ),
-            renderCell: (row) => (
-                <span className="block overflow-hidden text-ellipsis whitespace-nowrap" title={row.Email}>
-                    {row.Email}
-                </span>
-            ),
         },
         {
             field: 'Current Stage (linked)',
-            headerName: 'Current Stage',
+            headerName: 'Current Stage (linked)',
             sortable: true,
             sortDirection: sortField === 'Current Stage (linked)' ? sortDirection : undefined,
             renderHeader: () => (
@@ -259,15 +254,15 @@ const OpportunitiesCRMPage = memo(() => {
                     {sortField === 'Current Stage (linked)' && (
                         <Iconify
                             icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
+                            width={16}
+                            height={16}
                             className="ml-1.5"
                         />
                     )}
                 </button>
             ),
             renderCell: (row) => (
-                <span className="border-1 border-black/50 text-gray-700 font-normal px-2 py-1 text-xs inline-block rounded-md overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]">
+                <span className="bg-gray-100 text-gray-700 font-normal rounded px-2 py-1 text-xs inline-block">
                     {statusLabels[row['Current Stage (linked)']] || row['Current Stage (linked)']}
                 </span>
             ),
@@ -287,8 +282,8 @@ const OpportunitiesCRMPage = memo(() => {
                     {sortField === 'Deal Value' && (
                         <Iconify
                             icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
+                            width={16}
+                            height={16}
                             className="ml-1.5"
                         />
                     )}
@@ -304,15 +299,15 @@ const OpportunitiesCRMPage = memo(() => {
             renderHeader: () => (
                 <button
                     type="button"
-                    className="  hover:text-blue-700 block overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]"
+                    className="flex items-center hover:text-blue-700"
                     onClick={() => handleHeaderClick('Close Probability')}
                 >
                     Close Probability
                     {sortField === 'Close Probability' && (
                         <Iconify
                             icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
+                            width={16}
+                            height={16}
                             className="ml-1.5"
                         />
                     )}
@@ -335,17 +330,12 @@ const OpportunitiesCRMPage = memo(() => {
                     {sortField === 'General Notes' && (
                         <Iconify
                             icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
+                            width={16}
+                            height={16}
                             className="ml-1.5"
                         />
                     )}
                 </button>
-            ),
-            renderCell: (row) => (
-                <span className="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" title={row['General Notes']}>
-                    {row['General Notes']}
-                </span>
             ),
         },
     ];
@@ -366,6 +356,7 @@ const OpportunitiesCRMPage = memo(() => {
             label: 'Current Stage',
             type: 'select',
             options: Object.entries(statusLabels)
+                .sort(([a], [b]) => a.localeCompare(b)) // Sort by value to maintain order
                 .map(([value, label]) => ({
                     value,
                     label
@@ -411,717 +402,98 @@ const OpportunitiesCRMPage = memo(() => {
         },
     ];
 
-    // Memoize callbacks to prevent unnecessary rerenders
-    const handleColumnsCreated = useCallback((columns: KanbanColumn[]) => {
-        console.log('Kanban columns created:', columns);
-        kanbanColumnsRef.current = columns;
-        // Check for duplicate IDs
-        const ids = columns.map(col => col.id);
-        const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
-        if (duplicateIds.length > 0) {
-            console.error('Duplicate column IDs found:', duplicateIds);
-        }
-    }, []);
-
-    const handleKanbanItemClick = useCallback((item: KanbanRecord) => {
-        const opportunity = {
-            'Prospect ID': item.id,
-            'Last Name': item.title,
-            'Deal Value': item.dealValue,
-            'Email': item.email,
-            'Company': item.company,
-            'Job Title': item.jobTitle,
-            'Phone': item.phone,
-            'General Notes': item.generalNotes,
-            'Current Stage (linked)': item.status,
-            'Close Probability': item.closeProbability,
-            ...item
-        };
-        handleRowClick(opportunity);
-    }, []);
-
-    const handleKanbanItemMove = useCallback((item: KanbanRecord, sourceColumn: string, targetColumn: string) => {
-        // In a real app, you would update the item in your database
-        console.log(`Moved ${item.title} from ${sourceColumn} to ${targetColumn}`);
-
-        // Extract the value from the column ID based on the groupByField
-        let newValue = '';
-
-        if (groupByField === 'Current Stage (linked)') {
-            // Remove the 'column-stage_' prefix
-            newValue = targetColumn.replace('column-stage_', '');
-        } else if (groupByField === 'Source Channel') {
-            // Remove the 'column-source_' prefix and capitalize the value
-            const sourceName = targetColumn.replace('column-source_', '');
-            newValue = sourceName.charAt(0).toUpperCase() + sourceName.slice(1);
-        } else if (groupByField === 'Close Probability') {
-            // Remove the 'column-prob_' prefix
-            newValue = targetColumn.replace('column-prob_', '');
-        } else {
-            // Default - just remove 'column-' prefix
-            newValue = targetColumn.replace('column-', '');
-        }
-
-        // Here you would make an API call to update the status or field value
-        // For now, we just log the change
-        console.log(`New ${groupByField}: ${newValue}`);
-
-        // The updated item with the new field value
-        const updatedItem = {
-            ...item,
-            [groupByField]: newValue
-        };
-
-        console.log('Updated item:', updatedItem);
-    }, [groupByField]);
-
-    // Memoize the column map to prevent unnecessary rerenders
-    const getColumnMap = useCallback(() => {
-        if (groupByField === 'Stage ID') {
-            return Object.entries(statusLabels)
-                .reduce((acc, [value, label]) => {
-                    acc[value] = {
-                        id: `stage_${value}`, // Ensure this ID is unique
-                        title: label
-                    };
-                    return acc;
-                }, {} as Record<string, { id: string; title: string }>);
-        }
-        if (groupByField === 'Source Channel') {
-            return {
-                'Facebook': { id: 'source_facebook', title: 'Facebook' },
-                'Instagram': { id: 'source_instagram', title: 'Instagram' },
-                'LinkedIn': { id: 'source_linkedin', title: 'LinkedIn' },
-                'Referral': { id: 'source_referral', title: 'Referral' },
-                'Website': { id: 'source_website', title: 'Website' },
-            };
-        }
-        if (groupByField === 'Close Probability') {
-            return {
-                '0': { id: 'prob_0', title: '0%' },
-                '10': { id: 'prob_10', title: '10%' },
-                '20': { id: 'prob_20', title: '20%' },
-                '30': { id: 'prob_30', title: '30%' },
-                '40': { id: 'prob_40', title: '40%' },
-                '50': { id: 'prob_50', title: '50%' },
-                '60': { id: 'prob_60', title: '60%' },
-                '70': { id: 'prob_70', title: '70%' },
-                '80': { id: 'prob_80', title: '80%' },
-                '90': { id: 'prob_90', title: '90%' },
-                '100': { id: 'prob_100', title: '100%' },
-            };
-        }
-        return undefined;
-    }, [groupByField]);
-
-    // Memoize the column map itself
-    const columnMap = useMemo(() => getColumnMap(), [getColumnMap]);
-
-    // Memoize the display fields for the kanban
-    const displayFields = useMemo(() => [
-        { field: 'title', label: 'Name' },
-        {
-            field: 'dealValue',
-            label: 'Deal Value',
-            render: (value: any) => formatCurrency(value)
-        },
-        {
-            field: 'closeProbability',
-            label: 'Probability',
-            render: (value: any) => value ? `${value}%` : '-'
-        },
-        { field: 'email', label: 'Email' }
-    ], []);
-
-    // Memoize the item mapping function for sorted data
-    const mapItemsFromSortedData = useCallback((data: any[]) => data.map(item => ({
-        id: item['Prospect ID'],
-        title: item['Last Name'],
-        status: item[groupByField as keyof typeof item],
-        dealValue: item['Deal Value'],
-        closeProbability: item['Close Probability'],
-        email: item.Email,
-        company: item.Company,
-        jobTitle: item['Job Title'],
-        phone: item.Phone,
-        generalNotes: item['General Notes'],
-        [groupByField]: item[groupByField as keyof typeof item],
-        ...item
-    })), [groupByField]);
-
-    // Memoize the renderColumnHeader function
-    const renderColumnHeader = useCallback((column: any) => (
-        <div className="sticky top-0 z-10 p-3 font-medium border-b border-black/40 flex items-center">
-            <span className="text-gray-800 text-lg">{column.title}</span>
-            <span className="ml-2 text-xs text-gray-500 font-normal">
-                {column.records?.length || 0}
-            </span>
-        </div>
-    ), []);
-
-    // Memoize the renderItem function
-    const renderItem = useCallback((item: any) => (
-        <div className="bg-white border-1 rounded-lg p-3 mb-2 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-            <div className="mb-1.5 border-b border-black/40 pb-1.5 font-medium text-sm">
-                {item.title}
-            </div>
-
-            <div className="grid grid-cols-1 gap-2 text-xs ">
-                <div className="flex items-center justify-between">
-                    <div className="text-gray-500 font-medium mb-0.5">Prospect ID</div>
-                    <div className="text-black ">Pros - {item.id}</div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <div className="text-gray-500 mb-0.5">{
-                        groupByField === 'Current Stage (linked)'
-                            ? 'Current Stage'
-                            : groupByField
-                    }</div>
-                    <div className="text-gray-700 flex items-center">
-                        {
-                            groupByField === 'Current Stage (linked)'
-                                ? statusLabels[String(item[groupByField])] || item[groupByField]
-                                : item[groupByField]
-                        }
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <div className="text-gray-500 mb-0.5">Close Probability</div>
-                    <div className="text-gray-700">{item.closeProbability ? `${item.closeProbability}%` : '30%'}</div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <div className="text-gray-500 mb-0.5">Deal Value</div>
-                    <div className="text-gray-700">{formatCurrency(item.dealValue)}</div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <div className="text-gray-500 mb-0.5">Last Name</div>
-                    <div className="text-gray-700">{item.title}</div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <div className="text-gray-500 mb-0.5">General Notes</div>
-                    <div className="text-gray-700">{item.generalNotes}</div>
-                </div>
-            </div>
-        </div>
-    ), [groupByField]);
-
-    const handleCloseActivityModal = () => {
-        setActivityModalOpen(false);
-    };
-
-    const handleOpenActivityModal = () => {
-        if (!selectedOpportunity) return;
-
-        // Just open the modal - the component will handle its own state
-        setActivityModalOpen(true);
-    };
-
-    const handleActivityInputChange = (field: string, value: any) => {
-        setActivityFormValues(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleSaveActivity = async () => {
-        try {
-            await createActivityLogMutation({
-                Prospect: [activityFormValues.prospectId],
-                'Log Date': activityFormValues.logDate,
-                'Current Stage': [activityFormValues.currentStage],
-                'New Stage': [activityFormValues.newStage],
-                'Next Contact Date': activityFormValues.nextContactDate,
-                'Note': activityFormValues.note
-            });
-
-            handleCloseActivityModal();
-            // Optionally refresh opportunities data
-            refetch();
-        } catch (err) {
-            console.error('Failed to create activity log:', err);
-        }
-    };
-
-    // Handle opening the stage transition modal
-    const handleOpenStageTransition = useCallback((opportunity: KanbanRecord) => {
-        // Convert the KanbanRecord to an OpportunitiesRecord format
-        const opportunityRecord = {
-            id: opportunity.id,
-            'Prospect ID': opportunity.id,
-            'Last Name': opportunity.title || '',
-            'First Name': opportunity.firstName || '',
-            'Email': opportunity.email || '',
-            'Current Stage (linked)': opportunity.status ? [opportunity.status] : [],
-            'Close Probability': opportunity.closeProbability || 0,
-            'Deal Value': opportunity.dealValue || 0,
-            'Phone': opportunity.phone || '',
-            'Company': opportunity.company || '',
-            'Job Title': opportunity.jobTitle || '',
-            'General Notes': opportunity.generalNotes || '',
-            'Source Channel': opportunity.sourceChannel || '',
-            'Spouse': opportunity.spouse || 0,
-            createdTime: opportunity.createdAt || '',
-            lastModifiedTime: opportunity.updatedAt || ''
-        };
-
-        setSelectedOpportunity(opportunityRecord);
-        setStageTransitionModalOpen(true);
-    }, []);
-
-    // Handle closing the stage transition modal
-    const handleCloseStageTransition = useCallback(() => {
-        setStageTransitionModalOpen(false);
-        setSelectedOpportunity(null);
-    }, []);
-
-    // Handle saving the stage transition
-    const handleSaveStageTransition = useCallback(async (values: {
-        stageId: string;
-        closeProbability: number;
-        estimatedCloseDate: Date | null;
-        comments: string;
-    }) => {
-        if (!selectedOpportunity) return;
-
-        setIsCreatingActivity(true);
-        try {
-            // Update the opportunity with new stage and probability
-            await supabase
-                .from('opportunities')
-                .update({
-                    stage_id: values.stageId,
-                    close_probability: values.closeProbability,
-                    estimated_close_date: values.estimatedCloseDate,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', selectedOpportunity.id);
-
-            // Create activity log for the stage change
-            if (values.comments) {
-                await supabase
-                    .from('activity_log')
-                    .insert({
-                        opportunity_id: selectedOpportunity.id,
-                        activity_type: 'stage_change',
-                        notes: values.comments,
-                        created_at: new Date().toISOString()
-                    });
-            }
-
-            toast({
-                title: 'Stage updated successfully',
-                status: 'success'
-            });
-
-            // Refresh opportunities data
-            refetch();
-            handleCloseStageTransition();
-        } catch (err) {
-            console.error('Error updating stage:', err);
-            toast({
-                title: 'Failed to update stage',
-                status: 'error'
-            });
-        } finally {
-            setIsCreatingActivity(false);
-        }
-    }, [selectedOpportunity, refetch, handleCloseStageTransition]);
-
-    // Define activity form component as a separate component with its own state
-    const ActivityLogModal = () => {
-        // Local state for the form values
-        const [localFormValues, setLocalFormValues] = useState<Record<string, any>>(() => ({
-            prospectId: selectedOpportunity?.id || '',
-            logDate: new Date().toISOString().split('T')[0],
-            currentStage: selectedOpportunity?.['Current Stage (linked)'] || '',
-            newStage: selectedOpportunity?.['Current Stage (linked)'] || '',
-            nextContactDate: '',
-            note: '',
-        }));
-
-        // Update local state when selectedOpportunity changes
-        useEffect(() => {
-            if (selectedOpportunity && activityModalOpen) {
-                setLocalFormValues({
-                    prospectId: selectedOpportunity.id,
-                    logDate: new Date().toISOString().split('T')[0],
-                    currentStage: selectedOpportunity['Current Stage (linked)'] || '',
-                    newStage: selectedOpportunity['Current Stage (linked)'] || '',
-                    nextContactDate: '',
-                    note: '',
-                });
-            }
-        }, [selectedOpportunity, activityModalOpen]);
-
-        // Local handlers
-        const handleLocalInputChange = (field: string, value: any) => {
-            setLocalFormValues(prev => ({
-                ...prev,
-                [field]: value
-            }));
-        };
-
-        const handleLocalSave = async () => {
-            try {
-                await createActivityLogMutation({
-                    Prospect: [localFormValues.prospectId],
-                    'Log Date': localFormValues.logDate,
-                    'Current Stage': [localFormValues.currentStage],
-                    'New Stage': [localFormValues.newStage],
-                    'Next Contact Date': localFormValues.nextContactDate,
-                    'Note': localFormValues.note
-                });
-
-                handleCloseActivityModal();
-                // Optionally refresh opportunities data
-                refetch();
-            } catch (err) {
-                console.error('Failed to create activity log:', err);
-            }
-        };
-
-        return (
-            <Dialog
-                open={activityModalOpen}
-                onClose={handleCloseActivityModal}
-                maxWidth="sm"
-                fullWidth
-            >
-                <DialogTitle>Create New Activity</DialogTitle>
-                <DialogContent>
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 2,
-                            py: 2,
-                        }}
-                    >
-                        <TextField
-                            label="Log Date"
-                            type="date"
-                            fullWidth
-                            value={localFormValues.logDate || ''}
-                            onChange={(e) => handleLocalInputChange('logDate', e.target.value)}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                        />
-
-                        <FormControl fullWidth disabled>
-                            <TextField
-                                label="Current Stage"
-                                value={stages.find(s => s.id === localFormValues.currentStage)?.['Stage ID'] || ''}
-                                disabled
-                                fullWidth
-                            />
-                        </FormControl>
-
-                        <FormControl fullWidth>
-                            <Select
-                                value={localFormValues.newStage || ''}
-                                onChange={(e) => handleLocalInputChange('newStage', e.target.value)}
-                                displayEmpty
-                                label="New Stage"
-                            >
-                                {Object.entries(statusLabels)
-                                    .map(([value, label]) => (
-                                        <MenuItem key={value} value={value}>
-                                            {label}
-                                        </MenuItem>
-                                    ))}
-                            </Select>
-                        </FormControl>
-
-                        <TextField
-                            label="Next Contact Date"
-                            type="date"
-                            fullWidth
-                            value={localFormValues.nextContactDate || ''}
-                            onChange={(e) => handleLocalInputChange('nextContactDate', e.target.value)}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                        />
-
-                        <TextField
-                            label="Note"
-                            multiline
-                            rows={4}
-                            fullWidth
-                            value={localFormValues.note || ''}
-                            onChange={(e) => handleLocalInputChange('note', e.target.value)}
-                        />
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <MuiButton variant="text" onClick={handleCloseActivityModal}>Cancel</MuiButton>
-                    <MuiButton variant="contained" color="primary" onClick={handleLocalSave} disabled={activityLoading}>
-                        {activityLoading ? 'Saving...' : 'Save Activity'}
-                    </MuiButton>
-                </DialogActions>
-            </Dialog>
-        );
-    };
-
-    // Handle loading or error states for stages
-    if (stagesLoading) return <div>Loading stages...</div>;
-    if (stagesError) return <div>Error loading stages</div>;
-
     return (
-        <div className="w-full text-xs">
-            <div className="flex justify-between mb-2">
-                <div className="flex items-center">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <MuiButton className="cursor-pointer mr-1 flex items-center text-xs px-2 py-0.5">
-                                <span>View: {viewType === 'list' ? 'List' : 'Kanban'}</span>
-                                <Iconify
-                                    icon="mdi:chevron-down"
-                                    width={14}
-                                    height={14}
-                                    className="ml-1"
-                                />
-                            </MuiButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent sideOffset={5} align="start" className="w-40 bg-white border border-gray-200 shadow-md p-0">
+        <div className="w-full">
+            <div className="flex justify-end mb-3">
+                <Button
+                    variant="default"
+                    className="mr-2 text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                    onClick={handleAddOpportunity}
+                >
+                    Add opportunity
+                </Button>
+
+
+                <Button variant="default" className="mr-1">
+                    Group
+                </Button>
+
+                <Button variant="default" className="mr-1 cursor-pointer">
+                    Filter
+                </Button>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="default" className="cursor-pointer mr-1 flex items-center">
+                            <span>Sort</span>
+                            {sortField === 'Email' && (
+                                <>
+                                    <span className="mx-1 text-gray-400">|</span>
+                                    <span className="text-blue-600">{sortField}</span>
+                                    <Iconify
+                                        icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
+                                        width={14}
+                                        height={14}
+                                        className="ml-1 text-blue-600"
+                                    />
+                                </>
+                            )}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent sideOffset={5} align="start" className="w-60 bg-white border border-gray-200 shadow-md p-0">
+                        {columns.filter(col => col.sortable).map((column) => (
                             <DropdownMenuItem
-                                onClick={() => setViewType('list')}
-                                className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${viewType === 'list' ? "bg-blue-100" : ""}`}
+                                key={column.field}
+                                onClick={() => handleHeaderClick(column.field)}
+                                className={`cursor-pointer py-2.5 px-4 hover:bg-gray-50 ${sortField === column.field ? "bg-blue-100" : ""}`}
                             >
-                                <div className="flex items-center w-full">
-                                    <Iconify
-                                        icon="mdi:view-list"
-                                        width={14}
-                                        height={14}
-                                        className="mr-2"
-                                    />
-                                    <span className={viewType === 'list' ? "font-medium text-blue-700" : ""}>List</span>
-                                </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => setViewType('kanban')}
-                                className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${viewType === 'kanban' ? "bg-blue-100" : ""}`}
-                            >
-                                <div className="flex items-center w-full">
-                                    <Iconify
-                                        icon="mdi:view-kanban"
-                                        width={14}
-                                        height={14}
-                                        className="mr-2"
-                                    />
-                                    <span className={viewType === 'kanban' ? "font-medium text-blue-700" : ""}>Kanban</span>
-                                </div>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {viewType === 'kanban' && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <MuiButton className="cursor-pointer ml-1 flex items-center text-xs px-2 py-0.5">
-                                    <span>Group By: {groupByField === 'Current Stage (linked)' ? 'Current Stage' : groupByField}</span>
-                                    <Iconify
-                                        icon="mdi:chevron-down"
-                                        width={14}
-                                        height={14}
-                                        className="ml-1"
-                                    />
-                                </MuiButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent sideOffset={5} align="start" className="w-56 bg-white border border-gray-200 shadow-md p-0">
-                                <DropdownMenuItem
-                                    onClick={() => setGroupByField('Current Stage (linked)')}
-                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Current Stage (linked)' ? "bg-blue-100" : ""}`}
-                                >
-                                    <div className="flex items-center w-full">
-                                        <span className={groupByField === 'Current Stage (linked)' ? "font-medium text-blue-700" : ""}>Current Stage</span>
-                                    </div>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => setGroupByField('Source Channel')}
-                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Source Channel' ? "bg-blue-100" : ""}`}
-                                >
-                                    <div className="flex items-center w-full">
-                                        <span className={groupByField === 'Source Channel' ? "font-medium text-blue-700" : ""}>Source Channel</span>
-                                    </div>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => setGroupByField('Close Probability')}
-                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Close Probability' ? "bg-blue-100" : ""}`}
-                                >
-                                    <div className="flex items-center w-full">
-                                        <span className={groupByField === 'Close Probability' ? "font-medium text-blue-700" : ""}>Close Probability</span>
-                                    </div>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                </div>
-
-                <div className="flex">
-                    <MuiButton
-                        className="mr-1.5 text-white bg-blue-600 hover:bg-blue-700 cursor-pointer text-xs px-2 py-0.5"
-                        onClick={handleAddOpportunity}
-                    >
-                        Add opportunity
-                    </MuiButton>
-
-                    {viewType !== 'kanban' && (
-                        <MuiButton className="mr-1 text-xs px-2 py-0.5">
-                            Group
-                        </MuiButton>
-                    )}
-
-                    <MuiButton className="mr-1 cursor-pointer text-xs px-2 py-0.5">
-                        Filter
-                    </MuiButton>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <MuiButton className="cursor-pointer mr-1 flex items-center text-xs px-2 py-0.5">
-                                <span>Sort</span>
-                                {sortField === 'Email' && (
-                                    <>
-                                        <span className="mx-1 text-gray-400">|</span>
-                                        <span className="text-blue-600">{sortField}</span>
+                                <div className="flex items-center justify-between w-full">
+                                    <span className={sortField === column.field ? "font-medium text-blue-700" : ""}>{column.headerName}</span>
+                                    {sortField === column.field && (
                                         <Iconify
                                             icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                                            width={10}
-                                            height={10}
-                                            className="ml-1 text-blue-600"
+                                            width={16}
+                                            height={16}
+                                            className="text-blue-600"
                                         />
-                                    </>
-                                )}
-                            </MuiButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent sideOffset={5} align="start" className="w-56 bg-white border border-gray-200 shadow-md p-0">
-                            {columnsConfig.filter(col => col.sortable).map((column) => (
-                                <DropdownMenuItem
-                                    key={column.field}
-                                    onClick={() => handleHeaderClick(column.field)}
-                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${sortField === column.field ? "bg-blue-100" : ""}`}
-                                >
-                                    <div className="flex items-center justify-between w-full">
-                                        <span className={sortField === column.field ? "font-medium text-blue-700" : ""}>{column.headerName}</span>
-                                        {sortField === column.field && (
-                                            <Iconify
-                                                icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                                                width={12}
-                                                height={12}
-                                                className="text-blue-600"
-                                            />
-                                        )}
-                                    </div>
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                    )}
+                                </div>
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
 
-                    <button type="button" className="p-1 rounded-full hover:bg-gray-100">
-                        <Iconify icon="mdi:magnify" width={16} height={16} />
-                    </button>
+                <button type="button" className="p-2 rounded-full hover:bg-gray-100">
+                    <Iconify icon="mdi:magnify" width={20} height={20} />
+                </button>
 
-                    <button type="button" className="p-1 rounded-full hover:bg-gray-100">
-                        <Iconify icon="mdi:dots-horizontal" width={16} height={16} />
-                    </button>
-                </div>
+                <button type="button" className="p-2 rounded-full hover:bg-gray-100">
+                    <Iconify icon="mdi:dots-horizontal" width={20} height={20} />
+                </button>
             </div>
 
-            {viewType === 'list' ? (
-                <DynamicTable
-                    columns={columnsConfig}
-                    data={sortedData}
-                    isLoading={isLoading}
-                    isError={isError}
-                    error={error}
-                    onRowClick={handleRowClick}
-                    getRowId={(row) => row.id || `row-${Math.random().toString(36).substr(2, 9)}`}
-                    loadingMessage="Loading opportunities..."
-                    errorMessage="Error loading data"
-                    noDataMessage="No opportunities found."
-                />
-            ) : (
-                <div className="w-full h-[calc(100vh-180px)] overflow-x-auto flex">
-                    <DynamicKanban
-                        items={mapItemsFromSortedData(sortedData)}
-                        config={{
-                            groupByField,
-                            maxColumns: 10,
-                            allowDrag: true,
-                            onColumnsCreated: handleColumnsCreated as (columns: KanbanColumn[]) => void,
-                            columnMap,
-                            onItemClick: handleKanbanItemClick,
-                            onItemMove: handleKanbanItemMove,
-                            onItemStageUpdate: handleOpenStageTransition,
-                            displayFields,
-                            renderColumnHeader,
-                            renderItem
-                        }}
-                        isLoading={isLoading}
-                        isError={isError}
-                        error={error}
-                    />
-                </div>
-            )}
+            <DynamicTable
+                columns={columns}
+                data={sortedData.length > 0 ? sortedData : (opportunities || [])}
+                isLoading={isLoading}
+                isError={isError}
+                error={error}
+                onRowClick={handleRowClick}
+                getRowId={(row) => row.id || `row-${Math.random().toString(36).substr(2, 9)}`}
+                loadingMessage="Loading opportunities..."
+                errorMessage="Error loading data"
+                noDataMessage="No opportunities found."
+            />
 
             <EditDrawer
                 open={drawerOpen}
                 onClose={handleCloseDrawer}
-                title={selectedOpportunity ? `${formValues["Prospect ID"] || 'Opportunity'}` : 'Edit Opportunity'}
+                title={selectedOpportunity ? `Edit ${formValues.lastName || 'Opportunity'}` : 'Edit Opportunity'}
                 record={formValues}
                 onSave={handleSave}
                 onInputChange={handleInputChange}
                 fields={formFields}
-                customActions={
-                    <MuiButton
-                        variant="contained"
-                        color="primary"
-                        onClick={handleOpenActivityModal}
-                        sx={{ mr: 2 }}
-                    >
-                        Add Activity
-                    </MuiButton>
-                }
             />
-            <EditDrawer
-                open={stageTransitionModalOpen && !drawerOpen}
-                onClose={handleCloseStageTransition}
-                title="Update Activity Stage"
-                onSave={(record) => { console.log('save', record) }}
-                onInputChange={(field, value) => { console.log('input changed', field, value) }}
-                customContent={
-                    selectedOpportunity && (
-                        <StageTransitionForm
-                            opportunity={selectedOpportunity}
-                            pipelineStages={stages.filter(stage => !!stage.id) as Pipeline_StagesRecord[]}
-                            onSubmit={handleSaveStageTransition}
-                            onCancel={handleCloseStageTransition}
-                            isSubmitting={isCreatingActivity}
-                        />
-                    )
-                }
-            />
-
-            <ActivityLogModal />
-
-            {/* {activityModalOpen && (
-                <StageTransitionModal
-                    open={stageTransitionModalOpen}
-                    onClose={handleCloseStageTransition}
-                    opportunity={selectedOpportunity}
-                    pipelineStages={stages}
-                    onSubmit={handleSaveStageTransition}
-                    isSubmitting={isCreatingActivity}
-                />
-            )} */}
-        </div >
+        </div>
     );
-});
-
-export default OpportunitiesCRMPage; 
+} 

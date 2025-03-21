@@ -6,7 +6,7 @@ import {
   Pipeline_StagesRecord,
   ThoughtFlow___ContentRecord
 } from '../types/airtableTypes';
-import { createTableHooks, TableQueryOptions } from './useAirtableTable';
+import { createTableHooks } from './useAirtableTable';
 
 // Create hooks for Opportunities table
 export const OpportunityHooks = createTableHooks<OpportunitiesRecord>('Opportunities');
@@ -39,7 +39,7 @@ export const {
 } = ContentHooks;
 
 // Create hooks for Activity Log table
-export const ActivityLogHooks = createTableHooks<Activity_LogRecord>('Activity%20Log');
+export const ActivityLogHooks = createTableHooks<Activity_LogRecord>('Activity_Log');
 export const {
   useTable: useActivityLogs,
   useRecordById: useActivityLogById,
@@ -59,31 +59,14 @@ export const {
 } = EmployeesHooks;
 
 // Create hooks for Pipeline Stages table
-export const PipelineStagesHooks = createTableHooks<Pipeline_StagesRecord>('Pipeline%20Stages');
+export const PipelineStagesHooks = createTableHooks<Pipeline_StagesRecord>('Pipeline_Stages');
 export const {
-  useTable: usePipelineStagesBase,
+  useTable: usePipelineStages,
   useRecordById: usePipelineStageById,
   useCreateRecord: useCreatePipelineStage,
   useUpdateRecord: useUpdatePipelineStage,
   useDeleteRecord: useDeletePipelineStage
 } = PipelineStagesHooks;
-
-// Custom hook that returns sorted pipeline stages
-export const usePipelineStages = (options: TableQueryOptions = {}) => {
-  const result = usePipelineStagesBase(options);
-  
-  // Sort the stages by ID if data is available
-  const sortedRecords = [...result.records].sort((a, b) => {
-    const aId = a['Stage ID'] || '';
-    const bId = b['Stage ID'] || '';
-    return aId.localeCompare(bId);
-  });
-  
-  return {
-    ...result,
-    records: sortedRecords
-  };
-};
 
 // Generic function to create hooks for any table dynamically
 export function getTableHooks<T>(tableId: string) {

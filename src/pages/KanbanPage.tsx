@@ -11,10 +11,10 @@ import {
   useTheme,
 } from '@mui/material';
 
-import { KanbanColumn, KanbanRecord } from 'src/types/kanbanTypes';
 import { Iconify } from '../components/iconify';
 import { KanbanBoard } from '../components/kanban/KanbanBoard';
 
+import type { KanbanColumn, KanbanRecord } from '../types/kanban';
 
 // Mock data for Sales Pipeline
 const mockSalesPipelineData: KanbanRecord[] = [

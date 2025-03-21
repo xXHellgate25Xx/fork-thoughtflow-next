@@ -1,23 +1,23 @@
-import type { DraggableProvided, DroppableProvided, DropResult } from 'react-beautiful-dnd';
+import type { DropResult, DraggableProvided, DroppableProvided } from 'react-beautiful-dnd';
 
 import { useState } from 'react';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import { Draggable, Droppable, DragDropContext } from 'react-beautiful-dnd';
 
 import {
   Box,
   Card,
-  CardContent,
   Chip,
-  IconButton,
   Menu,
-  MenuItem,
   Paper,
+  MenuItem,
+  IconButton,
   Typography,
+  CardContent,
 } from '@mui/material';
 
 import { Iconify } from 'src/components/iconify';
 
-import type { KanbanColumn, KanbanRecord } from '../../types/kanbanTypes';
+import type { KanbanColumn, KanbanRecord } from '../../types/kanban';
 
 interface KanbanBoardProps {
   columns: KanbanColumn[];

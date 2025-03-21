@@ -1,8 +1,7 @@
-import react from '@vitejs/plugin-react-swc';
 import path from 'path';
-import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
-import tsconfigPaths from 'vite-tsconfig-paths';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
 
 // ----------------------------------------------------------------------
 
@@ -11,7 +10,6 @@ const PORT = 3000;
 export default defineConfig({
   plugins: [
     react(),
-    tsconfigPaths(),
     checker({
       typescript: true,
       eslint: {
@@ -34,10 +32,6 @@ export default defineConfig({
         find: /^src(.+)/,
         replacement: path.join(process.cwd(), 'src/$1'),
       },
-      {
-        find: '@',
-        replacement: path.resolve(__dirname, 'src')
-      }
     ],
   },
   server: { port: PORT, host: true },
