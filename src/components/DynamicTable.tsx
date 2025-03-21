@@ -10,14 +10,6 @@ import {
     DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from './ui/table';
 
 // Column definition type
 export interface ColumnDef<T> {
@@ -185,93 +177,94 @@ export default function DynamicTable<T extends Record<string, any>>({
 
     return (
         <div className="border-none shadow-none">
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader className="bg-gray-100">
-                        <TableRow className="border-t border-b border-gray-200">
-                            {columns.map((column, index) => (
-                                <TableHead
-                                    key={index}
-                                    className={`${getTextAlign(column.align)} text-xs font-bold text-gray-700 uppercase py-3 px-4 ${index !== 0 ? 'border-l border-gray-200' : ''}`}
-                                    style={column.width ? { width: `${column.width}px` } : undefined}
-                                >
-                                    {column.renderHeader ? (
-                                        column.renderHeader()
-                                    ) : (
-                                        <div className="flex items-center">
-                                            <span>{column.headerName}</span>
-                                            {column.sortable && (
-                                                <Iconify
-                                                    icon={column.sortDirection === 'asc'
-                                                        ? 'lucide:arrow-up'
-                                                        : column.sortDirection === 'desc'
-                                                            ? 'lucide:arrow-down'
-                                                            : 'lucide:chevrons-up-down'}
-                                                    width={14}
-                                                    height={14}
-                                                    className="ml-1 opacity-70"
-                                                />
-                                            )}
-                                        </div>
-                                    )}
-                                </TableHead>
-                            ))}
-                            {showRowActions && (
-                                <TableHead className="text-right text-xs font-medium text-gray-500 uppercase py-3 px-4">
-                                    Actions
-                                </TableHead>
-                            )}
-                        </TableRow>
-                    </TableHeader>
-
-                    <TableBody>
-                        {data.map((row, rowIndex) => (
-                            <TableRow
-                                key={getRowId(row) || rowIndex}
-                                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                                className={`border-t border-gray-200 ${onRowClick ? 'cursor-pointer' : ''} ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors duration-150`}
-                            >
-                                {columns.map((column, cellIndex) => (
-                                    <TableCell
-                                        key={cellIndex}
-                                        className={`${getTextAlign(column.align)} p-4`}
+            <div className="w-full relative">
+                <div className="max-h-[80vh] overflow-y-auto overflow-x-auto">
+                    <table className="w-full border-collapse">
+                        <thead className="sticky top-0 z-10">
+                            <tr className="border-b border-gray-200">
+                                {columns.map((column, index) => (
+                                    <th
+                                        key={index}
+                                        className={`${getTextAlign(column.align)} bg-gray-100 text-xs font-bold text-gray-700 uppercase py-3 px-4 ${index !== 0 ? 'border-l border-gray-200' : ''} border-b border-gray-200`}
+                                        style={column.width ? { width: `${column.width}px` } : undefined}
                                     >
-                                        {renderCellContent(row, column)}
-                                    </TableCell>
+                                        {column.renderHeader ? (
+                                            column.renderHeader()
+                                        ) : (
+                                            <div className="flex items-center">
+                                                <span>{column.headerName}</span>
+                                                {column.sortable && (
+                                                    <Iconify
+                                                        icon={column.sortDirection === 'asc'
+                                                            ? 'lucide:arrow-up'
+                                                            : column.sortDirection === 'desc'
+                                                                ? 'lucide:arrow-down'
+                                                                : 'lucide:chevrons-up-down'}
+                                                        width={14}
+                                                        height={14}
+                                                        className="ml-1 opacity-70"
+                                                    />
+                                                )}
+                                            </div>
+                                        )}
+                                    </th>
                                 ))}
                                 {showRowActions && (
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                                    <Iconify icon="lucide:more-horizontal" className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                {rowActions.map((action, i) => (
-                                                    <React.Fragment key={action}>
-                                                        <DropdownMenuItem onClick={() => handleActionSelect(action, row)}>
-                                                            <Iconify
-                                                                icon={action.toLowerCase() === 'edit'
-                                                                    ? 'lucide:pencil'
-                                                                    : action.toLowerCase() === 'delete'
-                                                                        ? 'lucide:trash-2'
-                                                                        : 'lucide:more-horizontal'}
-                                                                className="mr-2 h-4 w-4"
-                                                            />
-                                                            <span>{action}</span>
-                                                        </DropdownMenuItem>
-                                                        {i < rowActions.length - 1 && <DropdownMenuSeparator />}
-                                                    </React.Fragment>
-                                                ))}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
+                                    <th className="text-right bg-gray-100 text-[10px] font-medium text-gray-500 uppercase py-3 px-2 border-b border-gray-200 ">
+                                        Actions
+                                    </th>
                                 )}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((row, rowIndex) => (
+                                <tr
+                                    key={getRowId(row) || rowIndex}
+                                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                                    className={`border-t border-gray-200 ${onRowClick ? 'cursor-pointer' : ''} ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors duration-150`}
+                                >
+                                    {columns.map((column, cellIndex) => (
+                                        <td
+                                            key={cellIndex}
+                                            className={`${getTextAlign(column.align)} py-3 px-2`}
+                                        >
+                                            {renderCellContent(row, column)}
+                                        </td>
+                                    ))}
+                                    {showRowActions && (
+                                        <td className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                                        <Iconify icon="lucide:more-horizontal" className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {rowActions.map((action, i) => (
+                                                        <React.Fragment key={action}>
+                                                            <DropdownMenuItem onClick={() => handleActionSelect(action, row)}>
+                                                                <Iconify
+                                                                    icon={action.toLowerCase() === 'edit'
+                                                                        ? 'lucide:pencil'
+                                                                        : action.toLowerCase() === 'delete'
+                                                                            ? 'lucide:trash-2'
+                                                                            : 'lucide:more-horizontal'}
+                                                                    className="mr-2 h-4 w-4"
+                                                                />
+                                                                <span>{action}</span>
+                                                            </DropdownMenuItem>
+                                                            {i < rowActions.length - 1 && <DropdownMenuSeparator />}
+                                                        </React.Fragment>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </td>
+                                    )}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

@@ -28,6 +28,13 @@ export default function CRMPage() {
         'test2@email.com',
         'kate.tran@edge8.ai',
         'dave@edge8.ai',
+        'dave@talentedge.io',
+        'dave@edge8.co',
+        'chris@investmigrate.com',
+        'hoa@investmigrate.com',
+        'marketing@investmigrate.com',
+        'tyrone@investmigrate.com',
+        'josh@investmigrate.com'
         // Add more emails as needed
     ];
 

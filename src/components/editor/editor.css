@@ -12,6 +12,7 @@
 
 /* Adjust footer toolbar top margin */
 .editor-container [data-hook="footerToolbar"] { 
+  display: none !important; /* Hide the entire toolbar */
   margin-top: 2px !important; /* Further reduced margin */
   margin-bottom: 2px !important; /* Add bottom margin as well */
   padding: 0 !important; /* Remove padding */
@@ -19,6 +20,7 @@
 
 /* Adjust toolbar button sizes if needed */
 .editor-container [data-hook="footerToolbar"] button {
+  visibility: hidden;
   padding: 4px !important; /* More compact buttons */
 }
 
