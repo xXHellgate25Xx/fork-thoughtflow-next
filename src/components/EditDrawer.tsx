@@ -78,11 +78,11 @@ export default function EditDrawer({
 
         // For select fields with options, use the first option as default if no default is specified
         if (field.type === 'select' && field.options && field.options.length > 0) {
-            return field.defaultValue !== undefined ? field.defaultValue : field.options[0].value;
+            return field.defaultValue || field.options[0].value;
         }
 
         // Fall back to default value or empty string for other field types
-        return field.defaultValue !== undefined ? field.defaultValue : '';
+        return field.defaultValue || '';
     };
 
     return (
@@ -182,165 +182,165 @@ export default function EditDrawer({
                         },
                     }}
                 >
-                    {customContent ? (
+                    {
                         customContent
-                    ) : (
-                        fields && record && fields.map((field, index) => (
-                            <Box
-                                mb={3}
-                                key={field.name}
-                                sx={{
-                                    animation: `fadeIn ${0.3 + index * 0.05}s ease-in-out`,
-                                    '@keyframes fadeIn': {
-                                        '0%': { opacity: 0, transform: 'translateY(10px)' },
-                                        '100%': { opacity: 1, transform: 'translateY(0)' },
-                                    },
-                                }}
-                            >
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                    mb={1}
+                        || (
+                            fields && record && fields.map((field, index) => (
+                                <Box
+                                    mb={3}
+                                    key={field.name}
                                     sx={{
-                                        fontWeight: 500,
-                                        letterSpacing: '0.1px',
+                                        animation: `fadeIn ${0.3 + index * 0.05}s ease-in-out`,
+                                        '@keyframes fadeIn': {
+                                            '0%': { opacity: 0, transform: 'translateY(10px)' },
+                                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                                        },
                                     }}
                                 >
-                                    {field.label}
-                                </Typography>
-
-                                {field.renderField ? (
-                                    field.renderField(getFieldValue(field), (value) => onInputChange(field.name, value))
-                                ) : field.type === 'textarea' ? (
-                                    <TextField
-                                        fullWidth
-                                        multiline
-                                        rows={field.rows || 4}
-                                        size="small"
-                                        value={getFieldValue(field)}
-                                        onChange={(e) => onInputChange(field.name, e.target.value)}
-                                        variant="outlined"
-                                        helperText={field.helperText}
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        mb={1}
                                         sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                backgroundColor: alpha(theme.palette.background.default, 0.5),
-                                                '&:hover': {
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: theme.palette.primary.light,
-                                                    }
-                                                }
-                                            }
-                                        }}
-                                    />
-                                ) : field.type === 'select' ? (
-                                    <FormControl
-                                        fullWidth
-                                        size="small"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                backgroundColor: alpha(theme.palette.background.default, 0.5),
-                                                '&:hover': {
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: theme.palette.primary.light,
-                                                    }
-                                                }
-                                            }
+                                            fontWeight: 500,
+                                            letterSpacing: '0.1px',
                                         }}
                                     >
-                                        <Select
-                                            value={String(getFieldValue(field) || '')}
-                                            onChange={(e: SelectChangeEvent) => onInputChange(field.name, e.target.value)}
-                                            MenuProps={{
-                                                PaperProps: {
-                                                    sx: {
-                                                        boxShadow: theme.shadows[4],
-                                                        borderRadius: 1,
-                                                    },
-                                                },
+                                        {field.label}
+                                    </Typography>
+
+                                    {field.renderField ? (
+                                        field.renderField(getFieldValue(field), (value) => onInputChange(field.name, value))
+                                    ) : field.type === 'textarea' ? (
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={field.rows || 4}
+                                            size="small"
+                                            value={getFieldValue(field)}
+                                            onChange={(e) => onInputChange(field.name, e.target.value)}
+                                            variant="outlined"
+                                            helperText={field.helperText}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                                    '&:hover': {
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: theme.palette.primary.light,
+                                                        }
+                                                    }
+                                                }
                                             }}
-                                            renderValue={(selected) => {
-                                                // Find the option with matching value to display its label
-                                                const option = field.options?.find(opt => opt.value === selected);
-                                                return option ? option.label : selected;
+                                        />
+                                    ) : field.type === 'select' ? (
+                                        <FormControl
+                                            fullWidth
+                                            size="small"
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                                    '&:hover': {
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: theme.palette.primary.light,
+                                                        }
+                                                    }
+                                                }
                                             }}
                                         >
-                                            {field.options?.map((option) => (
-                                                <MenuItem key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                ) : field.type === 'number' ? (
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        type="number"
-                                        value={getFieldValue(field)}
-                                        onChange={(e) => onInputChange(field.name, parseFloat(e.target.value))}
-                                        variant="outlined"
-                                        helperText={field.helperText}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                backgroundColor: alpha(theme.palette.background.default, 0.5),
-                                                '&:hover': {
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: theme.palette.primary.light,
+                                            <Select
+                                                value={String(getFieldValue(field) || '')}
+                                                onChange={(e: SelectChangeEvent) => onInputChange(field.name, e.target.value)}
+                                                MenuProps={{
+                                                    PaperProps: {
+                                                        sx: {
+                                                            boxShadow: theme.shadows[4],
+                                                            borderRadius: 1,
+                                                        },
+                                                    },
+                                                }}
+                                                renderValue={(selected) => {
+                                                    // Find the option with matching value to display its label
+                                                    const option = field.options?.find(opt => opt.value === selected);
+                                                    return option ? option.label : selected;
+                                                }}
+                                            >
+                                                {field.options?.map((option) => (
+                                                    <MenuItem key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    ) : field.type === 'number' ? (
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            type="number"
+                                            value={getFieldValue(field)}
+                                            onChange={(e) => onInputChange(field.name, parseFloat(e.target.value))}
+                                            variant="outlined"
+                                            helperText={field.helperText}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                                    '&:hover': {
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: theme.palette.primary.light,
+                                                        }
                                                     }
                                                 }
-                                            }
-                                        }}
-                                    />
-                                ) : field.type === 'currency' ? (
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        type="number"
-                                        value={getFieldValue(field)}
-                                        onChange={(e) => onInputChange(field.name, parseFloat(e.target.value))}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Typography color="text.secondary">$</Typography>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                        variant="outlined"
-                                        helperText={field.helperText}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                backgroundColor: alpha(theme.palette.background.default, 0.5),
-                                                '&:hover': {
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: theme.palette.primary.light,
+                                            }}
+                                        />
+                                    ) : field.type === 'currency' ? (
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            type="number"
+                                            value={getFieldValue(field)}
+                                            onChange={(e) => onInputChange(field.name, parseFloat(e.target.value))}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <Typography color="text.secondary">$</Typography>
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            variant="outlined"
+                                            helperText={field.helperText}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                                    '&:hover': {
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: theme.palette.primary.light,
+                                                        }
                                                     }
                                                 }
-                                            }
-                                        }}
-                                    />
-                                ) : (
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        value={String(getFieldValue(field) || '')}
-                                        onChange={(e) => onInputChange(field.name, e.target.value)}
-                                        variant="outlined"
-                                        helperText={field.helperText}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                backgroundColor: alpha(theme.palette.background.default, 0.5),
-                                                '&:hover': {
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: theme.palette.primary.light,
+                                            }}
+                                        />
+                                    ) : (
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            value={String(getFieldValue(field) || '')}
+                                            onChange={(e) => onInputChange(field.name, e.target.value)}
+                                            variant="outlined"
+                                            helperText={field.helperText}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                                    '&:hover': {
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: theme.palette.primary.light,
+                                                        }
                                                     }
                                                 }
-                                            }
-                                        }}
-                                    />
-                                )}
-                            </Box>
-                        ))
-                    )}
+                                            }}
+                                        />
+                                    )}
+                                </Box>
+                            ))
+                        )}
                 </Box>
 
                 <Box
