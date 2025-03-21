@@ -4,8 +4,6 @@
 
 ![preview](public/assets/images/minimal-free-preview.jpg)
 
-> Free React Admin Dashboard made with Material-UI components and React + Vite.js.
-
 ## Pages
 
 - [Dashboard](https://free.minimals.cc/)
