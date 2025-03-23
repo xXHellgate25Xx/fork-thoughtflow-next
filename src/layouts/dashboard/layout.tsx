@@ -1,26 +1,26 @@
-import type { Breakpoint, SxProps, Theme } from '@mui/material/styles';
+import type { Theme, SxProps, Breakpoint } from '@mui/material/styles';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 
+import { useRouter } from 'src/routes/hooks';
+
+import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 
 import { Iconify } from 'src/components/iconify';
 
-import { useLocation } from 'react-router-dom';
-import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
-import { useRouter } from 'src/routes/hooks';
-
 import { layoutClasses } from '../classes';
-import { AccountPopover } from '../components/account-popover';
-import { MenuButton } from '../components/menu-button';
+import { NavMobile, NavDesktop } from './nav';
+import { Main, DashboardContent } from './main';
 import { navData } from '../config-nav-dashboard';
+import { MenuButton } from '../components/menu-button';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
-import { DashboardContent, Main } from './main';
-import { NavDesktop, NavMobile } from './nav';
+import { AccountPopover } from '../components/account-popover';
 
 // ----------------------------------------------------------------------
 

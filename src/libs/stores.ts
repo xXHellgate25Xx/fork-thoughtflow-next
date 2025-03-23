@@ -1,19 +1,20 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { AccountApi } from './service/account/account';
-import { generalService } from './service/airtable/generalService';
-import { AnalyticsPageApi } from './service/analytics/analytics';
-import { authApi } from './service/auth/auth';
-import { ChannelApi } from './service/channel/channel';
-import { ContentPageApi } from './service/content/content';
-import { generateContentApi } from './service/content/generate';
-import exampleSlice from './service/example/exampleSlice';
-import { IdeaApi } from './service/idea/idea';
-import { RepurposeApi } from './service/idea/repurpose';
-import { HomePageApi } from './service/pillar/home';
-import { PillarPageApi } from './service/pillar/pillar-item';
-import { ProfileApi } from './service/profile/profile';
-import { uploadToStorageApi } from './service/storage/api-storage';
+
 import { WixApi } from './service/wix/wix';
+import { authApi } from './service/auth/auth';
+import { IdeaApi } from './service/idea/idea';
+import { HomePageApi } from './service/pillar/home';
+import { AccountApi } from './service/account/account';
+import { ChannelApi } from './service/channel/channel';
+import { ProfileApi } from './service/profile/profile';
+import { RepurposeApi } from './service/idea/repurpose';
+import exampleSlice from './service/example/exampleSlice';
+import { ContentPageApi } from './service/content/content';
+import { PillarPageApi } from './service/pillar/pillar-item';
+import { generateContentApi } from './service/content/generate';
+import { AnalyticsPageApi } from './service/analytics/analytics';
+import { generalService } from './service/airtable/generalService';
+import { uploadToStorageApi } from './service/storage/api-storage';
 
 const store = configureStore({
   reducer: {

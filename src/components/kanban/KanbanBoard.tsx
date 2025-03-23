@@ -1,18 +1,15 @@
-import type { DraggableProvided, DroppableProvided, DropResult } from 'react-beautiful-dnd';
-
 import { useState } from 'react';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 
 import {
   Box,
   Card,
-  CardContent,
   Chip,
-  IconButton,
   Menu,
-  MenuItem,
   Paper,
+  MenuItem,
+  IconButton,
   Typography,
+  CardContent,
 } from '@mui/material';
 
 import { Iconify } from 'src/components/iconify';
@@ -36,28 +33,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRecord, setSelectedRecord] = useState<KanbanRecord | null>(null);
-
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-
-    const { source, destination, draggableId } = result;
-    const sourceColumn = columns.find((col) => col.id === source.droppableId);
-    const destColumn = columns.find((col) => col.id === destination.droppableId);
-    const record = sourceColumn?.records.find((r) => r.id === draggableId);
-
-    if (!sourceColumn || !destColumn || !record) return;
-
-    // Remove from source column
-    const newSourceRecords = sourceColumn.records.filter((r) => r.id !== draggableId);
-    const newRecord = { ...record, status: destination.droppableId };
-
-    // Add to destination column
-    const newDestRecords = [...destColumn.records];
-    newDestRecords.splice(destination.index, 0, newRecord);
-
-    // Update the record
-    onRecordUpdate(newRecord);
-  };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, record: KanbanRecord) => {
     setAnchorEl(event.currentTarget);
@@ -126,63 +101,50 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   );
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <Box sx={{ display: 'flex', gap: 2, p: 2, height: '100%', overflowX: 'auto' }}>
-        {columns.map((column) => (
-          <Paper
-            key={column.id}
-            sx={{
-              width: 300,
-              flexShrink: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              maxHeight: '100%',
-            }}
-            className="kanban-column"
-          >
-            {renderColumnHeader ? renderColumnHeader(column) : defaultColumnHeaderRenderer(column)}
+    <Box sx={{ display: 'flex', gap: 2, p: 2, height: '100%', overflowX: 'auto' }}>
+      {columns.map((column) => (
+        <Paper
+          key={column.id}
+          sx={{
+            width: 300,
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '100%',
+          }}
+          className="kanban-column"
+        >
+          {renderColumnHeader ? renderColumnHeader(column) : defaultColumnHeaderRenderer(column)}
 
-            <Droppable droppableId={column.id}>
-              {(provided: DroppableProvided) => (
-                <Box
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  sx={{ flex: 1, overflowY: 'auto', p: 2 }}
-                >
-                  {column.records.map((record, index) => (
-                    <Draggable key={record.id} draggableId={record.id} index={index}>
-                      {(draggableProvided: DraggableProvided) => (
-                        <Card
-                          ref={draggableProvided.innerRef}
-                          {...draggableProvided.draggableProps}
-                          {...draggableProvided.dragHandleProps}
-                          sx={{ mb: 2 }}
-                        >
-                          {renderCustomCard ? (
-                            <Box sx={{ position: 'relative' }}>
-                              {renderCustomCard(record)}
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleMenuClick(e, record)}
-                                sx={{ position: 'absolute', top: 4, right: 4 }}
-                              >
-                                <Iconify icon="mdi:dots-vertical" />
-                              </IconButton>
-                            </Box>
-                          ) : (
-                            defaultCardRenderer(record)
-                          )}
-                        </Card>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </Box>
-              )}
-            </Droppable>
-          </Paper>
-        ))}
-      </Box>
+          <Box
+            sx={{ flex: 1, overflowY: 'auto', p: 2 }}
+            className="kanban-column-content"
+          >
+            {column.records.map((record, index) => (
+              <Card
+                key={record.id}
+                sx={{ mb: 2 }}
+                className="kanban-card"
+              >
+                {renderCustomCard ? (
+                  <Box sx={{ position: 'relative' }}>
+                    {renderCustomCard(record)}
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleMenuClick(e, record)}
+                      sx={{ position: 'absolute', top: 4, right: 4 }}
+                    >
+                      <Iconify icon="mdi:dots-vertical" />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  defaultCardRenderer(record)
+                )}
+              </Card>
+            ))}
+          </Box>
+        </Paper>
+      ))}
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={handleDelete}>
@@ -190,6 +152,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           Delete
         </MenuItem>
       </Menu>
-    </DragDropContext>
+    </Box>
   );
 };

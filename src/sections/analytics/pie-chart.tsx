@@ -1,4 +1,4 @@
-import { Card, Typography, Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { PieChart, mangoFusionPalette } from "@mui/x-charts";
 
 type PieChartProps = {
@@ -8,8 +8,7 @@ type PieChartProps = {
 
 export function ViewPieChart({ title, data }: PieChartProps) {
   return (
-    <>
-      <Box sx={{ 
+    <Box sx={{ 
         width: '600px',  // Fixed width
         minWidth: '450px', 
         maxWidth: '100%', // Responsive on smaller screens
@@ -50,6 +49,5 @@ export function ViewPieChart({ title, data }: PieChartProps) {
             }}
           />
       </Box>
-    </>
   );
 }

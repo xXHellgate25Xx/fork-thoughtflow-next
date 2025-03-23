@@ -1,18 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
-import { IMAGE_TYPE } from 'ricos-content';
-import { RicosEditor } from 'ricos-editor';
-import { EditorCommands } from 'ricos-types';
-import { useUploadToSupabaseMutation, useUploadToWixMutation } from 'src/libs/service/wix/wix';
-import { toBase64 } from 'src/utils/encodeFileToBase64';
-import { processingFilePath } from 'src/utils/file-path-with-hash';
-import { pluginHeadings } from "wix-rich-content-plugin-headings";
-import { pluginImage } from 'wix-rich-content-plugin-image';
-import { pluginLink } from "wix-rich-content-plugin-link";
-import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-text-color';
+import './editor.css';
+
+import type { EditorCommands } from 'ricos-types';
 
 import { Icon } from '@iconify/react';
+import { IMAGE_TYPE } from 'ricos-content';
+import { RicosEditor } from 'ricos-editor';
+import { useRef, useState, useEffect } from 'react';
+import { pluginLink } from "wix-rich-content-plugin-link";
+import { pluginImage } from 'wix-rich-content-plugin-image';
+import { pluginHeadings } from "wix-rich-content-plugin-headings";
+import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-text-color';
+
 import { Button, CircularProgress } from '@mui/material';
-import './editor.css';
+
+import { toBase64 } from 'src/utils/encodeFileToBase64';
+import { processingFilePath } from 'src/utils/file-path-with-hash';
+
+import { useUploadToWixMutation, useUploadToSupabaseMutation } from 'src/libs/service/wix/wix';
 
 function Editor({ content, callback, channel_id, content_id }: { content?: any, callback?: any, channel_id?: any, content_id?: any }) {
   const isInitialMount = useRef(true);

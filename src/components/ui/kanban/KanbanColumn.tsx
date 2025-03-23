@@ -1,10 +1,11 @@
-import { Plus } from 'lucide-react';
-import { Droppable } from 'react-beautiful-dnd';
+import type { KanbanColumn as KanbanColumnType } from 'src/types/kanbanTypes';
 
-import { KanbanColumn as KanbanColumnType } from 'src/types/kanbanTypes';
+import { Plus } from 'lucide-react';
+
 import { Button } from '../button';
 import { KanbanCard } from './KanbanCard';
-import { KanbanConfig } from './types';
+
+import type { KanbanConfig } from './types';
 
 interface KanbanColumnProps {
     column: KanbanColumnType;
@@ -52,26 +53,19 @@ export function KanbanColumn({ column, config }: KanbanColumnProps) {
             {/* Column Header */}
             {columnHeader}
 
-            {/* Column Content - Droppable Area */}
-            <Droppable droppableId={column.id}>
-                {(provided, snapshot) => (
-                    <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className="flex-1 overflow-y-auto p-2 transition-colors duration-200 bg-transparent"
-                    >
-                        {column.records.map((item, index) => (
-                            <KanbanCard
-                                key={item.id}
-                                item={item}
-                                index={index}
-                                config={config}
-                            />
-                        ))}
-                        {provided.placeholder}
-                    </div>
-                )}
-            </Droppable>
+            {/* Column Content */}
+            <div
+                className="flex-1 overflow-y-auto p-2 transition-colors duration-200 bg-transparent kanban-column-content"
+            >
+                {column.records.map((item, index) => (
+                    <KanbanCard
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        config={config}
+                    />
+                ))}
+            </div>
         </div>
     );
 } 

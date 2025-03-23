@@ -1,7 +1,12 @@
-import { ReactNode, useEffect } from 'react';
-import { useGlobalContext } from 'src/GlobalContextProvider';
+import type { ReactNode} from 'react';
+
+import { useEffect } from 'react';
+
 import { useRouter } from 'src/routes/hooks';
-import { getToken, isTokenValid, removeToken } from 'src/utils/auth';
+
+import { getToken, removeToken, isTokenValid } from 'src/utils/auth';
+
+import { useGlobalContext } from 'src/GlobalContextProvider';
 
 interface JWTAuthWrapperProps {
   children: ReactNode;

@@ -1,33 +1,36 @@
-import React, { useState, useEffect } from "react"
+import type { ProfileProps } from "src/interfaces/profile-interfaces"
+
 import { Helmet } from "react-helmet-async"
-import {
-  Box,
-  CircularProgress,
-  Container,
-  Paper,
-  Typography,
-  Divider,
-  Button,
-  TextField,
-  IconButton,
-  Snackbar,
-  InputAdornment,
-} from "@mui/material"
-import MuiAlert, { type AlertProps } from "@mui/material/Alert"
+import React, { useState, useEffect } from "react"
+
 import EditIcon from "@mui/icons-material/Edit"
 import Visibility from "@mui/icons-material/Visibility"
 import VisibilityOff from "@mui/icons-material/VisibilityOff"
+import MuiAlert, { type AlertProps } from "@mui/material/Alert"
+import {
+  Box,
+  Paper,
+  Button,
+  Divider,
+  Snackbar,
+  Container,
+  TextField,
+  Typography,
+  IconButton,
+  InputAdornment,
+  CircularProgress,
+} from "@mui/material"
+
+import { getRefreshToken } from "src/utils/auth"
+import { toBase64 } from "src/utils/encodeFileToBase64"
 
 import { CONFIG } from "src/config-global"
 import {
   useGetProfileQuery,
-  useUpdateDisplayImageMutation,
-  useUpdateDisplayNameMutation,
   useUpdatePasswordMutation,
+  useUpdateDisplayNameMutation,
+  useUpdateDisplayImageMutation,
 } from "src/libs/service/profile/profile"
-import type { ProfileProps } from "src/interfaces/profile-interfaces"
-import { getRefreshToken } from "src/utils/auth"
-import { toBase64 } from "src/utils/encodeFileToBase64"
 
 // Alert component using MuiAlert
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>((props, ref) => (

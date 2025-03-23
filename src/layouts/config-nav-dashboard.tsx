@@ -1,5 +1,6 @@
 import { Icon } from '@iconify/react';
-import { NavItem } from './dashboard/nav';
+
+import type { NavItem } from './dashboard/nav';
 
 // ----------------------------------------------------------------------
 

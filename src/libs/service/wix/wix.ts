@@ -1,6 +1,7 @@
-import { RichContent } from 'ricos-schema';
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { Tags } from 'src/interfaces/seoData-interface';
+import type { Tags } from 'src/interfaces/seoData-interface';
+
+import { createApi } from '@reduxjs/toolkit/query/react';
+
 import { baseQuery } from '../supabase/baseQuery';
 
 // Define the file response interface

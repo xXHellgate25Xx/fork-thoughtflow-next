@@ -1,16 +1,16 @@
 // src/components/modal/basic-modal.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import {
+  Box,
   Dialog,
+  Button,
+  TextField,
+  Typography,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  Button,
-  Box,
   CircularProgress,
-  ButtonPropsColorOverrides,
-  Typography,
 } from '@mui/material';
 
 interface GenericModalProps {

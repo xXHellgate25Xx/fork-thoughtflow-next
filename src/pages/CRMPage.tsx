@@ -1,11 +1,13 @@
+import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+
 import {
     Box,
     Container,
     Typography
 } from '@mui/material';
-import { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+
 import { useGetProfileQuery } from 'src/libs/service/profile/profile';
 
 export default function CRMPage() {

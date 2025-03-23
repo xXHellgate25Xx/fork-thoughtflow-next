@@ -1,6 +1,8 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { AirtableRecord, QueryOptions } from '../../../types/airtableTypes';
+
 import { airtableBaseQuery } from './airtableBaseQuery';
+
+import type { QueryOptions, AirtableRecord } from '../../../types/airtableTypes';
 // Helper function to get the Airtable base ID
 const getBaseId = () => import.meta.env.VITE_AIRTABLE_BASE_ID || localStorage?.getItem('airtableBaseId') || '';
 
@@ -18,6 +20,7 @@ export const generalService = createApi({
         const baseId = getBaseId();
         // Create URLSearchParams for query parameters
         const params: Record<string, string> = {};
+      console.log("filters", filters);
         
         // Apply filters if they exist
         if (filters && filters.length > 0) {
@@ -33,6 +36,7 @@ export const generalService = createApi({
               case 'gte': return `{${field}} >= ${value}`;
               case 'contains': return `FIND('${value}', {${field}})`;
               case 'notContains': return `NOT(FIND('${value}', {${field}}))`;
+              case 'custom': return value; // Use custom formula directly
               default: return `{${field}} = '${value}'`;
             }
           }).join(', ');

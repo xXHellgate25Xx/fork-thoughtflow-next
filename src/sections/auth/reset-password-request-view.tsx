@@ -1,14 +1,17 @@
-import { useCallback, useState } from 'react';
+import type { AlertColor} from '@mui/material';
 
-import LoadingButton from '@mui/lab/LoadingButton';
-import { Alert, AlertColor, Snackbar } from '@mui/material';
+import { useState, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
+import { Alert, Snackbar } from '@mui/material';
 import Typography from '@mui/material/Typography';
+import LoadingButton from '@mui/lab/LoadingButton';
+
+import { useRouter } from 'src/routes/hooks';
 
 import { useRequestResetPasswordMutation } from 'src/libs/service/auth/auth';
-import { useRouter } from 'src/routes/hooks';
 
 export function ResetPasswordRequestView() {
   const router = useRouter();

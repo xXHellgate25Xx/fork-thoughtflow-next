@@ -1,14 +1,15 @@
 import {
+  useQueryTableQuery,
+  useGetRecordByIdQuery,
   useCreateRecordMutation,
   useDeleteRecordMutation,
-  useGetRecordByIdQuery,
-  useQueryTableQuery,
   useUpdateRecordMutation
 } from '../libs/service/airtable/generalService';
-import {
+
+import type {
+  SortCondition,
   AirtableRecord,
-  FilterCondition,
-  SortCondition
+  FilterCondition
 } from '../types/airtableTypes';
 
 // Interface for table hook options
@@ -81,7 +82,6 @@ export function createTableHooks<T>(tableId: string) {
    */
   const useTable = (options: TableQueryOptions = {}): TableQueryResult<T> => {
     const { filters = [], sort = [], limit, offset, view } = options;
-    
     const queryOptions = {
       tableId,
       filters,

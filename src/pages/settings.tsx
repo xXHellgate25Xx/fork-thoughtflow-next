@@ -1,29 +1,35 @@
+import type { 
+  AlertColor} from '@mui/material';
+
+import { Icon } from '@iconify/react';
 import { Helmet } from 'react-helmet-async';
-import { useState, useCallback, useEffect } from 'react';
-import { CONFIG } from 'src/config-global';
-import { Scrollbar } from 'src/components/scrollbar';
+import { useState, useEffect, useCallback } from 'react';
+
 import TableContainer from '@mui/material/TableContainer';
-import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
-import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
-import { ChannelTableRow, type ChannelProps } from 'src/sections/tables/channel-table-row';
+import { 
+  Box, 
+  Card, 
+  Table, 
+  Alert, 
+  Button, 
+  Snackbar,
+  TableBody,
+  Typography, 
+  CircularProgress
+} from '@mui/material';
+
+import { useRouter } from 'src/routes/hooks';
+
+import { CONFIG } from 'src/config-global';
+import { DashboardContent } from 'src/layouts/dashboard';
 import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
 import { useGetAllContentsOfUserQuery } from 'src/libs/service/content/content';
 
-import { 
-  Box, 
-  Button, 
-  Card, 
-  Typography, 
-  Table, 
-  TableBody,
-  CircularProgress,
-  Snackbar, 
-  Alert, 
-  AlertColor,
-} from '@mui/material';
-import { DashboardContent } from 'src/layouts/dashboard';
-import { Icon } from '@iconify/react';
-import { useRouter } from 'src/routes/hooks';
+import { Scrollbar } from 'src/components/scrollbar';
+
+import { emptyRows } from 'src/sections/tables/utils';
+import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
+import { ChannelTableRow, type ChannelProps } from 'src/sections/tables/channel-table-row';
 
 // ----------------------------------------------------------------------
 

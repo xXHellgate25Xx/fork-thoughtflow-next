@@ -1,11 +1,11 @@
 // Re-export from the central types file
-import {
-  KanbanBaseConfig,
-  KanbanColumn,
-  KanbanDynamicConfig as KanbanConfig,
+import type {
   KanbanProps,
-  KanbanRecord
+  KanbanColumn,
+  KanbanRecord,
+  KanbanBaseConfig,
+  KanbanDynamicConfig as KanbanConfig
 } from "src/types/kanbanTypes";
 
 // Export types for component users
-export type { KanbanBaseConfig, KanbanColumn, KanbanConfig, KanbanProps, KanbanRecord };
+export type { KanbanProps, KanbanColumn, KanbanConfig, KanbanRecord, KanbanBaseConfig };

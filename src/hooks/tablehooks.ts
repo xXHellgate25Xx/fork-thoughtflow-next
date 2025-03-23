@@ -1,12 +1,14 @@
-import {
-  Activity_LogRecord,
+import { createTableHooks } from './useAirtableTable';
+
+import type { TableQueryOptions } from './useAirtableTable';
+import type {
   EmployeesRecord,
   Meta_LeadsRecord,
+  Activity_LogRecord,
   OpportunitiesRecord,
   Pipeline_StagesRecord,
   ThoughtFlow___ContentRecord
 } from '../types/airtableTypes';
-import { createTableHooks, TableQueryOptions } from './useAirtableTable';
 
 // Create hooks for Opportunities table
 export const OpportunityHooks = createTableHooks<OpportunitiesRecord>('Opportunities');

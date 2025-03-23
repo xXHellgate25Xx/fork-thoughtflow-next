@@ -1,5 +1,6 @@
-import { sourceMapsEnabled } from "process";
-import { RichContent, Node, TextData, Decoration, Node_Type, Decoration_Type, LinkData } from "ricos-schema";
+import type { Node, TextData, LinkData, Decoration, RichContent} from "ricos-schema";
+
+import { Node_Type, Decoration_Type } from "ricos-schema";
 
 export const handleSeoSlugChange = (
   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,

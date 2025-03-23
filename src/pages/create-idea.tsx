@@ -1,35 +1,37 @@
-import { Helmet } from 'react-helmet-async';
-import { useState, useCallback, useEffect } from 'react';
-import { CONFIG } from 'src/config-global';
-import { DashboardContent } from 'src/layouts/dashboard';
-import IdeaForm from 'src/components/text-voice-input/IdeaForm';
-import { IdeaFormat } from 'src/interfaces/idea-interfaces';
-import { useRouter } from 'src/routes/hooks';
+import type { IdeaFormat } from 'src/interfaces/idea-interfaces';
 
+import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { fromPlainText } from 'ricos-content/libs/fromPlainText';
+
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import {
   Box,
-  Button,
   Card,
+  Alert,
+  Snackbar,
   Typography,
   LinearProgress,
   CircularProgress,
-  Snackbar,
-  Alert,
 } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
+
+import { useRouter } from 'src/routes/hooks';
+
+import { CONFIG } from 'src/config-global';
+import { DashboardContent } from 'src/layouts/dashboard';
+import { useGetAllPillarQuery } from 'src/libs/service/pillar/home';
+import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
+import { useGenerateContentHTMLMutation } from 'src/libs/service/content/generate';
+import { useCreateIdeaMutation, useCreateIdeaContentMutation } from 'src/libs/service/idea/idea';
+
+import IdeaForm from 'src/components/text-voice-input/IdeaForm';
+import VoiceToTextButton from 'src/components/text-voice-input/VoiceRecorderButton';
+
 import { PillarSelect } from 'src/sections/pillar/pillar-select';
 import { ChannelSelect } from 'src/sections/channel/channel-select';
-import VoiceToTextButton from 'src/components/text-voice-input/VoiceRecorderButton';
-import { useGetAllPillarQuery } from 'src/libs/service/pillar/home';
-import { useCreateIdeaMutation, useCreateIdeaContentMutation } from 'src/libs/service/idea/idea';
-import { useGenerateContentHTMLMutation } from 'src/libs/service/content/generate';
-import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
-import { fromPlainText } from 'ricos-content/libs/fromPlainText';
-import { fromRichTextHtml } from 'ricos-content/libs/server-side-converters';
-import { useGlobalContext } from 'src/GlobalContextProvider';
-import { useLocation } from 'react-router-dom';
 
 // ----------------------------------------------------------------------
 

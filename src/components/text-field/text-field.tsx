@@ -1,4 +1,6 @@
-import { Box, SxProps, TextField as MUITextField, Typography, TextFieldProps } from '@mui/material';
+import type { SxProps, TextFieldProps } from '@mui/material';
+
+import { Box, Typography, TextField as MUITextField } from '@mui/material';
 
 function TextField({ label, required, ...props }: { label?: string } & TextFieldProps) {
   return (

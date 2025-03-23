@@ -1,17 +1,21 @@
-import LoadingButton from "@mui/lab/LoadingButton"
-import { Alert, type AlertColor, Button, Snackbar } from "@mui/material"
+import { useState, useCallback } from "react"
+
 import Box from "@mui/material/Box"
-import IconButton from "@mui/material/IconButton"
-import InputAdornment from "@mui/material/InputAdornment"
 import Link from "@mui/material/Link"
 import TextField from "@mui/material/TextField"
+import IconButton from "@mui/material/IconButton"
 import Typography from "@mui/material/Typography"
-import { useCallback, useState } from "react"
+import LoadingButton from "@mui/lab/LoadingButton"
+import InputAdornment from "@mui/material/InputAdornment"
+import { Alert, Button, Snackbar, type AlertColor } from "@mui/material"
+
+import { useRouter } from "src/routes/hooks"
+
+import { hashPassword } from "src/utils/ecrypt"
+
+import { useSignUpWithEmailAndPasswordMutation } from "src/libs/service/auth/auth"
 
 import { Iconify } from "src/components/iconify"
-import { useSignUpWithEmailAndPasswordMutation } from "src/libs/service/auth/auth"
-import { useRouter } from "src/routes/hooks"
-import { hashPassword } from "src/utils/ecrypt"
 
 export function SignUpView() {
   const router = useRouter()

@@ -1,4 +1,4 @@
-import { KanbanColumn, KanbanConfig, KanbanRecord } from './types';
+import type { KanbanColumn, KanbanConfig, KanbanRecord } from './types';
 
 /**
  * Groups data items into columns based on the configuration

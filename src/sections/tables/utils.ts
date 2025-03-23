@@ -1,4 +1,3 @@
-import type { IdeaProps } from 'src/sections/tables/idea-table-row';
 import type { ContentProps } from 'src/sections/tables/content-table-row';
 
 // ----------------------------------------------------------------------

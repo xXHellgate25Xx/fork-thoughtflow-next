@@ -1,9 +1,10 @@
 import React from 'react';
+
 import {
     Box,
     Card,
-    CardActionArea,
     Typography,
+    CardActionArea,
 } from '@mui/material';
 
 interface TagProps {

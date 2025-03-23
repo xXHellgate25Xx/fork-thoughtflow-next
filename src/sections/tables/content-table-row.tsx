@@ -1,3 +1,6 @@
+import type { LabelColor } from 'src/components/label';
+
+import { Icon } from '@iconify/react';
 import { useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
@@ -6,15 +9,16 @@ import TableRow from '@mui/material/TableRow';
 import MenuList from '@mui/material/MenuList';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
-import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
+import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 
-import { Iconify } from 'src/components/iconify';
-import { Icon } from '@iconify/react';
-import { Label, LabelColor } from 'src/components/label';
 import { useRouter } from 'src/routes/hooks';
+
 import { channelIcons } from 'src/theme/icons/channel-icons';
+
+import { Label } from 'src/components/label';
+import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 

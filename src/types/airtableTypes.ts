@@ -4,7 +4,7 @@
 // Base interface for filter conditions
 export interface FilterCondition {
   field: string;
-  operator: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains' | 'notContains';
+  operator: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains' | 'notContains' | 'custom';
   value: any;
 }
 

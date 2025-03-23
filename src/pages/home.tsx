@@ -1,19 +1,22 @@
 import { Helmet } from 'react-helmet-async';
-import { CONFIG } from 'src/config-global';
-import { PillarCardItem } from 'src/sections/pillar/pillar-card-item';
-import { _products } from 'src/_mock';
+import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import { Iconify } from 'src/components/iconify';
-import Typography from '@mui/material/Typography';
-import { DashboardContent } from 'src/layouts/dashboard';
 import Grid from '@mui/material/Unstable_Grid2';
 import { CircularProgress } from '@mui/material';
+import Typography from '@mui/material/Typography';
+
 import { useRouter } from 'src/routes/hooks';
-import { useState, useEffect } from 'react';
-import { GenericModal } from 'src/components/modal/generic-modal';
+
+import { CONFIG } from 'src/config-global';
+import { DashboardContent } from 'src/layouts/dashboard';
+
+import { Iconify } from 'src/components/iconify';
 import { AddPillarModal } from 'src/components/modal/add-pillar-modal';
+
+import { PillarCardItem } from 'src/sections/pillar/pillar-card-item';
+
 import { 
   useGetAllPillarQuery,
   useCreatePillarMutation

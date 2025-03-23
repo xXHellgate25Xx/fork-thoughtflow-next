@@ -1,42 +1,45 @@
+import type { Dayjs } from 'dayjs';
+import type { 
+  AlertColor} from '@mui/material';
+
+import dayjs from 'dayjs';
+import { Icon } from '@iconify/react';
 import { Helmet } from 'react-helmet-async';
-import { CONFIG } from 'src/config-global';
-import { DashboardContent } from 'src/layouts/dashboard';
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { 
   Box, 
   Card,
-  CircularProgress, 
-  Typography,
-  Snackbar, 
   Alert, 
-  AlertColor,
+  Snackbar,
+  Typography, 
+  CircularProgress,
 } from '@mui/material';
-import { Icon } from '@iconify/react';
-import { ViewPieChart } from 'src/sections/analytics/pie-chart';
-import Grid from '@mui/material/Grid';
 
-import { DateRangePicker } from 'src/components/date-picker/date-range-picker';
-import { CustomLineChart, getDatesRange } from 'src/sections/analytics/line-chart';
-import { SelectMenu } from 'src/sections/analytics/agg-time-select';
-import { ChannelSelect } from 'src/sections/channel/channel-select';
-import LeaderboardTable from 'src/sections/analytics/leaderboard';
+import { useRouter } from 'src/routes/hooks';
 
+import store from 'src/libs/stores';
+import { CONFIG } from 'src/config-global';
+import { DashboardContent } from 'src/layouts/dashboard';
 import {useGetAllChannelsOfUserQuery} from 'src/libs/service/channel/channel';
 import {
+  AnalyticsPageApi,
+  useGetTopContentQuery,
   useGetAllStatsOfUserQuery,
-  useGetAnalyticsViewByContentPillarQuery,
-  useGetAllStatsOfUserByPillarQuery,
+  useGetTopContentDailyQuery,
+  useGetTopContentWeeklyQuery,
   useGetChannelStatsOfUserByPageQuery,
   useGetChannelStatsOfUserByPillarQuery,
-  useGetTopContentQuery,
-  useGetTopContentWeeklyQuery,
-  useGetTopContentDailyQuery,
-  AnalyticsPageApi
+  useGetAnalyticsViewByContentPillarQuery
 } from 'src/libs/service/analytics/analytics';
-import store from 'src/libs/stores';
-import dayjs, { Dayjs } from 'dayjs';
-import { useRouter } from 'src/routes/hooks';
+
+import { DateRangePicker } from 'src/components/date-picker/date-range-picker';
+
+import { ViewPieChart } from 'src/sections/analytics/pie-chart';
+import LeaderboardTable from 'src/sections/analytics/leaderboard';
+import { SelectMenu } from 'src/sections/analytics/agg-time-select';
+import { ChannelSelect } from 'src/sections/channel/channel-select';
+import { getDatesRange, CustomLineChart } from 'src/sections/analytics/line-chart';
 
 // ----------------------------------------------------------------------
 

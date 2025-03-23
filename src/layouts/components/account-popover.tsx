@@ -1,6 +1,6 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -13,16 +13,15 @@ import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 
 import { useRouter, usePathname } from 'src/routes/hooks';
-import { _myAccount } from 'src/_mock';
+
 import { removeToken, removeAccountId } from 'src/utils/auth';
+
 import store from 'src/libs/stores';
 import { HomePageApi } from 'src/libs/service/pillar/home';
-import { ContentPageApi } from 'src/libs/service/content/content';
 import { ChannelApi } from 'src/libs/service/channel/channel';
-import { AnalyticsPageApi } from 'src/libs/service/analytics/analytics';
-import { RouterLink } from 'src/routes/components';
-import Link from '@mui/material/Link';
+import { ContentPageApi } from 'src/libs/service/content/content';
 import { useGetProfileQuery } from 'src/libs/service/profile/profile';
+import { AnalyticsPageApi } from 'src/libs/service/analytics/analytics';
 
 // ----------------------------------------------------------------------
 

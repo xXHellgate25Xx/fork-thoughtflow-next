@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+
+import React, { useMemo, useState, useContext, createContext } from 'react';
 
 interface GlobalContextType {
   jwtToken: string;

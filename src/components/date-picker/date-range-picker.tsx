@@ -1,15 +1,17 @@
-import React, {useState, useEffect} from "react";
-import { 
-    LocalizationProvider, 
-    MobileDatePicker,
-} from '@mui/x-date-pickers';
+import type { Dayjs } from 'dayjs';
+
+import React from "react";
+
 import { 
     Box, 
     Typography 
 } from '@mui/material';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { 
+    MobileDatePicker, 
+    LocalizationProvider,
+} from '@mui/x-date-pickers';
 
 interface DateRangePickerProps{
     startDate: Dayjs | null;
@@ -29,8 +31,7 @@ export function DateRangePicker({
     setEndDate
 }: DateRangePickerProps) {
     return (
-        <>
-            <Box
+        <Box
               sx={{
                 justifyContent: "center",
                 alignItems: "center",
@@ -75,6 +76,5 @@ export function DateRangePicker({
                 </DemoContainer>
               </LocalizationProvider>
             </Box>
-        </>
     )
 };

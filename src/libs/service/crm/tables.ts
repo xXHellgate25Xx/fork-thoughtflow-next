@@ -1,6 +1,8 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { KanbanColumn, KanbanRecord } from '../../../types/kanbanTypes';
+
 import { baseQuery } from '../supabase/baseQuery';
+
+import type { KanbanColumn, KanbanRecord } from '../../../types/kanbanTypes';
 
 // Utility function to validate priority
 const validatePriority = (priority: string): 'high' | 'medium' | 'low' => {

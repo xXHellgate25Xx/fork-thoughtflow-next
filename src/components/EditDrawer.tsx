@@ -1,19 +1,22 @@
+import type { ReactNode } from 'react';
+import type {
+    SelectChangeEvent} from '@mui/material';
+
 import {
     Box,
+    alpha,
     Button,
     Drawer,
-    FormControl,
-    IconButton,
-    InputAdornment,
-    MenuItem,
     Select,
-    SelectChangeEvent,
+    MenuItem,
+    useTheme,
     TextField,
+    IconButton,
     Typography,
-    alpha,
-    useTheme
+    FormControl,
+    InputAdornment
 } from '@mui/material';
-import { ReactNode } from 'react';
+
 import { Iconify } from './iconify';
 
 // Field definition type
@@ -26,6 +29,7 @@ export interface FieldDef {
     renderField?: (value: any, onChange: (value: any) => void) => ReactNode;
     helperText?: string;
     defaultValue?: any;
+    required?: boolean;
 }
 
 // Record type for form data

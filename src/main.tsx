@@ -1,15 +1,17 @@
-import { Suspense } from 'react';
-import ReactDOM from 'react-dom/client';
-import { HelmetProvider } from 'react-helmet-async';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
-import App from './app';
 import "./global.css";
-import { GlobalContextProvider } from './GlobalContextProvider';
-import "./init";
-import AuthWrapper from './layouts/auth/authWrapper';
-import store from './libs/stores';
 import "./shadcn-theme.css";
+
+import { Suspense } from 'react';
+import { Provider } from 'react-redux';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+
+import "./init";
+import App from './app';
+import store from './libs/stores';
+import AuthWrapper from './layouts/auth/authWrapper';
+import { GlobalContextProvider } from './GlobalContextProvider';
 
 // ----------------------------------------------------------------------
 

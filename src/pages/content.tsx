@@ -1,27 +1,34 @@
+import type {
+  ContentApiRes} from 'src/libs/service/content/content';
+import type { ContentProps } from 'src/sections/tables/content-table-row';
+
+import { Icon } from '@iconify/react';
 import { Helmet } from 'react-helmet-async';
-import { useState, useCallback, useEffect } from 'react';
-import { CONFIG } from 'src/config-global';
-import { Scrollbar } from 'src/components/scrollbar';
+import { useState, useEffect, useCallback } from 'react';
+
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
-import { ContentTableRow } from 'src/sections/tables/content-table-row';
-import { CustomTableHead } from 'src/sections/tables/idea-table-head';
-import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
-import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
-import type { ContentProps } from 'src/sections/tables/content-table-row';
-import { Label } from 'src/components/label';
+import { Box, Card, Table, Button, TableBody, Typography } from '@mui/material';
 
-import { Box, Button, Card, Typography, Table, TableBody } from '@mui/material';
-import { DashboardContent } from 'src/layouts/dashboard';
-import { Icon } from '@iconify/react';
-import { 
-  useGetAllContentsOfUserQuery,
-  useGetAllStatsOfUserQuery,
-  ContentApiRes,
-  useDeleteContentMutation
-} from 'src/libs/service/content/content';
-import { fDateTime } from 'src/utils/format-time';
 import { useRouter } from 'src/routes/hooks';
+
+import { fDateTime } from 'src/utils/format-time';
+
+import { CONFIG } from 'src/config-global';
+import { DashboardContent } from 'src/layouts/dashboard';
+import { 
+  useDeleteContentMutation,
+  useGetAllStatsOfUserQuery,
+  useGetAllContentsOfUserQuery
+} from 'src/libs/service/content/content';
+
+import { Label } from 'src/components/label';
+import { Scrollbar } from 'src/components/scrollbar';
+
+import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
+import { CustomTableHead } from 'src/sections/tables/idea-table-head';
+import { ContentTableRow } from 'src/sections/tables/content-table-row';
+import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
 
 // ----------------------------------------------------------------------
 

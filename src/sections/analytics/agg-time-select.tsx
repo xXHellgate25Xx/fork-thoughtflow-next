@@ -1,15 +1,15 @@
-import { useState, useCallback } from 'react';
 import type { ButtonProps } from '@mui/material/Button';
+
+import { useState, useCallback } from 'react';
+
+import { Box } from '@mui/material';
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover';
 import MenuList from '@mui/material/MenuList';
 import Typography from '@mui/material/Typography';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
-import { Iconify } from 'src/components/iconify';
 
-import { channelIcons } from 'src/theme/icons/channel-icons';
-import { Box } from '@mui/material';
-import { Icon } from '@iconify/react';
+import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 

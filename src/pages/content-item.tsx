@@ -1,53 +1,56 @@
-import { useEffect, useRef, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
-import { CONFIG } from 'src/config-global';
+import type { RichContent } from 'ricos-schema';
 
 import { Icon } from '@iconify/react';
-import { Box, Button, Card, Checkbox, FormControlLabel, Link, List, ListItem, Typography } from '@mui/material';
+import { Helmet } from 'react-helmet-async';
+import { useParams } from 'react-router-dom';
+import { useRef, useState, useEffect } from 'react';
+import { toDraft } from 'ricos-content/libs/toDraft';
+import { toPlainText } from 'ricos-content/libs/toPlainText';
+import { fromPlainText } from 'ricos-content/libs/fromPlainText';
+import { toHtml } from 'ricos-content/libs/server-side-converters';
+
+import { Box, Card, Link, List, Button, Checkbox, ListItem, Typography, FormControlLabel } from '@mui/material';
+
+import { useRouter } from 'src/routes/hooks';
+
+import { fDateTime } from 'src/utils/format-time';
+import { deepCloneAs } from 'src/utils/object-utils';
+import { checkSEO, handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
+
+import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
+import { channelIcons } from 'src/theme/icons/channel-icons';
+import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
-import {
-  useGetAllChannelsOfUserQuery,
-  useGetChannelByIDQuery
-} from 'src/libs/service/channel/channel';
-import {
-  useGetContentQuery,
-  useGetContentViewCountQuery,
-  useUpdateContentMutation,
-} from 'src/libs/service/content/content';
-import {
-  useGenerateContentWithFeedbackMutation
-} from 'src/libs/service/content/generate';
 import {
   useCreateIdeaContentMutation
 } from 'src/libs/service/idea/idea';
 import {
-  useRepurposeContentMutation
-} from 'src/libs/service/idea/repurpose';
-import {
   useGetPillarByIdQuery
 } from 'src/libs/service/pillar/pillar-item';
+import {
+  useRepurposeContentMutation
+} from 'src/libs/service/idea/repurpose';
+import { createTitleTag, createMetaDescriptionTag } from 'src/interfaces/seoData-interface';
+import {
+  useGenerateContentWithFeedbackMutation
+} from 'src/libs/service/content/generate';
+import {
+  useGetChannelByIDQuery,
+  useGetAllChannelsOfUserQuery
+} from 'src/libs/service/channel/channel';
+import {
+  useGetContentQuery,
+  useUpdateContentMutation,
+  useGetContentViewCountQuery,
+} from 'src/libs/service/content/content';
 
-import { useParams } from 'react-router-dom';
-import TextField from 'src/components/text-field/text-field';
-import { createMetaDescriptionTag, createTitleTag } from 'src/interfaces/seoData-interface';
-import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
-import { useRouter } from 'src/routes/hooks';
-import { fDateTime } from 'src/utils/format-time';
-
-import { fromPlainText } from 'ricos-content/libs/fromPlainText';
-import { toHtml } from 'ricos-content/libs/server-side-converters';
-import { toDraft } from 'ricos-content/libs/toDraft';
-import { toPlainText } from 'ricos-content/libs/toPlainText';
-import { RichContent } from 'ricos-schema';
 import Editor from 'src/components/editor/Editor';
 import Viewer from 'src/components/editor/Viewer';
-import { channelIcons } from 'src/theme/icons/channel-icons';
-import { deepCloneAs } from 'src/utils/object-utils';
-import { checkSEO, handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
-
-import { PublishForm } from 'src/components/publish_message/publish_message';
+import TextField from 'src/components/text-field/text-field';
 import { RepurposeForm } from 'src/components/repurpose/repurpose';
+import { PublishForm } from 'src/components/publish_message/publish_message';
+
 import { RepurposeSelect } from 'src/sections/repurpose/repurpose-select';
 // ----------------------------------------------------------------------
 

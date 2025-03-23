@@ -1,8 +1,10 @@
+import React, { useMemo } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Cross1Icon } from '@radix-ui/react-icons';
-import React, { useMemo } from 'react';
-import { Activity_LogRecord, OpportunitiesRecord, Pipeline_StagesRecord } from '../types/airtableTypes';
+
 import StageTransitionForm from './StageTransitionForm';
+
+import type { Activity_LogRecord, OpportunitiesRecord, Pipeline_StagesRecord } from '../types/airtableTypes';
 
 interface StageTransitionModalProps {
     open: boolean;

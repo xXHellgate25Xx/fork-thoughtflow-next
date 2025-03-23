@@ -1,5 +1,7 @@
-import { RichContent } from 'ricos-schema';
+import type { RichContent } from 'ricos-schema';
+
 import { createApi } from "@reduxjs/toolkit/query/react";
+
 import { baseQuery } from "../supabase/baseQuery";
 
 interface repurposeContentProps {

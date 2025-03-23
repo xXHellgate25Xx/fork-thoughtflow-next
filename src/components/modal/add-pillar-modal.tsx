@@ -1,12 +1,13 @@
 // src/components/modal/basic-modal.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
+
 import {
+  Box,
   Dialog,
+  Button,
+  TextField,
   DialogTitle,
   DialogContent,
-  TextField,
-  Button,
-  Box,
 } from '@mui/material';
 
 

@@ -1,17 +1,16 @@
 // src/components/modal/basic-modal.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import {
+  Box,
+  Link,
   Dialog,
+  Button,
+  Typography,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  Button,
-  Box,
-  CircularProgress,
-  ButtonPropsColorOverrides,
-  Typography,
-  Link
+  CircularProgress
 } from '@mui/material';
 
 interface PublishFormProps {

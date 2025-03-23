@@ -1,5 +1,7 @@
+import type { RichContent } from "ricos-schema";
+
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { RichContent } from "ricos-schema";
+
 import { baseQuery } from "../supabase/baseQuery";
 
 interface GenContentReq {

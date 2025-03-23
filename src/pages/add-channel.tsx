@@ -1,13 +1,15 @@
-import { Typography, Card, TextField, Box, Button } from '@mui/material';
-import { Helmet } from 'react-helmet-async';
-import { CONFIG } from 'src/config-global';
-import { DashboardContent } from 'src/layouts/dashboard';
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { channelIcons } from 'src/theme/icons/channel-icons';
-import { useCreateChannelMutation } from 'src/libs/service/channel/channel';
+import { Helmet } from 'react-helmet-async';
+
+import { Box, Card, Button, TextField, Typography } from '@mui/material';
 
 import { useRouter } from 'src/routes/hooks';
+
+import { CONFIG } from 'src/config-global';
+import { DashboardContent } from 'src/layouts/dashboard';
+import { channelIcons } from 'src/theme/icons/channel-icons';
+import { useCreateChannelMutation } from 'src/libs/service/channel/channel';
 
 // ----------------------------------------------------------------------
 

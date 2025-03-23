@@ -1,16 +1,23 @@
+// Import CSS for day picker
+import 'react-day-picker/dist/style.css';
+
+import { format } from 'date-fns';
+import { DayPicker } from 'react-day-picker';
+import * as Popover from '@radix-ui/react-popover';
+import { CalendarIcon } from '@radix-ui/react-icons';
+import React, { useState, useCallback } from 'react';
+
 import {
     Box,
-    Button,
-    FormControl,
     Grid,
-    InputLabel,
-    MenuItem,
+    Button,
     Select,
-    TextField
+    MenuItem,
+    TextField,
+    InputLabel,
+    FormControl
 } from '@mui/material';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import React, { useCallback, useState } from 'react';
+
 import type { OpportunitiesRecord, Pipeline_StagesRecord } from '../types/supabase';
 
 interface StageTransitionFormProps {
@@ -115,21 +122,55 @@ const StageTransitionForm = React.memo(({
                 </Grid>
 
                 {/* Estimated Close Date */}
-                <Grid item xs={12}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                        <DatePicker
-                            label="Estimated Close Date"
-                            value={values.estimatedCloseDate}
-                            onChange={(date) => handleChange('estimatedCloseDate', date)}
-                            slotProps={{
-                                textField: {
-                                    fullWidth: true,
-                                    margin: 'normal',
-                                    variant: 'outlined',
-                                },
-                            }}
-                        />
-                    </LocalizationProvider>
+                <Grid item xs={12} sx={{ marginTop: 2 }}>
+                    <Popover.Root>
+                        <Popover.Trigger asChild>
+                            <div style={{ position: 'relative' }}>
+                                <TextField
+                                    fullWidth
+                                    label="Estimated Close Date"
+                                    value={values.estimatedCloseDate
+                                        ? format(values.estimatedCloseDate, 'PPP')
+                                        : ''}
+                                    InputProps={{
+                                        readOnly: true,
+                                        endAdornment: (
+                                            <CalendarIcon style={{
+                                                position: 'absolute',
+                                                right: 14,
+                                                pointerEvents: 'none'
+                                            }} />
+                                        ),
+                                    }}
+                                    sx={{ cursor: 'pointer' }}
+                                    variant="outlined"
+                                    margin="normal"
+                                />
+                            </div>
+                        </Popover.Trigger>
+                        <Popover.Portal>
+                            <Popover.Content
+                                className="PopoverContent"
+                                sideOffset={5}
+                                style={{
+                                    backgroundColor: 'white',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+                                    padding: '8px',
+                                    zIndex: 1000
+                                }}
+                            >
+                                <DayPicker
+                                    mode="single"
+                                    selected={values.estimatedCloseDate || undefined}
+                                    onSelect={(date) => handleChange('estimatedCloseDate', date)}
+                                    showOutsideDays
+                                    className="date-picker"
+                                />
+                                <Popover.Arrow className="PopoverArrow" />
+                            </Popover.Content>
+                        </Popover.Portal>
+                    </Popover.Root>
                 </Grid>
 
                 {/* Comments */}

@@ -1,4 +1,5 @@
 import type { ButtonProps } from '@mui/material/Button';
+
 import { GenericMenuDropdown } from 'src/components/selector/generic-menu-dropdown';
 
 
@@ -13,8 +14,7 @@ type ChannelSelectProps = ButtonProps & {
 export function ChannelSelect({ channelId, onSort, options, sx, ...other }: ChannelSelectProps) {
 
   return (
-    <>
-      <GenericMenuDropdown
+    <GenericMenuDropdown
         selectedId={channelId}
         label='Content Channel'
         onSort={onSort}
@@ -22,6 +22,5 @@ export function ChannelSelect({ channelId, onSort, options, sx, ...other }: Chan
         sx={sx}
         {...other}
       />
-    </>
   );
 }

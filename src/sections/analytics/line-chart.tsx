@@ -1,25 +1,27 @@
-import { useEffect, useState } from "react";
+import type {
+    CurveType,
+    LineChartProps} from "@mui/x-charts";
+
+import dayjs from 'dayjs';
+import { useState, useEffect } from "react";
+
+import {
+    mangoFusionPalette
+} from "@mui/x-charts";
 import {
     LineChart,
     lineElementClasses,
     markElementClasses,
 } from "@mui/x-charts/LineChart";
 import {
-    CurveType,
-    LineChartProps,
-    mangoFusionPalette
-} from "@mui/x-charts";
-import {
     Stack,
-    TextField,
     Switch,
+    TextField,
     FormControl,
     FormControlLabel,
-    Typography,
 } from '@mui/material';
+
 import GenericSelector from "src/components/selector/generic-selector";
-import dayjs, {Dayjs} from 'dayjs';
-import { WrapText } from "@mui/icons-material";
 
 const customize = {
     height: 400,

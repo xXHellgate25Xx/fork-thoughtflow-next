@@ -1,4 +1,5 @@
 import type { ButtonProps } from '@mui/material/Button';
+
 import { GenericMenuDropdown } from 'src/components/selector/generic-menu-dropdown';
 // ----------------------------------------------------------------------
 
@@ -10,8 +11,7 @@ type PillarSelectProps = ButtonProps & {
 
 export function PillarSelect({ options, pillarId, onSort, sx, ...other }: PillarSelectProps) {
   return (
-    <>
-      <GenericMenuDropdown
+    <GenericMenuDropdown
         selectedId={pillarId}
         label='Content Pillar'
         onSort={onSort}
@@ -19,6 +19,5 @@ export function PillarSelect({ options, pillarId, onSort, sx, ...other }: Pillar
         sx={sx}
         {...other}
       />
-    </>
   );
 }

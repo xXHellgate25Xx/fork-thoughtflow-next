@@ -1,23 +1,27 @@
 // LeaderboardTable.tsx
+import type {
+  SelectChangeEvent} from '@mui/material';
+
 import React, { useState } from 'react';
+
 import {
   Box,
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
   Stack,
   Paper,
   Table,
+  Button,
+  Select,
+  MenuItem,
+  TableRow,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
-  TableRow,
+  InputLabel,
   Typography,
+  FormControl,
+  TableContainer,
 } from '@mui/material';
+
 import { useRouter } from 'src/routes/hooks';
 
 

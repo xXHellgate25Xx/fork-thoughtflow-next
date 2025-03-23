@@ -1,21 +1,20 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import type { LabelColor } from 'src/components/label';
+
+import { Icon } from '@iconify/react';
+import React, { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
-
-import { Label, LabelColor } from 'src/components/label';
-import { Icon } from '@iconify/react';
-import { channelIcons } from 'src/theme/icons/channel-icons';
 import { 
   Button, 
   Typography,
 } from '@mui/material';
-import { GenericModal } from 'src/components/modal/generic-modal';
-import { TagsPicker } from 'src/components/tags/tags-picker';
-import dayjs from 'dayjs';
 
+import { channelIcons } from 'src/theme/icons/channel-icons';
 import { useModifyChannelMutation } from 'src/libs/service/channel/channel';
+
+import { GenericModal } from 'src/components/modal/generic-modal';
 // ----------------------------------------------------------------------
 
 export type ChannelProps = {

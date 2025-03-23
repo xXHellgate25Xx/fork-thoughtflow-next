@@ -1,9 +1,13 @@
+import type { IdeaFormat } from 'src/interfaces/idea-interfaces';
+
 import React, { useState, useEffect } from 'react';
+
 import { Box, Button } from '@mui/material';
-import { useUploadToStorageMutation } from 'src/libs/service/storage/api-storage';
+
 import { processingFilePath } from 'src/utils/file-path-with-hash';
-import { IdeaFormat } from 'src/interfaces/idea-interfaces';
-import { handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
+
+import { useUploadToStorageMutation } from 'src/libs/service/storage/api-storage';
+
 import TextField from '../text-field/text-field';
 
 interface IdeaFormProps {

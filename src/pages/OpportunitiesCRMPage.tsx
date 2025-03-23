@@ -1,10 +1,15 @@
-import { Box, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, MenuItem, Button as MuiButton, Select, TextField } from '@mui/material';
+import type { KanbanColumn, KanbanRecord } from 'src/types/kanbanTypes';
+
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DynamicKanban } from 'src/components/ui/kanban/DynamicKanban';
+
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Button as MuiButton, Select, TextField, useTheme } from '@mui/material';
+
 import { useCreateActivityLog, useOpportunities, usePipelineStages } from 'src/hooks/tablehooks';
-import { KanbanColumn, KanbanRecord } from 'src/types/kanbanTypes';
-import DynamicTable, { ColumnDef } from '../components/DynamicTable';
-import EditDrawer, { FieldDef } from '../components/EditDrawer';
+
+import { DynamicKanban } from 'src/components/ui/kanban/DynamicKanban';
+
+import DynamicTable from '../components/DynamicTable';
+import EditDrawer from '../components/EditDrawer';
 import { Iconify } from '../components/iconify';
 import StageTransitionForm from '../components/StageTransitionForm';
 import {
@@ -13,8 +18,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import ViewDrawer from '../components/ViewDrawer';
 import { supabase } from '../lib/supabase';
-import { Pipeline_StagesRecord } from '../types/supabase';
+
+import type { ColumnDef } from '../components/DynamicTable';
+import type { FieldDef } from '../components/EditDrawer';
+import OpportunityDetails from '../components/OpportunityDetails';
+import type { Pipeline_StagesRecord } from '../types/supabase';
 
 // Create a simple toast implementation if react-hot-toast isn't available
 const toast = ({ title, status }: { title: string, status: 'success' | 'error' }) => {
@@ -23,9 +33,11 @@ const toast = ({ title, status }: { title: string, status: 'success' | 'error' }
 
 type ViewType = 'list' | 'kanban';
 const OpportunitiesCRMPage = memo(() => {
+    const theme = useTheme();
     const { records: opportunities, isLoading, isError, error, refetch } = useOpportunities();
     const { records: stages, isLoading: stagesLoading, isError: stagesError } = usePipelineStages();
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
     const [activityModalOpen, setActivityModalOpen] = useState(false);
     const [activityFormValues, setActivityFormValues] = useState<Record<string, any>>({});
     const [sortField, setSortField] = useState<string>('Last Name');
@@ -95,6 +107,7 @@ const OpportunitiesCRMPage = memo(() => {
 
         // Map table columns to form fields
         const defaultValues: Record<string, any> = {
+            prospectId: opportunity['Prospect ID'] || '',
             lastName: opportunity['Last Name'] || '',
             dealValue: opportunity['Deal Value'] || 0,
             email: opportunity.Email || '',
@@ -110,7 +123,24 @@ const OpportunitiesCRMPage = memo(() => {
         // Set form values state
         setFormValues(defaultValues);
 
-        // Open drawer
+        // Open view drawer instead of edit drawer
+        setViewDrawerOpen(true);
+    }, []);
+
+    const handleCloseViewDrawer = useCallback(() => {
+        setViewDrawerOpen(false);
+        // Clear states after drawer is closed
+        setTimeout(() => {
+            if (!drawerOpen) {
+                setSelectedOpportunity(null);
+                setFormValues({});
+            }
+        }, 300); // Small delay to ensure drawer animation completes
+    }, [drawerOpen]);
+
+    const handleEditClick = useCallback(() => {
+        // Close view drawer and open edit drawer
+        setViewDrawerOpen(false);
         setDrawerOpen(true);
     }, []);
 
@@ -118,10 +148,12 @@ const OpportunitiesCRMPage = memo(() => {
         setDrawerOpen(false);
         // Clear states after drawer is closed
         setTimeout(() => {
-            setSelectedOpportunity(null);
-            setFormValues({});
+            if (!viewDrawerOpen) {
+                setSelectedOpportunity(null);
+                setFormValues({});
+            }
         }, 300); // Small delay to ensure drawer animation completes
-    }, []);
+    }, [viewDrawerOpen]);
 
     const handleInputChange = (field: string, value: any) => {
         // Update form values
@@ -424,20 +456,8 @@ const OpportunitiesCRMPage = memo(() => {
     }, []);
 
     const handleKanbanItemClick = useCallback((item: KanbanRecord) => {
-        const opportunity = {
-            'Prospect ID': item.id,
-            'Last Name': item.title,
-            'Deal Value': item.dealValue,
-            'Email': item.email,
-            'Company': item.company,
-            'Job Title': item.jobTitle,
-            'Phone': item.phone,
-            'General Notes': item.generalNotes,
-            'Current Stage (linked)': item.status,
-            'Close Probability': item.closeProbability,
-            ...item
-        };
-        handleRowClick(opportunity);
+
+        handleRowClick(item);
     }, []);
 
     const handleKanbanItemMove = useCallback((item: KanbanRecord, sourceColumn: string, targetColumn: string) => {
@@ -814,20 +834,26 @@ const OpportunitiesCRMPage = memo(() => {
                         />
 
                         <FormControl fullWidth disabled>
+                            <InputLabel shrink>Current Stage</InputLabel>
                             <TextField
                                 label="Current Stage"
-                                value={stages.find(s => s.id === localFormValues.currentStage)?.['Stage ID'] || ''}
+                                value={stages.find(s => s.id === localFormValues.currentStage)?.['Stage Name'] || ''}
                                 disabled
                                 fullWidth
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
                             />
                         </FormControl>
 
                         <FormControl fullWidth>
+                            <InputLabel shrink>New Stage</InputLabel>
                             <Select
                                 value={localFormValues.newStage || ''}
                                 onChange={(e) => handleLocalInputChange('newStage', e.target.value)}
                                 displayEmpty
                                 label="New Stage"
+                                inputProps={{ 'aria-label': 'New Stage' }}
                             >
                                 {Object.entries(statusLabels)
                                     .map(([value, label]) => (
@@ -1070,10 +1096,53 @@ const OpportunitiesCRMPage = memo(() => {
                 </div>
             )}
 
+            {/* View Drawer - Display only */}
+            <ViewDrawer
+                open={viewDrawerOpen}
+                onClose={handleCloseViewDrawer}
+                title=""
+                record={formValues}
+                fields={formFields}
+                width={550}
+                customContent={
+                    selectedOpportunity && (
+                        <OpportunityDetails
+                            opportunity={selectedOpportunity}
+                            useExistingActivityList
+                            prospectId={selectedOpportunity["Prospect ID"]}
+                            maxActivityHeight={400}
+                            formatCurrency={formatCurrency}
+                            statusLabels={statusLabels}
+                            onAddActivity={handleOpenActivityModal}
+                        />
+                    )
+                }
+                customActions={
+                    <>
+                        <MuiButton
+                            variant="contained"
+                            color="primary"
+                            onClick={handleEditClick}
+                            sx={{ mr: 2 }}
+
+                        >
+                            Edit
+                        </MuiButton>
+                        <MuiButton
+                            variant="outlined"
+                            onClick={handleCloseViewDrawer}
+                        >
+                            Close
+                        </MuiButton>
+                    </>
+                }
+            />
+
+            {/* Edit Drawer - For editing, kept for compatibility */}
             <EditDrawer
                 open={drawerOpen}
                 onClose={handleCloseDrawer}
-                title={selectedOpportunity ? `${formValues["Prospect ID"] || 'Opportunity'}` : 'Edit Opportunity'}
+                title={selectedOpportunity ? `Edit ${selectedOpportunity["Prospect ID"] || 'Opportunity'}` : 'Edit Opportunity'}
                 record={formValues}
                 onSave={handleSave}
                 onInputChange={handleInputChange}
@@ -1089,8 +1158,9 @@ const OpportunitiesCRMPage = memo(() => {
                     </MuiButton>
                 }
             />
+
             <EditDrawer
-                open={stageTransitionModalOpen && !drawerOpen}
+                open={stageTransitionModalOpen && !drawerOpen && !viewDrawerOpen}
                 onClose={handleCloseStageTransition}
                 title="Update Activity Stage"
                 onSave={(record) => { console.log('save', record) }}
@@ -1109,17 +1179,6 @@ const OpportunitiesCRMPage = memo(() => {
             />
 
             <ActivityLogModal />
-
-            {/* {activityModalOpen && (
-                <StageTransitionModal
-                    open={stageTransitionModalOpen}
-                    onClose={handleCloseStageTransition}
-                    opportunity={selectedOpportunity}
-                    pipelineStages={stages}
-                    onSubmit={handleSaveStageTransition}
-                    isSubmitting={isCreatingActivity}
-                />
-            )} */}
         </div >
     );
 });

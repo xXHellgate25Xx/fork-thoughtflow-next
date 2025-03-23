@@ -1,33 +1,39 @@
+import type {
+  Content} from 'src/libs/service/pillar/pillar-item';
+import type { ContentProps } from 'src/sections/tables/content-table-row';
+
+import { Icon } from '@iconify/react';
 import { Helmet } from 'react-helmet-async';
-import { useState, useCallback, useEffect } from 'react';
-import { CONFIG } from 'src/config-global';
-import { Scrollbar } from 'src/components/scrollbar';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
-import { ContentTableRow } from 'src/sections/tables/content-table-row';
-import { CustomTableHead } from 'src/sections/tables/idea-table-head';
-import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
-import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
-import type { ContentProps } from 'src/sections/tables/content-table-row';
-import { Label } from 'src/components/label';
+import { Box, Card, Table, Button, TableBody, TextField, TableCell, Typography, CircularProgress } from '@mui/material';
 
-import { Box, Button, Card, Typography, Table, TableBody, TextField, CircularProgress, TableCell } from '@mui/material';
+import { useRouter } from 'src/routes/hooks';
+
+import { fDateTime } from 'src/utils/format-time';
+
+import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { Icon } from '@iconify/react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
+import { useDeleteContentMutation } from 'src/libs/service/content/content';
 import {
   useGetPillarByIdQuery,
   useGetIdeasOfPillarQuery,
   useUpdatePillarNameMutation,
   useDeactivatePillarMutation,
-  useGetAllContentsFromPillarIdQuery,
-  Content,
+  useGetAllContentsFromPillarIdQuery
 } from 'src/libs/service/pillar/pillar-item';
-import { useRouter } from 'src/routes/hooks';
-import { GenericModal } from 'src/components/modal/generic-modal';
-import { fDateTime } from 'src/utils/format-time';
-import { useDeleteContentMutation } from 'src/libs/service/content/content';
+
+import { Label } from 'src/components/label';
+import { Scrollbar } from 'src/components/scrollbar';
+
+import { TableEmptyRows } from 'src/sections/tables/table-empty-row';
+import { CustomTableHead } from 'src/sections/tables/idea-table-head';
+import { ContentTableRow } from 'src/sections/tables/content-table-row';
+import { emptyRows, applyFilter, getComparator } from 'src/sections/tables/utils';
 
 // ----------------------------------------------------------------------
 

@@ -1,15 +1,13 @@
 import type { ButtonProps } from '@mui/material/Button';
 
-import { useState, useCallback, useEffect } from 'react';
+import { Icon } from '@iconify/react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover';
 import MenuList from '@mui/material/MenuList';
-import Typography from '@mui/material/Typography';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
-import { Icon } from '@iconify/react';
 
-import { Iconify } from 'src/components/iconify';
 
 
 // ----------------------------------------------------------------------
@@ -22,8 +20,7 @@ type ChannelSelectProps = ButtonProps & {
 
 export function RepurposeSelect({ channelId, onSort, options, sx, ...other }: ChannelSelectProps) {
   return (
-    <>
-      <RepurposeDropdown
+    <RepurposeDropdown
         selectedId={channelId}
         label='Repurpose to'
         onSort={onSort}
@@ -31,7 +28,6 @@ export function RepurposeSelect({ channelId, onSort, options, sx, ...other }: Ch
         sx={sx}
         {...other}
       />
-    </>
   );
 }
 
