@@ -1,17 +1,19 @@
+import type { OpportunitiesRecord } from 'src/types/airtableTypes';
 import type { KanbanColumn, KanbanRecord } from 'src/types/kanbanTypes';
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
-import { Box, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Button as MuiButton, Select, TextField, useTheme } from '@mui/material';
-
-import { useCreateActivityLog, useOpportunities, usePipelineStages } from 'src/hooks/tablehooks';
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Button as MuiButton, Select, TextField } from '@mui/material';
 
 import { DynamicKanban } from 'src/components/ui/kanban/DynamicKanban';
+import { useCreateActivityLog, useOpportunities, usePipelineStages, useUpdateOpportunity } from 'src/hooks/tablehooks';
 
+import type { ColumnDef } from '../components/DynamicTable';
 import DynamicTable from '../components/DynamicTable';
+import type { FieldDef } from '../components/EditDrawer';
 import EditDrawer from '../components/EditDrawer';
 import { Iconify } from '../components/iconify';
-import StageTransitionForm from '../components/StageTransitionForm';
+import OpportunityDetails from '../components/OpportunityDetails';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,12 +21,6 @@ import {
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import ViewDrawer from '../components/ViewDrawer';
-import { supabase } from '../lib/supabase';
-
-import type { ColumnDef } from '../components/DynamicTable';
-import type { FieldDef } from '../components/EditDrawer';
-import OpportunityDetails from '../components/OpportunityDetails';
-import type { Pipeline_StagesRecord } from '../types/supabase';
 
 // Create a simple toast implementation if react-hot-toast isn't available
 const toast = ({ title, status }: { title: string, status: 'success' | 'error' }) => {
@@ -33,24 +29,27 @@ const toast = ({ title, status }: { title: string, status: 'success' | 'error' }
 
 type ViewType = 'list' | 'kanban';
 const OpportunitiesCRMPage = memo(() => {
-    const theme = useTheme();
-    const { records: opportunities, isLoading, isError, error, refetch } = useOpportunities();
+    console.log("OpportunitiesCRMPage");
     const { records: stages, isLoading: stagesLoading, isError: stagesError } = usePipelineStages();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
     const [activityModalOpen, setActivityModalOpen] = useState(false);
-    const [activityFormValues, setActivityFormValues] = useState<Record<string, any>>({});
-    const [sortField, setSortField] = useState<string>('Last Name');
+    const [sortField, setSortField] = useState<string>('Prospect ID');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [formValues, setFormValues] = useState<Record<string, any>>({});
     const [viewType, setViewType] = useState<ViewType>('list');
-    const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
+    const [selectedOpportunity, setSelectedOpportunity] = useState<Partial<OpportunitiesRecord> | null>(null);
     const [groupByField, setGroupByField] = useState<string>('Stage ID');
     const kanbanColumnsRef = useRef<any[]>([]);
-    const [stageTransitionModalOpen, setStageTransitionModalOpen] = useState(false);
-    const [isCreatingActivity, setIsCreatingActivity] = useState(false);
     const { mutate: createActivityLogMutation, isLoading: activityLoading } = useCreateActivityLog();
-
+    const { records: opportunities, isLoading, isError, error, refetch } = useOpportunities({
+        sort: [{
+            field: sortField,
+            direction: sortDirection
+        }],
+        limit: 2000
+    });
+    const { mutate: updateOpportunityMutation, isLoading: updateOpportunityLoading } = useUpdateOpportunity();
     // Map stages to statusLabels
     const statusLabels = stages.reduce((acc, stage) => {
         if (stage.id && stage["Stage ID"]) {
@@ -101,7 +100,7 @@ const OpportunitiesCRMPage = memo(() => {
         console.log('Add opportunity');
     };
 
-    const handleRowClick = useCallback((opportunity: any) => {
+    const handleRowClick = useCallback((opportunity: Partial<OpportunitiesRecord>) => {
         // Set selected opportunity
         setSelectedOpportunity(opportunity);
 
@@ -179,7 +178,6 @@ const OpportunitiesCRMPage = memo(() => {
             'Current Stage (linked)': formValues.currentStage,
         };
 
-        console.log('Save', updatedOpportunity);
         setDrawerOpen(false);
 
         // Clear states after drawer is closed
@@ -350,7 +348,7 @@ const OpportunitiesCRMPage = memo(() => {
                     )}
                 </button>
             ),
-            renderCell: (row) => row['Close Probability'] ? `${row['Close Probability']}%` : '-',
+            renderCell: (row) => row['Close Probability'] ? `${row['Close Probability'] * 100}%` : '-',
         },
         {
             field: 'General Notes',
@@ -641,117 +639,6 @@ const OpportunitiesCRMPage = memo(() => {
         setActivityModalOpen(true);
     };
 
-    const handleActivityInputChange = (field: string, value: any) => {
-        setActivityFormValues(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleSaveActivity = async () => {
-        try {
-            await createActivityLogMutation({
-                Prospect: [activityFormValues.prospectId],
-                'Log Date': activityFormValues.logDate,
-                'Current Stage': [activityFormValues.currentStage],
-                'New Stage': [activityFormValues.newStage],
-                'Next Contact Date': activityFormValues.nextContactDate,
-                'Note': activityFormValues.note
-            });
-
-            handleCloseActivityModal();
-            // Optionally refresh opportunities data
-            refetch();
-        } catch (err) {
-            console.error('Failed to create activity log:', err);
-        }
-    };
-
-    // Handle opening the stage transition modal
-    const handleOpenStageTransition = useCallback((opportunity: KanbanRecord) => {
-        // Convert the KanbanRecord to an OpportunitiesRecord format
-        const opportunityRecord = {
-            id: opportunity.id,
-            'Prospect ID': opportunity.id,
-            'Last Name': opportunity.title || '',
-            'First Name': opportunity.firstName || '',
-            'Email': opportunity.email || '',
-            'Current Stage (linked)': opportunity.status ? [opportunity.status] : [],
-            'Close Probability': opportunity.closeProbability || 0,
-            'Deal Value': opportunity.dealValue || 0,
-            'Phone': opportunity.phone || '',
-            'Company': opportunity.company || '',
-            'Job Title': opportunity.jobTitle || '',
-            'General Notes': opportunity.generalNotes || '',
-            'Source Channel': opportunity.sourceChannel || '',
-            'Spouse': opportunity.spouse || 0,
-            createdTime: opportunity.createdAt || '',
-            lastModifiedTime: opportunity.updatedAt || ''
-        };
-
-        setSelectedOpportunity(opportunityRecord);
-        setStageTransitionModalOpen(true);
-    }, []);
-
-    // Handle closing the stage transition modal
-    const handleCloseStageTransition = useCallback(() => {
-        setStageTransitionModalOpen(false);
-        setSelectedOpportunity(null);
-    }, []);
-
-    // Handle saving the stage transition
-    const handleSaveStageTransition = useCallback(async (values: {
-        stageId: string;
-        closeProbability: number;
-        estimatedCloseDate: Date | null;
-        comments: string;
-    }) => {
-        if (!selectedOpportunity) return;
-
-        setIsCreatingActivity(true);
-        try {
-            // Update the opportunity with new stage and probability
-            await supabase
-                .from('opportunities')
-                .update({
-                    stage_id: values.stageId,
-                    close_probability: values.closeProbability,
-                    estimated_close_date: values.estimatedCloseDate,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', selectedOpportunity.id);
-
-            // Create activity log for the stage change
-            if (values.comments) {
-                await supabase
-                    .from('activity_log')
-                    .insert({
-                        opportunity_id: selectedOpportunity.id,
-                        activity_type: 'stage_change',
-                        notes: values.comments,
-                        created_at: new Date().toISOString()
-                    });
-            }
-
-            toast({
-                title: 'Stage updated successfully',
-                status: 'success'
-            });
-
-            // Refresh opportunities data
-            refetch();
-            handleCloseStageTransition();
-        } catch (err) {
-            console.error('Error updating stage:', err);
-            toast({
-                title: 'Failed to update stage',
-                status: 'error'
-            });
-        } finally {
-            setIsCreatingActivity(false);
-        }
-    }, [selectedOpportunity, refetch, handleCloseStageTransition]);
-
     // Define activity form component as a separate component with its own state
     const ActivityLogModal = () => {
         // Local state for the form values
@@ -759,24 +646,14 @@ const OpportunitiesCRMPage = memo(() => {
             prospectId: selectedOpportunity?.id || '',
             logDate: new Date().toISOString().split('T')[0],
             currentStage: selectedOpportunity?.['Current Stage (linked)'] || '',
-            newStage: selectedOpportunity?.['Current Stage (linked)'] || '',
+            newStage: '',
             nextContactDate: '',
+            closeProbability: '',
             note: '',
         }));
 
-        // Update local state when selectedOpportunity changes
-        useEffect(() => {
-            if (selectedOpportunity && activityModalOpen) {
-                setLocalFormValues({
-                    prospectId: selectedOpportunity.id,
-                    logDate: new Date().toISOString().split('T')[0],
-                    currentStage: selectedOpportunity['Current Stage (linked)'] || '',
-                    newStage: selectedOpportunity['Current Stage (linked)'] || '',
-                    nextContactDate: '',
-                    note: '',
-                });
-            }
-        }, [selectedOpportunity, activityModalOpen]);
+        // Validation state
+        const [errors, setErrors] = useState<Record<string, string>>({});
 
         // Local handlers
         const handleLocalInputChange = (field: string, value: any) => {
@@ -784,22 +661,78 @@ const OpportunitiesCRMPage = memo(() => {
                 ...prev,
                 [field]: value
             }));
+
+            // Clear error for the field being changed
+            setErrors(prev => ({
+                ...prev,
+                [field]: ''
+            }));
+        };
+
+        const validateForm = () => {
+            const newErrors: Record<string, string> = {};
+
+            // Validate required note for stages 10 or 11
+            if (['rec2LE93oDi5jf8ei', 'recJswG7wMvNozrvm'].includes(localFormValues.newStage) && !localFormValues.note) {
+                newErrors.note = 'Note is required when changing to Lost or Won stage';
+            }
+            if (!localFormValues.newStage) {
+                newErrors.newStage = 'New Stage is required';
+            }
+            if (!localFormValues.closeProbability) {
+                newErrors.closeProbability = 'Close Probability is required';
+            }
+            if (!localFormValues.nextContactDate) {
+                newErrors.nextContactDate = 'Next Contact Date is required when changing to Lost stage';
+            }
+
+            setErrors(newErrors);
+            return Object.keys(newErrors).length === 0;
         };
 
         const handleLocalSave = async () => {
+            if (!validateForm()) {
+                return;
+            }
+
             try {
+                // Format dates to yyyy/mm/dd
+                const formatDate = (dateStr: string) => {
+                    if (!dateStr) return '';
+                    const [year, month, day] = dateStr.split('-');
+                    return `${year}/${month}/${day}`;
+                };
+
                 await createActivityLogMutation({
                     Prospect: [localFormValues.prospectId],
-                    'Log Date': localFormValues.logDate,
-                    'Current Stage': [localFormValues.currentStage],
+                    'Log Date': formatDate(localFormValues.logDate),
+                    'Current Stage': localFormValues.currentStage,
                     'New Stage': [localFormValues.newStage],
-                    'Next Contact Date': localFormValues.nextContactDate,
+                    'Close Probability from Salesperson': localFormValues.closeProbability,
+                    'Next Contact Date': formatDate(localFormValues.nextContactDate),
                     'Note': localFormValues.note
+                }).then(async () => {
+                    // Update opportunity's current stage
+                    await updateOpportunityMutation(localFormValues.prospectId, {
+                        'Current Stage (linked)': [localFormValues.newStage]
+                    }).then(() => {
+                        toast({
+                            title: 'Opportunity updated successfully',
+                            status: 'success'
+                        });
+                    });
+
+                }).catch(() => {
+                    toast({
+                        title: 'Failed to create activity log',
+                        status: 'error'
+                    });
+                }).finally(() => {
+                    handleCloseActivityModal();
+                    // Optionally refresh opportunities data
+                    // refetch();
                 });
 
-                handleCloseActivityModal();
-                // Optionally refresh opportunities data
-                refetch();
             } catch (err) {
                 console.error('Failed to create activity log:', err);
             }
@@ -837,7 +770,7 @@ const OpportunitiesCRMPage = memo(() => {
                             <InputLabel shrink>Current Stage</InputLabel>
                             <TextField
                                 label="Current Stage"
-                                value={stages.find(s => s.id === localFormValues.currentStage)?.['Stage Name'] || ''}
+                                value={statusLabels[localFormValues.currentStage] || ''}
                                 disabled
                                 fullWidth
                                 InputLabelProps={{
@@ -854,6 +787,7 @@ const OpportunitiesCRMPage = memo(() => {
                                 displayEmpty
                                 label="New Stage"
                                 inputProps={{ 'aria-label': 'New Stage' }}
+                                error={!!errors.newStage}
                             >
                                 {Object.entries(statusLabels)
                                     .map(([value, label]) => (
@@ -862,8 +796,29 @@ const OpportunitiesCRMPage = memo(() => {
                                         </MenuItem>
                                     ))}
                             </Select>
+                            {errors.newStage && (
+                                <div className="text-red-500 text-xs mt-1">{errors.newStage}</div>
+                            )}
                         </FormControl>
-
+                        <FormControl fullWidth error={!!errors.closeProbability}>
+                            <InputLabel shrink>Close Probability (%)</InputLabel>
+                            <Select
+                                value={localFormValues.closeProbability || ''}
+                                onChange={(e) => handleLocalInputChange('closeProbability', e.target.value)}
+                                displayEmpty
+                                label="Close Probability (%)"
+                                inputProps={{ 'aria-label': 'Close Probability' }}
+                            >
+                                {Array.from({ length: 10 }, (_, i) => (i + 1) * 10).map((value) => (
+                                    <MenuItem key={value} value={value / 100}>
+                                        {value}%
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            {errors.closeProbability && (
+                                <div className="text-red-500 text-xs mt-1">{errors.closeProbability}</div>
+                            )}
+                        </FormControl>
                         <TextField
                             label="Next Contact Date"
                             type="date"
@@ -873,6 +828,8 @@ const OpportunitiesCRMPage = memo(() => {
                             InputLabelProps={{
                                 shrink: true,
                             }}
+                            error={!!errors.nextContactDate}
+                            helperText={errors.nextContactDate}
                         />
 
                         <TextField
@@ -880,8 +837,11 @@ const OpportunitiesCRMPage = memo(() => {
                             multiline
                             rows={4}
                             fullWidth
+                            required={['rec2LE93oDi5jf8ei', 'recJswG7wMvNozrvm'].includes(localFormValues.newStage)}
                             value={localFormValues.note || ''}
                             onChange={(e) => handleLocalInputChange('note', e.target.value)}
+                            error={!!errors.note}
+                            helperText={errors.note || (['rec2LE93oDi5jf8ei', 'recJswG7wMvNozrvm'].includes(localFormValues.newStage) ? 'Note is required for this new stage' : '')}
                         />
                     </Box>
                 </DialogContent>
@@ -1060,7 +1020,7 @@ const OpportunitiesCRMPage = memo(() => {
             </div>
 
             {viewType === 'list' ? (
-                <DynamicTable
+                <DynamicTable<Partial<OpportunitiesRecord>>
                     columns={columnsConfig}
                     data={sortedData}
                     isLoading={isLoading}
@@ -1083,8 +1043,6 @@ const OpportunitiesCRMPage = memo(() => {
                             onColumnsCreated: handleColumnsCreated as (columns: KanbanColumn[]) => void,
                             columnMap,
                             onItemClick: handleKanbanItemClick,
-                            onItemMove: handleKanbanItemMove,
-                            onItemStageUpdate: handleOpenStageTransition,
                             displayFields,
                             renderColumnHeader,
                             renderItem
@@ -1108,7 +1066,6 @@ const OpportunitiesCRMPage = memo(() => {
                     selectedOpportunity && (
                         <OpportunityDetails
                             opportunity={selectedOpportunity}
-                            useExistingActivityList
                             prospectId={selectedOpportunity["Prospect ID"]}
                             maxActivityHeight={400}
                             formatCurrency={formatCurrency}
@@ -1159,24 +1116,6 @@ const OpportunitiesCRMPage = memo(() => {
                 }
             />
 
-            <EditDrawer
-                open={stageTransitionModalOpen && !drawerOpen && !viewDrawerOpen}
-                onClose={handleCloseStageTransition}
-                title="Update Activity Stage"
-                onSave={(record) => { console.log('save', record) }}
-                onInputChange={(field, value) => { console.log('input changed', field, value) }}
-                customContent={
-                    selectedOpportunity && (
-                        <StageTransitionForm
-                            opportunity={selectedOpportunity}
-                            pipelineStages={stages.filter(stage => !!stage.id) as Pipeline_StagesRecord[]}
-                            onSubmit={handleSaveStageTransition}
-                            onCancel={handleCloseStageTransition}
-                            isSubmitting={isCreatingActivity}
-                        />
-                    )
-                }
-            />
 
             <ActivityLogModal />
         </div >

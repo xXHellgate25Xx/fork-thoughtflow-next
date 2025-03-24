@@ -4,7 +4,7 @@
 // Base interface for filter conditions
 export interface FilterCondition {
   field: string;
-  operator: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains' | 'notContains' | 'custom';
+  operator: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains' | 'notContains';
   value: any;
 }
 
@@ -21,7 +21,6 @@ export interface QueryOptions {
   sort?: SortCondition[];
   limit?: number;
   offset?: number;
-  view?: string;
 }
 
 // Base interface for Airtable records
@@ -36,7 +35,7 @@ export interface AirtableField {
   id: string;
   name: string;
   type: string;
-  options?: { name: string; id: string }[];
+  options?: { name: string; id: string; }[];
 }
 
 // Base interface for table metadata
@@ -49,8 +48,8 @@ export interface AirtableTable {
 
 export interface EmployeesRecord {
   id: string;
-  Name: string;
-  Position: string;
+  'Name': string;
+  'Position': string;
   'Start Date': string;
   'Employment Stage': string;
   'Labor Contract Start Date': string;
@@ -72,32 +71,44 @@ export interface EmployeesRecord {
   '[Sales] Contacts': string;
   'Pipeline Log': any;
   'Pipeline Log 2': any;
-  Opportunities: any;
+  'Opportunities': any;
   'Opportunities 2': any;
   'Opportunities 3': any;
   createdTime: string;
   lastModifiedTime: string;
 }
 
-export interface Meta_LeadsRecord {
+export interface LeadsRecord {
   id: string;
-  FBUserID: number;
-  Opportunities: any;
+  'Email': string;
+  'Opportunities': any;
   'First Name': string;
   'Last Name': string;
-  Email: string;
-  Phone: string;
+  'Phone': string;
   'Job Title': string;
   'Source Channel': string;
-  Campaign: string;
+  'FBUserID': number;
+  'Campaign': string;
   'Highest Education': string;
-  Networth: string;
+  'Networth': string;
   'Family Income': string;
   'EB3 Cost Awareness': string;
   'FB Form Name': string;
-  Audience: any;
-  Created: string;
-  Status: string;
+  'Audience': any;
+  'Created': string;
+  'Status': string;
+  createdTime: string;
+  lastModifiedTime: string;
+}
+
+export interface ContactsRecord {
+  id: string;
+  'Name': string;
+  'First Name': string;
+  'Last Name': string;
+  'Email': string;
+  'Phone': any;
+  'Job Title': string;
   createdTime: string;
   lastModifiedTime: string;
 }
@@ -107,12 +118,12 @@ export interface OpportunitiesRecord {
   'Prospect ID': any;
   'First Name': string;
   'Last Name': string;
-  Email: string;
-  Company: string;
+  'Email': string;
+  'Company': string;
   'Job Title': string;
-  Phone: string;
+  'Phone': string;
   'Source Channel': string;
-  Spouse: number;
+  'Spouse': number;
   '# of Children': number;
   'Additional Dependents': number;
   'Deal Value': number;
@@ -126,54 +137,52 @@ export interface OpportunitiesRecord {
   'Consent Withdrawn Date': string;
   'Address Ln 1': string;
   'Address Ln 2': string;
-  City: string;
-  Province: string;
-  Country: string;
+  'City': string;
+  'Province': string;
+  'Country': string;
   'Created By (linked)': any;
   'Created Date': string;
-  'Created Date Auto': string;
   'Initial Stage': string;
   'Initial Stage (linked)': any;
-  'No of Updates': number;
   'Last Updated By (linked)': any;
   'General Notes': string;
   'Activity Log': any;
-  Campaign: string;
+  'Campaign': string;
   'Highest education': string;
-  Networth: string;
+  'Networth': string;
   'Networth Amount': number;
   'Family Income': string;
   'EB3 Cost Awareness': string;
-  FBUserID: number;
+  'FBUserID': number;
   'FB Form Name': string;
-  Audience: any;
-  'Created Time (Auto)': string;
-  'Last Updated Date': string;
+  'Audience': any;
   'Meta Leads': any;
   'Audience (from Meta Leads)': any;
   'FB Form Name (from Meta Leads)': any;
   'Campaign (from Meta Leads)': any;
-  'Prospect ID (old)': string;
   'Prospect Auto Number': number;
-  ContactID: number;
+  'ContactID': number;
+  'Last Modified': string;
   createdTime: string;
   lastModifiedTime: string;
 }
 
 export interface Activity_LogRecord {
   id: string;
-  ID: number;
-  Prospect: any;
+  'ID': number;
+  'Prospect': any;
   'Close Probability (from Prospect)': any;
   'First Name (from Prospect)': any;
+  'Created': string;
   'Log Date': string;
   'Current Stage': any;
   'New Stage': any;
   'Next Contact Date': string;
   'Contacted By': any;
   'Assigned To': any;
+  'Close Probability from Salesperson': number;
   'Disqualified/Lost Reason': any;
-  Note: string;
+  'Note': string;
   createdTime: string;
   lastModifiedTime: string;
 }
@@ -182,12 +191,12 @@ export interface Pipeline_StagesRecord {
   id: string;
   'Stage ID': string;
   'Stage Name': string;
-  Phase: string;
+  'Phase': string;
   'Trigger for Meta': string;
   'Owned By': string;
-  Notes: string;
+  'Notes': string;
   'Next Steps': string;
-  Opportunities: any;
+  'Opportunities': any;
   'Opportunities 2': any;
   'Activity Log': any;
   'Activity Log 2': any;
@@ -197,7 +206,7 @@ export interface Pipeline_StagesRecord {
 
 export interface Stage_ExplanationRecord {
   id: string;
-  Explanation: string;
+  'Explanation': string;
   'Pipeline Stage': string;
   'Nuture Track': string;
   'Activity Log': any;
@@ -209,25 +218,25 @@ export interface _Sales__Lead_Information_ChatbotRecord {
   id: string;
   'First Name': string;
   'Last Name': string;
-  Phone: any;
-  Mail: string;
+  'Phone': any;
+  'Mail': string;
   'User Profile Information': string;
   'User Profile Summary': string;
   'User Type': string;
-  created_date: string;
+  'created_date': string;
   createdTime: string;
   lastModifiedTime: string;
 }
 
 export interface ThoughtFlow___ContentRecord {
   id: string;
-  Title: string;
-  Pillar: string;
-  Idea: any;
+  'Title': string;
+  'Pillar': string;
+  'Idea': any;
   'Content Text': string;
-  Status: string;
-  Channel: string;
-  URL: string;
+  'Status': string;
+  'Channel': string;
+  'URL': string;
   'Published At': string;
   'SEO Title': string;
   'Meta Description': string;
@@ -241,15 +250,15 @@ export interface ThoughtFlow___ContentRecord {
 
 export interface ThoughtFlow___PromptsRecord {
   id: string;
-  Channel: string;
-  Prompt: string;
+  'Channel': string;
+  'Prompt': string;
   createdTime: string;
   lastModifiedTime: string;
 }
 
 export interface ThoughtFlow___IdeasRecord {
   id: string;
-  Idea: string;
+  'Idea': string;
   'Creation Date': string;
   'Content Created': any;
   'Idea ID': string;
@@ -257,14 +266,4 @@ export interface ThoughtFlow___IdeasRecord {
   lastModifiedTime: string;
 }
 
-export type AirtableTableName =
-  | 'Employees'
-  | 'Meta_Leads'
-  | 'Opportunities'
-  | 'Activity_Log'
-  | 'Pipeline_Stages'
-  | 'Stage_Explanation'
-  | '_Sales__Lead_Information_Chatbot'
-  | 'ThoughtFlow___Content'
-  | 'ThoughtFlow___Prompts'
-  | 'ThoughtFlow___Ideas';
+export type AirtableTableName = 'Employees' | 'Leads' | 'Contacts' | 'Opportunities' | 'Activity_Log' | 'Pipeline_Stages' | 'Stage_Explanation' | '_Sales__Lead_Information_Chatbot' | 'ThoughtFlow___Content' | 'ThoughtFlow___Prompts' | 'ThoughtFlow___Ideas';

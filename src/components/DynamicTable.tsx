@@ -1,17 +1,16 @@
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 
-import React, { useState } from 'react';
+import React from 'react';
 
-import { useTheme } from '@mui/material';
 
 import { Iconify } from './iconify';
 import { Button } from './ui/button';
 import {
     DropdownMenu,
-    DropdownMenuItem,
     DropdownMenuContent,
-    DropdownMenuTrigger,
+    DropdownMenuItem,
     DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
 
@@ -61,9 +60,6 @@ export default function DynamicTable<T extends Record<string, any>>({
     onRowActionSelect,
     rowActions = ['Edit', 'Delete']
 }: DynamicTableProps<T>) {
-    const theme = useTheme();
-    const [selectedRow, setSelectedRow] = useState<T | null>(null);
-
     const handleActionSelect = (action: string, row: T) => {
         if (onRowActionSelect) {
             onRowActionSelect(action, row);

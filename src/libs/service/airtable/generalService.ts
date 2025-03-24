@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { airtableBaseQuery } from './airtableBaseQuery';
 
-import type { QueryOptions, AirtableRecord } from '../../../types/airtableTypes';
+import type { AirtableRecord, QueryOptions } from '../../../types/airtableTypes';
 // Helper function to get the Airtable base ID
 const getBaseId = () => import.meta.env.VITE_AIRTABLE_BASE_ID || localStorage?.getItem('airtableBaseId') || '';
 
@@ -14,14 +14,12 @@ export const generalService = createApi({
     // Generic endpoint to query any table
     queryTable: builder.query<AirtableRecord[], QueryOptions>({
       query: (options) => {
-        const { tableId, filters, sort, limit, offset, view } = options;
+        const { tableId, filters, sort, limit, offset } = options;
         
         // Construct URL and query parameters based on Airtable API format
         const baseId = getBaseId();
         // Create URLSearchParams for query parameters
-        const params: Record<string, string> = {};
-      console.log("filters", filters);
-        
+        const params: Record<string, string> = {};        
         // Apply filters if they exist
         if (filters && filters.length > 0) {
           // Convert filters to formula format
@@ -36,8 +34,7 @@ export const generalService = createApi({
               case 'gte': return `{${field}} >= ${value}`;
               case 'contains': return `FIND('${value}', {${field}})`;
               case 'notContains': return `NOT(FIND('${value}', {${field}}))`;
-              case 'custom': return value; // Use custom formula directly
-              default: return `{${field}} = '${value}'`;
+              default: return value;
             }
           }).join(', ');
           
@@ -46,17 +43,10 @@ export const generalService = createApi({
         
         // Apply sorting if it exists
         if (sort && sort.length > 0) {
-          const sortParam = sort.map(s => ({
-            field: s.field,
-            direction: s.direction
-          }));
-          
-          params.sort = JSON.stringify(sortParam);
-        }
-        
-        // Apply view if provided
-        if (view) {
-          params.view = view;
+            sort.forEach((s, index) => {
+                params[`sort[${index}][field]`] = s.field;
+                params[`sort[${index}][direction]`] = s.direction;
+            });
         }
         
         // Apply pagination

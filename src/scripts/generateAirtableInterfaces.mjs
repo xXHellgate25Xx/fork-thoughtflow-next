@@ -39,13 +39,13 @@ try {
 
 // Get command line arguments or use environment variables
 const args = process.argv.slice(2);
-const baseId = args[0] || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID;
-const apiKey = args[1] || process.env.NEXT_PUBLIC_AIRTABLE_API_KEY;
+const baseId = args[0] || process.env.VITE_AIRTABLE_BASE_ID;
+const apiKey = args[1] || process.env.VITE_AIRTABLE_API_KEY;
 
 if (!baseId || !apiKey) {
   console.error('Error: Please provide Airtable Base ID and API Key');
   console.error('Usage: node generateAirtableInterfaces.mjs <baseId> <apiKey>');
-  console.error('Or set NEXT_PUBLIC_AIRTABLE_BASE_ID and NEXT_PUBLIC_AIRTABLE_API_KEY in .env file');
+  console.error('Or set VITE_AIRTABLE_BASE_ID and VITE_AIRTABLE_API_KEY in .env file');
   process.exit(1);
 }
 

@@ -1,14 +1,14 @@
 import { createTableHooks } from './useAirtableTable';
 
-import type { TableQueryOptions } from './useAirtableTable';
 import type {
-  EmployeesRecord,
-  Meta_LeadsRecord,
   Activity_LogRecord,
+  EmployeesRecord,
+  LeadsRecord,
   OpportunitiesRecord,
   Pipeline_StagesRecord,
   ThoughtFlow___ContentRecord
 } from '../types/airtableTypes';
+import type { TableQueryOptions } from './useAirtableTable';
 
 // Create hooks for Opportunities table
 export const OpportunityHooks = createTableHooks<OpportunitiesRecord>('Opportunities');
@@ -21,7 +21,7 @@ export const {
 } = OpportunityHooks;
 
 // Create hooks for Meta Leads table
-export const MetaLeadsHooks = createTableHooks<Meta_LeadsRecord>('Meta_Leads');
+export const MetaLeadsHooks = createTableHooks<LeadsRecord>('Meta_Leads');
 export const {
   useTable: useMetaLeads,
   useRecordById: useMetaLeadById,

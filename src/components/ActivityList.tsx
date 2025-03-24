@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
-import { alpha, Box, Chip, Paper, Skeleton, Typography, useTheme } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 
 import { useActivityLogs } from '../hooks/tablehooks';
 import { Iconify } from './iconify';
@@ -9,17 +9,20 @@ import { Iconify } from './iconify';
 interface ActivityListProps {
     prospectId: string;
     maxHeight?: number | string;
+    statusLabels: Record<string, string>;
 }
 
-export default function ActivityList({ prospectId, maxHeight = 300 }: ActivityListProps) {
-    const theme = useTheme();
+export default function ActivityList({ statusLabels, prospectId, maxHeight = 300 }: ActivityListProps) {
     const { records: activities, isLoading, isError, refetch } = useActivityLogs({
         filters: [{
             field: 'Prospect',
-            operator: 'custom',
-            value: `FIND('${prospectId}', ARRAYJOIN({Prospect}, ''))`
+            operator: 'eq',
+            value: prospectId
         }],
-        // sort: [{ field: 'Log Date', direction: 'desc' }]
+        sort: [{
+            field: 'Created',
+            direction: 'desc'
+        }]
     });
 
     // Refresh activities when prospectId changes
@@ -32,162 +35,113 @@ export default function ActivityList({ prospectId, maxHeight = 300 }: ActivityLi
     // Format date to a readable format
     const formatDate = (dateString: string) => {
         try {
-            return format(new Date(dateString), 'MMM d, yyyy');
+            return format(new Date(dateString), 'MMMM d, yyyy');
         } catch (e) {
             return dateString || 'N/A';
         }
     };
 
-    // Get status badges for stage transitions
-    const getStatusBadge = (status: string) => (
-        <Chip
-            size="small"
-            label={status}
-            sx={{
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.primary.main,
-                fontWeight: 500,
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-            }}
-        />
-    );
-
-    // Group activities by date
-    const groupedActivities = useMemo(() => {
-        if (!activities?.length) return {};
-
-        return activities.reduce((acc: Record<string, any[]>, activity) => {
-            const date = activity['Log Date'] || activity['Next Contact Date'];
-            const formattedDate = date ? formatDate(date) : 'N/A';
-
-            if (!acc[formattedDate]) {
-                acc[formattedDate] = [];
-            }
-
-            acc[formattedDate].push(activity);
-            return acc;
-        }, {});
-    }, [activities]);
-
     if (isError) {
         return (
-            <Box sx={{ p: 2, textAlign: 'center' }}>
-                <Typography color="error">Error loading activities</Typography>
+            <Box className="p-4 text-center text-red-500">
+                Error loading activities
+            </Box>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <Box className="bg-gray-100/40 border border-gray-200 p-6 rounded-lg max-w ">
+                <h2 className="text-gray-700 font-medium text-sm mb-4">ACTIVITIES</h2>
+                <div className="animate-pulse space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="border-b border-gray-200 pb-4 mb-4">
+                            <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
+                            <div className="h-4 bg-gray-200 rounded w-1/2" />
+                        </div>
+                    ))}
+                </div>
+            </Box>
+        );
+    }
+
+    if (!activities?.length) {
+        return (
+            <Box className="bg-gray-100/40 border border-gray-200 p-6 rounded-lg max-w ">
+                <h2 className="text-gray-700 font-medium text-sm mb-4">ACTIVITIES (0)</h2>
+                <div className="text-center p-6 rounded border border-dashed border-gray-300 bg-gray-50">
+                    <div className="mb-2 text-gray-400">
+                        <Iconify
+                            icon="mdi:calendar-blank"
+                            width={32}
+                            height={32}
+                        />
+                    </div>
+                    <p className="text-gray-500 text-sm">
+                        No activity records found
+                    </p>
+                </div>
             </Box>
         );
     }
 
     return (
-        <Box sx={{ maxHeight, overflowY: 'auto', pr: 1 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                Activity History
-            </Typography>
+        <Box className="bg-gray-100/40 border border-gray-200 p-6 rounded-lg max-w-full" style={{ maxHeight }}>
+            <h2 className="text-gray-700 font-medium text-sm mb-4">
+                ACTIVITIES ({activities.length})
+            </h2>
 
-            {isLoading ? (
-                // Loading skeleton
-                Array.from({ length: 3 }).map((_, i) => (
-                    <Box key={`skeleton-${i}`} sx={{ mb: 2 }}>
-                        <Skeleton variant="text" width="30%" height={24} />
-                        <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 1, mt: 1 }} />
-                    </Box>
-                ))
-            ) : !activities?.length ? (
-                // No activities found
-                <Box
-                    sx={{
-                        p: 3,
-                        textAlign: 'center',
-                        borderRadius: 1,
-                        backgroundColor: alpha(theme.palette.background.default, 0.5),
-                        border: `1px dashed ${alpha(theme.palette.divider, 0.5)}`,
-                    }}
-                >
-                    <Iconify
-                        icon="mdi:calendar-blank"
-                        width={32}
-                        height={32}
-                        sx={{
-                            color: alpha(theme.palette.text.secondary, 0.4),
-                            mb: 1
-                        }}
-                    />
-                    <Typography color="textSecondary" variant="body2">
-                        No activity records found
-                    </Typography>
-                </Box>
-            ) : (
-                // Activity list grouped by date
-                Object.entries(groupedActivities).map(([date, dateActivities]) => (
-                    <Box key={date} sx={{ mb: 3 }}>
-                        <Typography
-                            variant="subtitle2"
-                            sx={{
-                                mb: 1.5,
-                                color: theme.palette.text.secondary,
-                                fontWeight: 500
-                            }}
+            <div className="space-y-4 overflow-y-auto">
+                {activities.map((activity, index) => {
+                    const isLast = index === activities.length - 1;
+                    const currentStage = activity['Current Stage']?.[0];
+                    const newStage = activity['New Stage']?.[0];
+
+                    return (
+                        <div
+                            key={activity.id}
+                            className={`${!isLast ? 'border-b border-gray-300 pb-4' : ''}`}
                         >
-                            {date}
-                        </Typography>
-
-                        {dateActivities.map((activity, index) => (
-                            <Paper
-                                key={activity.id}
-                                elevation={0}
-                                sx={{
-                                    mb: 2,
-                                    p: 2,
-                                    borderRadius: 1,
-                                    backgroundColor: alpha(theme.palette.background.default, 0.7),
-                                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                                    '&:hover': {
-                                        backgroundColor: alpha(theme.palette.background.default, 0.9),
-                                    }
-                                }}
-                            >
-                                <Box display="flex" alignItems="center" mb={1}>
-                                    {activity['Current Stage']?.length > 0 && activity['New Stage']?.length > 0 && (
-                                        <>
-                                            {getStatusBadge(activity['Current Stage'][0])}
-                                            <Iconify
-                                                icon="mdi:arrow-right"
-                                                width={20}
-                                                height={20}
-                                                sx={{ mx: 1, color: theme.palette.text.secondary }}
-                                            />
-                                            {getStatusBadge(activity['New Stage'][0])}
-                                        </>
-                                    )}
-                                    {activity['Current Stage']?.length > 0 && (!activity['New Stage'] || !activity['New Stage'].length) && (
-                                        <>{getStatusBadge(activity['Current Stage'][0])}</>
-                                    )}
-                                    {(!activity['Current Stage'] || !activity['Current Stage'].length) && activity['New Stage']?.length > 0 && (
-                                        <>{getStatusBadge(activity['New Stage'][0])}</>
-                                    )}
-                                </Box>
-
-                                {activity.Note && (
-                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>
-                                        {activity.Note}
-                                    </Typography>
+                            <div className="flex items-center gap-2 mb-2">
+                                {currentStage && (
+                                    <Chip
+                                        label={statusLabels[currentStage]}
+                                        size="small"
+                                        color="default"
+                                    />
                                 )}
-
-                                <Box display="flex" justifyContent="space-between" mt={1}>
-                                    {activity['Next Contact Date'] && (
-                                        <Typography variant="caption" color="textSecondary">
-                                            Next contact: {formatDate(activity['Next Contact Date'])}
-                                        </Typography>
-                                    )}
-                                    <Typography variant="caption" color="textSecondary" sx={{ ml: 'auto' }}>
-                                        {format(new Date(activity.createdTime), 'h:mm a')}
-                                    </Typography>
-                                </Box>
-                            </Paper>
-                        ))}
-                    </Box>
-                ))
-            )}
+                                {currentStage && newStage && (
+                                    <Iconify
+                                        icon="mdi:arrow-right"
+                                        width={20}
+                                        height={20}
+                                        className="text-gray-400"
+                                    />
+                                )}
+                                {newStage && (
+                                    <Chip
+                                        label={statusLabels[newStage]}
+                                        size="small"
+                                        color="primary"
+                                    />
+                                )}
+                            </div>
+                            <p className="text-gray-500 mt-1">
+                                Next Contact: {
+                                    activity['Next Contact Date'] ? (
+                                        formatDate(activity['Next Contact Date'])
+                                    ) : (
+                                        'N/A'
+                                    )
+                                }
+                            </p>
+                            <p className="text-gray-500 mt-1">
+                                Owner: {activity['Contacted By'] ? activity['Contacted By'] : 'N/A'}
+                            </p>
+                        </div>
+                    );
+                })}
+            </div>
         </Box>
     );
 } 

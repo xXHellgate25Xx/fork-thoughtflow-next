@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import type { OpportunitiesRecord } from '../types/airtableTypes';
 import ActivityList from './ActivityList';
 import { Iconify } from './iconify';
 
@@ -12,9 +13,7 @@ interface Activity {
 }
 
 interface OpportunityDetailsProps {
-    opportunity: any; // Accept any to support both custom and CRM opportunity formats
-    activities?: Activity[];
-    useExistingActivityList?: boolean;
+    opportunity: Partial<OpportunitiesRecord>; // Accept any to support both custom and CRM opportunity formats
     prospectId?: string;
     maxActivityHeight?: number | string;
     formatCurrency?: (value: any) => string;
@@ -24,8 +23,6 @@ interface OpportunityDetailsProps {
 
 export default function OpportunityDetails({
     opportunity,
-    activities = [],
-    useExistingActivityList = false,
     prospectId = '',
     maxActivityHeight = 400,
     formatCurrency: externalFormatCurrency,
@@ -91,85 +88,40 @@ export default function OpportunityDetails({
 
     // Render opportunity details section
     return (
-        <div className="text-sm">
-            <div className="flex items-center mb-6 justify-end">
-                <button
-                    type="button"
-                    className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white border-none cursor-pointer hover:bg-blue-700"
-                    onClick={onAddActivity}
-                >
-                    <Iconify icon="mdi:plus" width={20} height={20} />
-                </button>
+        <div className="text-sm relative">
+            <div className="sticky top-0 bg-white z-10   mb-2">
+                <div className="flex items-center justify-end">
+                    <button
+                        type="button"
+                        className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white border-none cursor-pointer hover:bg-blue-700"
+                        onClick={onAddActivity}
+                    >
+                        <Iconify icon="mdi:plus" width={20} height={20} />
+                    </button>
+                </div>
             </div>
 
             <div className="mb-8">
-                {/* Support both custom and CRM formats */}
-                {renderDetailItem('OPPORTUNITY NAME', opportunity.name || opportunity['Last Name'] || '')}
-                {renderDetailItem('CONTACT', opportunity.contact || opportunity['Last Name'] || '')}
-                {renderDetailItem('COMPANY', opportunity.company || opportunity.Company || '')}
-                {(opportunity.Email || opportunity.Email) && renderDetailItem('EMAIL', opportunity.Email || opportunity.Email)}
-                {(opportunity.Phone || opportunity.Phone) && renderDetailItem('PHONE', opportunity.Phone || opportunity.Phone)}
-                {(opportunity['Job Title'] || opportunity.jobTitle) && renderDetailItem('JOB TITLE', opportunity['Job Title'] || opportunity.jobTitle)}
-                {renderDetailItem('VALUE', formatCurrency(opportunity.value || opportunity['Deal Value'] || 0))}
-                {renderDetailItem('CURRENT STAGE', getStatusChip(opportunity.status || opportunity['Current Stage (linked)'] || ''))}
-                {(opportunity['Source Channel'] || opportunity.sourceChannel) && renderDetailItem('SOURCE CHANNEL', opportunity['Source Channel'] || opportunity.sourceChannel)}
-                {renderDetailItem('EXPECTED CLOSE DATE', formatDate(opportunity.expectedCloseDate || opportunity['Expected Close Date'] || ''))}
-                {(opportunity['General Notes'] || opportunity.generalNotes) && renderDetailItem('GENERAL NOTES', opportunity['General Notes'] || opportunity.generalNotes)}
-                {opportunity.owner && renderDetailItem('OPPORTUNITY OWNER', opportunity.owner)}
+                <div className="mb-8">
+                    {/* Support both custom and CRM formats */}
+                    {renderDetailItem('NAME', opportunity['First Name'] || '')}
+                    {renderDetailItem('COMPANY', opportunity.Company || '')}
+                    {renderDetailItem('JOB TITLE', opportunity['Job Title'] || "")}
+                    {renderDetailItem('EMAIL', opportunity.Email || "")}
+                    {renderDetailItem('PHONE', opportunity.Phone || "")}
+                    {renderDetailItem('CURRENT STAGE', getStatusChip(opportunity['Current Stage (linked)'] || ''))}
+                    {renderDetailItem('SOURCE CHANNEL', opportunity['Source Channel'] || "")}
+                    {renderDetailItem('GENERAL NOTES', opportunity['General Notes'] || "")}
+                    {renderDetailItem('OPPORTUNITY OWNER', opportunity["Meta Leads"] || "")}
+                </div>
+
+                <hr className="my-6 border-t border-gray-300" />
+
+                {actualProspectId && (
+                    // Use the existing ActivityList component
+                    <ActivityList statusLabels={statusLabels} prospectId={actualProspectId} maxHeight={maxActivityHeight} />
+                )}
             </div>
-
-            <hr className="my-6 border-t border-gray-200" />
-
-            {useExistingActivityList && actualProspectId ? (
-                // Use the existing ActivityList component
-                <ActivityList prospectId={actualProspectId} maxHeight={maxActivityHeight} />
-            ) : (
-                // Use the custom activities list
-                <>
-                    <h3 className="font-semibold mb-4 text-base">
-                        ACTIVITIES ({activities.length})
-                    </h3>
-
-                    {activities.length === 0 ? (
-                        <div className="p-6 text-center rounded border border-dashed border-gray-300 bg-gray-50">
-                            <div className="mb-2 text-gray-400">
-                                <Iconify
-                                    icon="mdi:calendar-blank"
-                                    width={32}
-                                    height={32}
-                                />
-                            </div>
-                            <p className="text-gray-500 text-sm">
-                                No activity records found
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="overflow-y-auto" style={{ maxHeight: `${maxActivityHeight}px` }}>
-                            {activities.map((activity) => (
-                                <div
-                                    key={activity.id}
-                                    className={`mb-3 p-4 rounded border border-gray-200 ${activity.isCompleted
-                                        ? 'bg-gray-50'
-                                        : 'bg-white'
-                                        } hover:bg-gray-100`}
-                                >
-                                    <h4 className="mb-1 font-semibold text-sm">
-                                        {activity.title}
-                                    </h4>
-                                    <p className="text-gray-500 text-xs mb-2">
-                                        {formatDate(activity.date)} • Owner: {activity.owner}
-                                    </p>
-                                    {activity.status && (
-                                        <div className="mt-2">
-                                            {getStatusChip(activity.status)}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </>
-            )}
         </div>
     );
 } 
