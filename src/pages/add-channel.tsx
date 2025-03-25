@@ -10,6 +10,7 @@ import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { channelIcons } from 'src/theme/icons/channel-icons';
 import { useCreateChannelMutation } from 'src/libs/service/channel/channel';
+import { hashPassword } from 'src/utils/ecrypt';
 
 // ----------------------------------------------------------------------
 
@@ -19,6 +20,9 @@ export default function Page() {
   const [channelUrl, setChannelUrl] = useState('');
   const [channelVoice, setChannelVoice] = useState('');
   const [channelType, setChannelType] = useState('wix');
+  const [wixAPIKey, setWixAPIKey] = useState('')
+  const [wixAccountId, setWixAccountId] = useState('')
+  const [wixSiteId, setWixSiteId] = useState('')
 
   const [createChannel] = useCreateChannelMutation();
   
@@ -30,6 +34,7 @@ export default function Page() {
   ]
 
   const handleCreateChannel = async () => {
+      const en_wix_api_key = await hashPassword(wixAPIKey);
       await createChannel({
       payload:{
         name: channelName,
@@ -37,12 +42,51 @@ export default function Page() {
         url: channelUrl,
         is_active: true,
         brand_voice_initial: channelVoice,
-        account_id: localStorage.getItem('accountId')
+        account_id: localStorage.getItem('accountId'),
+        encrypted_wix_api_key: en_wix_api_key,
+        wix_account_id: wixAccountId,
+        wix_site_id: wixSiteId
       }
     });
     router.push("/settings");
   };
 
+  const integrationFields: any = {
+    wix: (
+      <Box display='flex' flexDirection='column' gap='0.5rem'>
+        {/* WIX-API-KEY */}
+        <Box display='flex' gap='0.5rem' alignItems='baseline'>
+          <Typography>WIX API KEY</Typography>
+          <Typography variant='caption'>your WIX API Key with site level access</Typography>
+        </Box>
+        <TextField 
+          onChange={(api_key) => {setWixAPIKey(api_key.target.value)}}
+          fullWidth
+        />
+        {/* wix-account-id */}
+        <Box display='flex' gap='0.5rem' alignItems='baseline'>
+          <Typography>Wix account id</Typography>
+          <Typography variant='caption'>the ID of your wix account</Typography>
+        </Box>
+        <TextField 
+          onChange={(wix_account_id) => {setWixAccountId(wix_account_id.target.value)}}
+          fullWidth
+        />
+        {/* wix-site-id */}
+        <Box display='flex' gap='0.5rem' alignItems='baseline'>
+          <Typography>Wix site id</Typography>
+          <Typography variant='caption'>the ID of your wix site</Typography>
+        </Box>
+        <TextField 
+          onChange={(wix_site_id) => {setWixSiteId(wix_site_id.target.value)}}
+          fullWidth
+        />
+      </Box>
+    ),
+    // Future channel types can be added here
+    // linkedin: <Box>LinkedIn Fields here</Box>,
+    // instagram: <Box>Instagram Fields here</Box>,
+  };
 
   return (
     <>
@@ -116,8 +160,10 @@ export default function Page() {
             ))}
             </Box>
 
-            <Typography>Integration (coming soon)</Typography>
-
+            <Typography fontWeight='fontWeightBold'>Integration</Typography>
+            {integrationFields[channelType] ?? (
+            <Typography mt={1}>(Coming soon)</Typography>
+            )}
             <Button
               size='large'
               color='inherit'

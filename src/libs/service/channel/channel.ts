@@ -11,6 +11,7 @@ interface ChannelReq {
     is_active?: boolean;
     wix_account_id?: string;
     wix_site_id?: string;
+    encrypted_wix_api_key?: string;
     brand_voice_initial?: string;
     account_id?: string | null;
   };
@@ -20,6 +21,26 @@ interface ChannelRes {
   data?: any;
   error?: any;
 }
+
+const transformWixKeys = (payload: Record<string, any>) => {
+  const keyMap: Record<string, string> = {
+    wix_account_id: 'wix-account-id',
+    wix_site_id: 'wix-site-id',
+    encrypted_wix_api_key: 'encrypted-wix-api-key',
+  };
+
+  const result: Record<string, any> = {};
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined) return; // skip undefined values
+
+    const newKey = keyMap[key] || key;
+    result[newKey] = value;
+  });
+
+  return result;
+};
+
 
 const ChannelApi = createApi({
   reducerPath: 'channelApi',
@@ -41,11 +62,14 @@ const ChannelApi = createApi({
     }),
     // -----------------CREATE NEW CHANNEL-------------------
     createChannel: builder.mutation<ChannelRes, ChannelReq>({
-      query: ({ payload }) => ({
-        url: `/functions/v1/api/channel`,
-        method: 'POST',
-        body: payload,
-      }),
+      query: ({ payload }) => {
+        const transformedPayload = payload ? transformWixKeys(payload) : {};
+        return {
+          url: `/functions/v1/api/channel`,
+          method: 'POST',
+          body: transformedPayload,
+        };
+      },
     }),
     // -----------------MODIFY AN EXISTING CHANNEL-------------------
     modifyChannel: builder.mutation<ChannelRes, ChannelReq>({
