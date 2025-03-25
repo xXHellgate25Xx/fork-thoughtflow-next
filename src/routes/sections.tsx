@@ -4,7 +4,7 @@ import { Navigate, Outlet, useRoutes } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 
-import ComingSoonPage from 'src/components/ComingSoonPage';
+import ComingSoonPage from 'src/components/CRM/Activities/ComingSoonPage';
 import { AuthLayout } from 'src/layouts/auth';
 import { DashboardLayout } from 'src/layouts/dashboard';
 import { varAlpha } from 'src/theme/styles';

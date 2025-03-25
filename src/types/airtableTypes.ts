@@ -181,7 +181,7 @@ export interface Activity_LogRecord {
   'Contacted By': any;
   'Assigned To': any;
   'Close Probability from Salesperson': number;
-  'Disqualified/Lost Reason': any;
+  'Explanation': any;
   'Note': string;
   createdTime: string;
   lastModifiedTime: string;
@@ -200,6 +200,7 @@ export interface Pipeline_StagesRecord {
   'Opportunities 2': any;
   'Activity Log': any;
   'Activity Log 2': any;
+  'Stage Explanation': any;
   createdTime: string;
   lastModifiedTime: string;
 }
@@ -208,8 +209,10 @@ export interface Stage_ExplanationRecord {
   id: string;
   'Explanation': string;
   'Pipeline Stage': string;
-  'Nuture Track': string;
+  'Pipeline Stage Linked': any;
+  'Action': string;
   'Activity Log': any;
+  'Stage ID (from Pipeline Stage Linked)': any;
   createdTime: string;
   lastModifiedTime: string;
 }

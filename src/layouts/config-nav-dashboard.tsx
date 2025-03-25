@@ -34,16 +34,6 @@ export const navData: NavItem[] = [
         path: '/crm/contacts',
         icon: icon('fluent:person-16-filled'),
       },
-      {
-        title: 'Leads',
-        path: '/crm/leads',
-        icon: icon('fluent:people-16-filled'),
-      },
-      {
-        title: 'Deals',
-        path: '/crm/deals',
-        icon: icon('fluent:money-16-filled'),
-      },
     ],
   },
   {

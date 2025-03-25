@@ -1,12 +1,13 @@
 import { createTableHooks } from './useAirtableTable';
 
 import type {
-  Activity_LogRecord,
-  EmployeesRecord,
-  LeadsRecord,
-  OpportunitiesRecord,
-  Pipeline_StagesRecord,
-  ThoughtFlow___ContentRecord
+    Activity_LogRecord,
+    EmployeesRecord,
+    LeadsRecord,
+    OpportunitiesRecord,
+    Pipeline_StagesRecord,
+    Stage_ExplanationRecord,
+    ThoughtFlow___ContentRecord
 } from '../types/airtableTypes';
 import type { TableQueryOptions } from './useAirtableTable';
 
@@ -86,6 +87,16 @@ export const usePipelineStages = (options: TableQueryOptions = {}) => {
     records: sortedRecords
   };
 };
+
+// Create hooks for Stage Explanation table
+export const StageExplanationHooks = createTableHooks<Stage_ExplanationRecord>('Stage%20Explanation');
+export const {
+  useTable: useStageExplanations,
+  useRecordById: useStageExplanationById,
+  useCreateRecord: useCreateStageExplanation,
+  useUpdateRecord: useUpdateStageExplanation,
+  useDeleteRecord: useDeleteStageExplanation
+} = StageExplanationHooks;
 
 // Generic function to create hooks for any table dynamically
 export function getTableHooks<T>(tableId: string) {
