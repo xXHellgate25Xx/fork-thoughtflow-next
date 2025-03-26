@@ -1,6 +1,4 @@
-import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
-
+import { Close as CloseIcon, DragHandle as DragHandleIcon } from '@mui/icons-material';
 import {
     alpha,
     Box,
@@ -8,44 +6,70 @@ import {
     Chip,
     Drawer,
     IconButton,
+    Tooltip,
     Typography,
     useTheme
 } from '@mui/material';
+import type { ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { FieldDef, FormRecord } from './types';
 
-import { Iconify } from '../../iconify';
+// Custom hook for handling resize
+const useResize = (initialWidth: number | string) => {
+    const [width, setWidth] = useState(initialWidth);
+    const [isResizing, setIsResizing] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [startWidth, setStartWidth] = useState(0);
+    const [resizeFromLeft, setResizeFromLeft] = useState(false);
 
-export type FormRecord = Record<string, any>;
+    const handleMouseDown = useCallback((e: React.MouseEvent, fromLeft: boolean = false) => {
+        setIsResizing(true);
+        setStartX(e.clientX);
+        setStartWidth(typeof width === 'number' ? width : parseInt(width as string, 10));
+        setResizeFromLeft(fromLeft);
+    }, [width]);
 
-// Field definition type
-export interface FieldDef {
-    name: string;
-    label: string;
-    type?: 'text' | 'number' | 'select' | 'textarea' | 'multiselect' | 'date' | 'datetime' | 'currency' | 'custom';
-    options?: Array<{
-        value: string | number | boolean;
-        label: string;
-    }>;
-    defaultValue?: any;
-    required?: boolean;
-    helperText?: string;
-    renderField?: (value: any, onChange: (value: any) => void) => ReactNode;
-    renderValue?: (value: any) => ReactNode;
-    rows?: number;
-}
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (!isResizing) return;
+
+        const diff = startX - e.clientX;
+        const newWidth = Math.max(400, Math.min(window.innerWidth * 0.9, startWidth + (resizeFromLeft ? -diff : diff)));
+        setWidth(newWidth);
+    }, [isResizing, startX, startWidth, resizeFromLeft]);
+
+    const handleMouseUp = useCallback(() => {
+        setIsResizing(false);
+        setResizeFromLeft(false);
+    }, []);
+
+    useEffect(() => {
+        if (isResizing) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing, handleMouseMove, handleMouseUp]);
+
+    return { width, handleMouseDown };
+};
 
 // Drawer props type
-export interface ViewDrawerProps {
+export interface ViewDrawerProps<T extends FormRecord> {
     open: boolean;
     onClose: () => void;
     title?: string | ReactNode;
     record?: FormRecord | null;
-    fields?: FieldDef[];
+    fields?: FieldDef<T>[];
     width?: number | string;
     customActions?: ReactNode;
     customContent?: ReactNode;
 }
 
-export default function ViewDrawer({
+export default function ViewDrawer<T extends FormRecord>({
     open,
     onClose,
     title,
@@ -54,7 +78,8 @@ export default function ViewDrawer({
     width = 450,
     customActions,
     customContent,
-}: ViewDrawerProps) {
+}: ViewDrawerProps<T>) {
+    const { width: drawerWidth, handleMouseDown } = useResize(width);
     const theme = useTheme();
     const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -82,10 +107,10 @@ export default function ViewDrawer({
     };
 
     // Get a field value based on priority order
-    const getFieldValue = (field: FieldDef): any => {
+    const getFieldValue = (field: FieldDef<T>): any => {
         // If record has this field, use it
-        if (record[field.name] !== undefined) {
-            return record[field.name];
+        if (record && field.name in record) {
+            return record[field.name as keyof typeof record];
         }
 
         // Fall back to default value or empty string
@@ -122,7 +147,7 @@ export default function ViewDrawer({
             }}
             PaperProps={{
                 sx: {
-                    width: { xs: '100%', sm: width },
+                    width: { xs: '100%', sm: drawerWidth },
                     maxWidth: '100%',
                     borderTopLeftRadius: 8,
                     borderBottomLeftRadius: 8,
@@ -136,10 +161,39 @@ export default function ViewDrawer({
                 },
             }}
         >
+            {/* Left resize handle */}
+            <Box
+                onMouseDown={handleMouseDown}
+                sx={{
+                    position: 'absolute',
+                    left: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    height: '100px',
+                    width: '4px',
+                    cursor: 'ew-resize',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    [theme.breakpoints.down('sm')]: {
+                        display: 'none'
+                    }
+                }}
+            >
+                <Tooltip title="Drag to resize" placement="right">
+                    <DragHandleIcon sx={{
+                        color: 'text.secondary',
+                        opacity: 0.5,
+                        rotate: '90deg',
+                        '&:hover': { opacity: 1 }
+                    }} />
+                </Tooltip>
+            </Box>
+
             <Box
                 ref={drawerRef}
                 sx={{
-                    p: title ? 3 : '24px 28px',
+                    p: title ? 3 : '24px 20px',
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
@@ -180,7 +234,7 @@ export default function ViewDrawer({
                             }),
                         }}
                     >
-                        <Iconify icon="mdi:close" />
+                        <CloseIcon />
                     </IconButton>
                 </Box>
 
@@ -206,9 +260,9 @@ export default function ViewDrawer({
                         customContent
                         ||
                         (
-                            fields && record && fields.map((field, index) => (
+                            fields && record && fields.map((field: FieldDef<T>, index: number) => (
                                 <Box
-                                    key={`field-${field.name}-${index}`}
+                                    key={`field-${String(field.name)}-${index}`}
                                     mb={2.5}
                                 >
                                     <Typography
@@ -255,7 +309,7 @@ export default function ViewDrawer({
                                                 border: `1px solid ${alpha(theme.palette.divider, 0.3)}`
                                             }}
                                         >
-                                            {field.options?.find(option => option.value === getFieldValue(field))?.label || '-'}
+                                            {field.options?.find((option: { value: string | number | boolean; label: string }) => option.value === getFieldValue(field))?.label || '-'}
                                         </Box>
                                     ) : field.type === 'multiselect' ? (
                                         <Box
@@ -273,7 +327,7 @@ export default function ViewDrawer({
                                                 ? getFieldValue(field).map((value: any) => (
                                                     <Chip
                                                         key={value}
-                                                        label={field.options?.find(option => option.value === value)?.label || value}
+                                                        label={field.options?.find((option: { value: string | number | boolean; label: string }) => option.value === value)?.label || value}
                                                         size="small"
                                                     />
                                                 ))

@@ -6,11 +6,11 @@ import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { Button as MuiButton } from '@mui/material';
 
 import { DynamicKanban } from 'src/components/ui/kanban/DynamicKanban';
-import { useCreateActivityLog, useOpportunities, usePipelineStages, useStageExplanations, useUpdateOpportunity } from 'src/hooks/tablehooks';
+import { useCreateActivityLog, useEmployees, useOpportunities, usePipelineStages, useStageExplanations, useUpdateOpportunity } from 'src/hooks/tablehooks';
 import { useSnackbar } from 'src/hooks/use-snackbar';
 
+import { FieldDef } from 'src/components/CRM/Modals/types';
 import ActivityLogModal from '../components/CRM/Modals/ActivityLogModal';
-import type { FieldDef } from '../components/CRM/Modals/EditDrawer';
 import EditDrawer from '../components/CRM/Modals/EditDrawer';
 import ViewDrawer from '../components/CRM/Modals/ViewDrawer';
 import OpportunityDetails from '../components/CRM/Opportunities/OpportunityDetails';
@@ -23,7 +23,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
-import { opportunityFields } from '../config/opportunityFormFields';
+import { opportunityFields, sourceChannelOptions } from '../config/opportunityFormFields';
 
 type ViewType = 'list' | 'kanban';
 
@@ -31,6 +31,7 @@ const OpportunitiesCRMPage = memo(() => {
     const { showSnackbar, SnackbarComponent } = useSnackbar();
     const { records: stages, isLoading: stagesLoading, isError: stagesError } = usePipelineStages();
     const { records: stageExplanations, isLoading: explanationsLoading } = useStageExplanations();
+    const { records: employees, isLoading: employeesLoading } = useEmployees();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
     const [activityModalOpen, setActivityModalOpen] = useState(false);
@@ -57,6 +58,17 @@ const OpportunitiesCRMPage = memo(() => {
         }
         return acc;
     }, {} as Record<string, string>);
+
+    // Map employees to a lookup object for easy access
+    const employeeMap = useMemo(() => {
+        if (!employees) return {};
+        return employees.reduce((acc, employee) => {
+            if (employee.id && employee.Name) {
+                acc[employee.id] = employee.Name;
+            }
+            return acc;
+        }, {} as Record<string, string>);
+    }, [employees]);
 
     // Group stage explanations by pipeline stage
     const groupedStageExplanationLabels = useMemo(() => {
@@ -85,6 +97,10 @@ const OpportunitiesCRMPage = memo(() => {
 
         return stageExplanationLabels;
     }, [stageExplanations]);
+    const sourceChannelLabels = useMemo(() => sourceChannelOptions.reduce((acc, option) => {
+        acc[option.value] = option.label;
+        return acc;
+    }, {} as Record<string, string>), []);
     // Memoize sorted data
     const sortedData = useMemo(() => {
         if (!opportunities) return [];
@@ -168,8 +184,17 @@ const OpportunitiesCRMPage = memo(() => {
                 }
                 return acc;
             }, {} as Partial<OpportunitiesRecord>);
+            console.log(changedFields);
             // Only proceed if there are changes
             if (Object.keys(changedFields).length > 0) {
+
+                if (changedFields['Salesperson (linked)']) {
+                    changedFields['Salesperson (linked)'] = [changedFields['Salesperson (linked)']];
+                }
+                if (changedFields['Current Stage (linked)']) {
+                    changedFields['Current Stage (linked)'] = [changedFields['Current Stage (linked)']];
+                }
+
                 // Update the opportunity using the mutation with only changed fields
                 await updateOpportunityMutation(record.id!, changedFields);
 
@@ -178,6 +203,8 @@ const OpportunitiesCRMPage = memo(() => {
 
                 // Refresh the opportunities data
                 refetch();
+            } else {
+                showSnackbar('No changes to update', 'info');
             }
         } catch (err) {
             console.error('Failed to update opportunity:', err);
@@ -377,6 +404,33 @@ const OpportunitiesCRMPage = memo(() => {
                 </span>
             ),
         },
+        // {
+        //     field: 'Salesperson (linked)',
+        //     headerName: 'Salesperson',
+        //     sortable: true,
+        //     sortDirection: sortField === 'Salesperson (linked)' ? sortDirection : undefined,
+        //     renderHeader: () => (
+        //         <button
+        //             type="button"
+        //             className="flex items-center hover:text-blue-700"
+        //             onClick={() => handleHeaderClick('Salesperson (linked)')}
+        //         >
+        //             Salesperson
+        //             {sortField === 'Salesperson (linked)' && (
+        //                 <Iconify
+        //                     icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
+        //                     width={12}
+        //                     height={12}
+        //                     className="ml-1.5"
+        //                 />
+        //             )}
+        //         </button>
+        //     ),
+        //     renderCell: (row) => {
+        //         const salespersonId = row['Salesperson (linked)']?.[0];
+        //         return salespersonId ? employeeMap[salespersonId] || '-' : '-';
+        //     },
+        // },
     ];
 
     // Define form fields for the drawer
@@ -389,6 +443,16 @@ const OpportunitiesCRMPage = memo(() => {
                     label
                 })),
                 disabled: true
+            };
+        }
+        if (field.name === 'Salesperson (linked)') {
+
+            return {
+                ...field,
+                options: Object.entries(employeeMap).map(([value, label]) => ({
+                    value,
+                    label
+                }))
             };
         }
         return field;
@@ -416,7 +480,7 @@ const OpportunitiesCRMPage = memo(() => {
             return Object.entries(statusLabels)
                 .reduce((acc, [value, label]) => {
                     acc[value] = {
-                        id: `stage_${value}`, // Ensure this ID is unique
+                        id: `stage_${value}`,
                         title: label
                     };
                     return acc;
@@ -446,8 +510,19 @@ const OpportunitiesCRMPage = memo(() => {
                 '100': { id: 'prob_100', title: '100%' },
             };
         }
+        if (groupByField === 'Salesperson (linked)') {
+            return employees?.reduce((acc, employee) => {
+                if (employee.id && employee.Name) {
+                    acc[employee.id] = {
+                        id: `salesperson_${employee.id}`,
+                        title: employee.Name
+                    };
+                }
+                return acc;
+            }, {} as Record<string, { id: string; title: string }>) || {};
+        }
         return undefined;
-    }, [groupByField]);
+    }, [groupByField, employees]);
 
     // Memoize the column map itself
     const columnMap = useMemo(() => getColumnMap(), [getColumnMap]);
@@ -465,8 +540,13 @@ const OpportunitiesCRMPage = memo(() => {
             label: 'Probability',
             render: (value: any) => value ? `${value}%` : '-'
         },
-        { field: 'email', label: 'Email' }
-    ], []);
+        { field: 'email', label: 'Email' },
+        {
+            field: 'salesperson',
+            label: 'Salesperson',
+            render: (value: any) => value ? employeeMap[value] || '-' : '-'
+        }
+    ], [employeeMap]);
 
     // Memoize the item mapping function for sorted data
     const mapItemsFromSortedData = useCallback((data: any[]) => data.map(item => ({
@@ -480,6 +560,7 @@ const OpportunitiesCRMPage = memo(() => {
         jobTitle: item['Job Title'],
         phone: item.Phone,
         generalNotes: item['General Notes'],
+        salesperson: item['Salesperson (linked)']?.[0],
         [groupByField]: item[groupByField as keyof typeof item],
         ...item
     })), [groupByField]);
@@ -533,6 +614,11 @@ const OpportunitiesCRMPage = memo(() => {
                 </div>
 
                 <div className="flex items-center justify-between">
+                    <div className="text-gray-500 mb-0.5">Salesperson</div>
+                    <div className="text-gray-700">{item.salesperson ? employeeMap[item.salesperson] || '-' : '-'}</div>
+                </div>
+
+                <div className="flex items-center justify-between">
                     <div className="text-gray-500 mb-0.5">Last Name</div>
                     <div className="text-gray-700">{item.title}</div>
                 </div>
@@ -543,7 +629,7 @@ const OpportunitiesCRMPage = memo(() => {
                 </div>
             </div>
         </div>
-    ), [groupByField]);
+    ), [groupByField, employeeMap]);
 
     const handleCloseActivityModal = () => {
         setActivityModalOpen(false);
@@ -690,6 +776,14 @@ const OpportunitiesCRMPage = memo(() => {
                                         <span className={groupByField === 'Close Probability' ? "font-medium text-blue-700" : ""}>Close Probability</span>
                                     </div>
                                 </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setGroupByField('Salesperson (linked)')}
+                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Salesperson (linked)' ? "bg-blue-100" : ""}`}
+                                >
+                                    <div className="flex items-center w-full">
+                                        <span className={groupByField === 'Salesperson (linked)' ? "font-medium text-blue-700" : ""}>Salesperson</span>
+                                    </div>
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     )}
@@ -813,6 +907,8 @@ const OpportunitiesCRMPage = memo(() => {
                             opportunity={selectedOpportunity as OpportunitiesRecord}
                             statusLabels={statusLabels}
                             stageExplanationLabels={groupedStageExplanationLabels}
+                            salespersonLabels={employeeMap}
+                            sourceChannelLabels={sourceChannelLabels}
                             onAddActivity={() => setActivityModalOpen(true)}
                         />
                     )
@@ -845,6 +941,7 @@ const OpportunitiesCRMPage = memo(() => {
                 title={selectedOpportunity ? `Edit ${selectedOpportunity["Prospect ID"] || 'Opportunity'}` : 'Edit Opportunity'}
                 initialRecord={selectedOpportunity || {}}
                 submitLoading={updateOpportunityLoading}
+                hideCloseIcon
                 onSave={async record => {
                     if (!selectedOpportunity) {
                         return Promise.resolve();

@@ -1,16 +1,6 @@
 import { OpportunitiesRecord } from 'src/types/airtableTypes';
-import type { FieldDef } from '../components/CRM/Modals/EditDrawer';
-
-// Status labels for opportunities
-export const statusLabels: Record<string, string> = {
-    'New': 'New',
-    'Contact Made': 'Contact Made',
-    'Qualified': 'Qualified',
-    'Proposal Sent': 'Proposal Sent',
-    'Negotiation': 'Negotiation',
-    'Closed Won': 'Closed Won',
-    'Closed Lost': 'Closed Lost',
-};
+import type { FieldDef } from '../components/CRM/Modals/types';
+ 
 
 // Source channel options
 export const sourceChannelOptions = [
@@ -62,12 +52,29 @@ export const opportunityFields: FieldDef<OpportunitiesRecord>[] = [
     {
         name: 'Spouse',
         label: 'Spouse',
-        type: 'text',
+        type: 'number',
     },
     {
         name: '# of Children',
         label: '# of Children',
         type: 'number',
+    },
+
+    // Address Information
+    {
+        name: 'Address Ln 1',
+        label: 'Address 1',
+        type: 'text',
+    },
+    {
+        name: 'Address Ln 2',
+        label: 'Address 2',
+        type: 'text',
+    },
+    {
+        name: 'City',
+        label: 'City',
+        type: 'text',
     },
 
     // Additional Information
@@ -79,7 +86,8 @@ export const opportunityFields: FieldDef<OpportunitiesRecord>[] = [
     {
         name: 'Salesperson (linked)',
         label: 'Salesperson',
-        type: 'text',
+        type: 'select',
+        options: [], // Will be populated dynamically from employees data
     },
     {
         name: 'Current Stage (linked)',
@@ -97,23 +105,17 @@ export const opportunityFields: FieldDef<OpportunitiesRecord>[] = [
         required: true,
     },
 
-    // Address Information
     {
-        name: 'Address Ln 1',
-        label: 'Address',
-        type: 'text',
+        name: 'Close Probability',
+        label: 'Close Probability',
+        type: 'percentage',  
     },
-    {
-        name: 'City',
-        label: 'City',
-        type: 'text',
-    },
-
     // Dates and Notes
     {
         name: 'Created Date',
         label: 'Created Date',
-        type: 'text',
+        type: 'date',
+        disabled: true,
     },
     {
         name: 'General Notes',
