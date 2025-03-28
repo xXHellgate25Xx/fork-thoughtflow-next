@@ -19,7 +19,7 @@ export interface TableQueryOptions {
   filters?: FilterCondition[];
   sort?: SortCondition[];
   limit?: number;
-  offset?: number;
+  offset?: string;
   view?: string;
 }
 
@@ -87,7 +87,6 @@ export function createTableHooks<T>(tableId: string) {
    */
   const useTable = (opts: TableQueryOptions = {}): TableQueryResult<T> => {
     const [options, setOptions] = useState<TableQueryOptions>(opts); 
-    const [offset, setOffset] = useState<string | undefined>(undefined);
     const [allRecords, setAllRecords] = useState<Partial<T>[]>([]);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
@@ -98,7 +97,6 @@ export function createTableHooks<T>(tableId: string) {
       return {
       tableId,
         ...options,
-        offset: offset || undefined
       }
     }, [needLoadMore]);
     const result = useQueryTableQuery(queryParams, {
@@ -106,7 +104,7 @@ export function createTableHooks<T>(tableId: string) {
     });
     const { data, isLoading, isError, error, refetch } = result
     useEffect(() => {
-      // console.log('opts in useTable',opts);
+      console.log('opts in useTable',opts);
     }, [opts]);
     useEffect(() => {
       console.log('resutl in useTable', tableId,result);
@@ -115,21 +113,20 @@ export function createTableHooks<T>(tableId: string) {
     // Handle initial data load
     useEffect(() => { 
       if (needLoadMore && data) {
-        if (data.offset !== offset) {
+        if (data.offset !== options.offset) {
           setAllRecords(prevRecords => [...prevRecords, ...data.records.map(convertToTypedRecord)]);
           setHasMore(!!data.offset);
-          setOffset(data.offset);
+          setOptions({...options, offset: data.offset});
           setNeedLoadMore(false);
           setIsLoadingMore(false);
         }
       }
-    }, [data, offset, needLoadMore]);
+    }, [data, needLoadMore]);
 
     const resetRecords = useCallback((resetOptions: TableQueryOptions) => {
       console.log('resetRecords',resetOptions); 
       setAllRecords([]);
       setOptions(resetOptions);
-      setOffset(undefined);
       // refetch();
       setHasMore(true);
       setNeedLoadMore(true);
@@ -141,7 +138,7 @@ export function createTableHooks<T>(tableId: string) {
       
       setIsLoadingMore(true);
       setNeedLoadMore(true);
-    }, [hasMore, isLoadingMore, offset, refetch]);
+    }, [hasMore, isLoadingMore,  refetch]);
     
     return {
       records: allRecords || [],
