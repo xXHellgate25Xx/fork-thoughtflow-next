@@ -241,14 +241,14 @@ const OpportunitiesCRMPage = memo(() => {
         setSortDirection(newDirection);
 
         // Reset and refetch with new sort parameters
-        // resetRecords({
-        //     sort: [{
-        //         field: field,
-        //         direction: newDirection
-        //     }],
-        //     limit: 10000
-        // });
-        resetRecords();
+        resetRecords({
+            sort: [{
+                field,
+                direction: newDirection
+            }],
+            limit: 10000
+        });
+        // resetRecords();
         refetch();
     }, [sortField, sortDirection, resetRecords, refetch]);
 

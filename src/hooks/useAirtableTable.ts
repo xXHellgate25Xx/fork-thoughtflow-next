@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useCreateRecordMutation,
   useDeleteRecordMutation,
@@ -32,7 +32,7 @@ export interface TableQueryResult<T> {
   refetch: () => void;
   hasMore: boolean;
   loadMore: () => Promise<void>;
-  resetRecords: () => void;
+  resetRecords: (opts: TableQueryOptions) => void;
 }
 
 // Interface for single record hook results
@@ -93,33 +93,47 @@ export function createTableHooks<T>(tableId: string) {
     const [hasMore, setHasMore] = useState(true);
     const [needLoadMore, setNeedLoadMore] = useState(true);
  
-    const { data, isLoading, isError, error, refetch } = useQueryTableQuery({
+    const queryParams= useMemo(() => {
+      console.log('queryParams', tableId,options);
+      return {
       tableId,
-      ...options,
-      offset: offset || undefined
-    }, {
+        ...options,
+        offset: offset || undefined
+      }
+    }, [needLoadMore]);
+    const result = useQueryTableQuery(queryParams, {
       skip: !tableId
     });
+    const { data, isLoading, isError, error, refetch } = result
+    useEffect(() => {
+      // console.log('opts in useTable',opts);
+    }, [opts]);
+    useEffect(() => {
+      console.log('resutl in useTable', tableId,result);
+    }, [result]);
 
     // Handle initial data load
     useEffect(() => { 
       if (needLoadMore && data) {
-        setAllRecords(prevRecords => [...prevRecords, ...data.records.map(convertToTypedRecord)]);
-        setHasMore(!!data.offset);
-        setOffset(data.offset);
-        setNeedLoadMore(false);
-        setIsLoadingMore(false);
+        if (data.offset !== offset) {
+          setAllRecords(prevRecords => [...prevRecords, ...data.records.map(convertToTypedRecord)]);
+          setHasMore(!!data.offset);
+          setOffset(data.offset);
+          setNeedLoadMore(false);
+          setIsLoadingMore(false);
+        }
       }
     }, [data, offset, needLoadMore]);
 
-    const resetRecords = useCallback(() => {
-      console.log('resetRecords',options);
+    const resetRecords = useCallback((resetOptions: TableQueryOptions) => {
+      console.log('resetRecords',resetOptions); 
       setAllRecords([]);
+      setOptions(resetOptions);
       setOffset(undefined);
-      refetch();
+      // refetch();
       setHasMore(true);
       setNeedLoadMore(true);
-    }, [refetch, options]);
+    }, [options]);
 
     // Function to load more records
     const loadMore = useCallback(async () => {
