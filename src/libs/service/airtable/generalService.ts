@@ -12,7 +12,7 @@ export const generalService = createApi({
   tagTypes: ['AirtableData'],
   endpoints: (builder) => ({
     // Generic endpoint to query any table
-    queryTable: builder.query<AirtableRecord[], QueryOptions>({
+    queryTable: builder.query<{ records: AirtableRecord[]; offset?: string }, QueryOptions>({
       query: (options) => {
         const { tableId, filters, sort, limit, offset } = options;
         
@@ -51,11 +51,11 @@ export const generalService = createApi({
         
         // Apply pagination
         if (limit) {
-          params.maxRecords = limit.toString();
+          params.maxRecords = String(limit);
         }
         
         if (offset) {
-          params.offset = offset.toString();
+          params.offset = offset;
         }
         
         // Return the full path with baseId/tableId structure required by Airtable API
@@ -65,11 +65,17 @@ export const generalService = createApi({
         };
       },
       transformResponse: (response: any) => {
-        // Transform the response to a standardized format
-        if (response && response.records) {
-          return response.records;
+        // Transform the response to include both records and offset
+        if (response) {
+          return {
+            records: response.records || [],
+            offset: response.offset
+          };
         }
-        return [];
+        return {
+          records: [],
+          offset: undefined
+        };
       },
       providesTags: ['AirtableData'],
     }),

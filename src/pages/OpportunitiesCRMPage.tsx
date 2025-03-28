@@ -1,7 +1,7 @@
 import type { OpportunitiesRecord, Stage_ExplanationRecord } from 'src/types/airtableTypes';
 import type { KanbanColumn, KanbanRecord } from 'src/types/kanbanTypes';
 
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button as MuiButton } from '@mui/material';
 
@@ -27,6 +27,38 @@ import { opportunityFields, sourceChannelOptions } from '../config/opportunityFo
 
 type ViewType = 'list' | 'kanban';
 
+// Add this component before the OpportunitiesCRMPage
+const LoadMoreObserver = ({ onIntersect, loading }: { onIntersect: () => void, loading: boolean }) => {
+    const observerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const [entry] = entries;
+                if (entry.isIntersecting && !loading) {
+                    onIntersect();
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        const currentRef = observerRef.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
+    }, [onIntersect, loading]);
+
+    return (
+        <div ref={observerRef} className="h-0 w-full" />
+    );
+};
+
 const OpportunitiesCRMPage = memo(() => {
     const { showSnackbar, SnackbarComponent } = useSnackbar();
     const { records: stages, isLoading: stagesLoading, isError: stagesError } = usePipelineStages();
@@ -42,13 +74,23 @@ const OpportunitiesCRMPage = memo(() => {
     const [groupByField, setGroupByField] = useState<string>('Stage ID');
     const kanbanColumnsRef = useRef<any[]>([]);
     const { mutate: createActivityLogMutation, isLoading: activityLoading } = useCreateActivityLog();
-    const { records: opportunities, isLoading, isError, error, refetch } = useOpportunities({
+    const {
+        records: opportunities,
+        isLoading,
+        isError,
+        error,
+        refetch,
+        hasMore,
+        loadMore,
+        resetRecords
+    } = useOpportunities({
         sort: [{
             field: sortField,
             direction: sortDirection
         }],
-        limit: 2000
+        limit: 10000
     });
+
     const { mutate: updateOpportunityMutation, isLoading: updateOpportunityLoading } = useUpdateOpportunity();
     // Map stages to statusLabels
     const statusLabels = stages.reduce((acc, stage) => {
@@ -97,36 +139,11 @@ const OpportunitiesCRMPage = memo(() => {
 
         return stageExplanationLabels;
     }, [stageExplanations]);
+
     const sourceChannelLabels = useMemo(() => sourceChannelOptions.reduce((acc, option) => {
         acc[option.value] = option.label;
         return acc;
     }, {} as Record<string, string>), []);
-    // Memoize sorted data
-    const sortedData = useMemo(() => {
-        if (!opportunities) return [];
-        return [...opportunities].sort((a, b) => {
-            // Use type assertion since we know these fields exist
-            const aValue = a[sortField as keyof typeof a];
-            const bValue = b[sortField as keyof typeof b];
-
-            // Handle null/undefined values (they should be at the end)
-            if (aValue === null || aValue === undefined) return sortDirection === 'asc' ? 1 : -1;
-            if (bValue === null || bValue === undefined) return sortDirection === 'asc' ? -1 : 1;
-
-            // Handle numbers
-            if (typeof aValue === 'number' && typeof bValue === 'number') {
-                return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-            }
-
-            // Handle strings and other values
-            const aString = String(aValue).toLowerCase();
-            const bString = String(bValue).toLowerCase();
-
-            return sortDirection === 'asc'
-                ? aString.localeCompare(bString)
-                : bString.localeCompare(aString);
-        });
-    }, [opportunities, sortField, sortDirection]);
 
     const formatCurrency = (value?: number) => {
         if (!value) return '-';
@@ -214,86 +231,51 @@ const OpportunitiesCRMPage = memo(() => {
     }, [updateOpportunityMutation, refetch, showSnackbar]);
 
     // Handle column header click for sorting
-    const handleHeaderClick = (field: string) => {
-        if (sortField === field) {
-            // Toggle direction if same field
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            // Set new field and default to ascending
-            setSortField(field);
-            setSortDirection('asc');
-        }
-    };
+    const handleHeaderClick = useCallback((field: string) => {
+        const newDirection = sortField === field
+            ? (sortDirection === 'asc' ? 'desc' : 'asc')
+            : 'asc';
+
+        // Update sort parameters
+        setSortField(field);
+        setSortDirection(newDirection);
+
+        // Reset and refetch with new sort parameters
+        // resetRecords({
+        //     sort: [{
+        //         field: field,
+        //         direction: newDirection
+        //     }],
+        //     limit: 10000
+        // });
+        resetRecords();
+        refetch();
+    }, [sortField, sortDirection, resetRecords, refetch]);
 
     // Define table columns
     const columnsConfig: ColumnDef<any>[] = [
         {
             field: 'Prospect ID',
             headerName: 'Prospect ID',
+            width: 70,
             sortable: true,
-            renderHeader: () => (
-                <button
-                    type="button"
-                    className="flex items-center hover:text-blue-700"
-                    onClick={() => handleHeaderClick('Prospect ID')}
-                >
-                    Prospect ID
-                    {sortField === 'Prospect ID' && (
-                        <Iconify
-                            icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
-                            className="ml-1.5"
-                        />
-                    )}
-                </button>
-            ),
+            onHeaderClick: () => handleHeaderClick('Prospect ID'),
+            sortDirection: sortField === 'Prospect ID' ? sortDirection : undefined,
         },
         {
             field: 'Last Name',
             headerName: 'Last Name',
+            width: 70,
             sortable: true,
             sortDirection: sortField === 'Last Name' ? sortDirection : undefined,
-            renderHeader: () => (
-                <button
-                    type="button"
-                    className="flex items-center hover:text-blue-700"
-                    onClick={() => handleHeaderClick('Last Name')}
-                >
-                    Last Name
-                    {sortField === 'Last Name' && (
-                        <Iconify
-                            icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
-                            className="ml-1.5"
-                        />
-                    )}
-                </button>
-            ),
+            onHeaderClick: () => handleHeaderClick('Last Name'),
         },
         {
             field: 'Email',
             headerName: 'Email',
             sortable: true,
             sortDirection: sortField === 'Email' ? sortDirection : undefined,
-            renderHeader: () => (
-                <button
-                    type="button"
-                    className="flex items-center hover:text-blue-700 "
-                    onClick={() => handleHeaderClick('Email')}
-                >
-                    Email
-                    {sortField === 'Email' && (
-                        <Iconify
-                            icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
-                            className="ml-1.5"
-                        />
-                    )}
-                </button>
-            ),
+            onHeaderClick: () => handleHeaderClick('Email'),
             renderCell: (row) => (
                 <span className="block overflow-hidden text-ellipsis whitespace-nowrap" title={row.Email}>
                     {row.Email}
@@ -305,23 +287,7 @@ const OpportunitiesCRMPage = memo(() => {
             headerName: 'Current Stage',
             sortable: true,
             sortDirection: sortField === 'Current Stage (linked)' ? sortDirection : undefined,
-            renderHeader: () => (
-                <button
-                    type="button"
-                    className="flex items-center hover:text-blue-700"
-                    onClick={() => handleHeaderClick('Current Stage (linked)')}
-                >
-                    Current Stage
-                    {sortField === 'Current Stage (linked)' && (
-                        <Iconify
-                            icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
-                            className="ml-1.5"
-                        />
-                    )}
-                </button>
-            ),
+            onHeaderClick: () => handleHeaderClick('Current Stage (linked)'),
             renderCell: (row) => (
                 <span className="border-1 border-black/50 text-gray-700 font-normal px-2 py-1 text-xs inline-block rounded-md overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]">
                     {statusLabels[row['Current Stage (linked)']] || row['Current Stage (linked)']}
@@ -331,49 +297,19 @@ const OpportunitiesCRMPage = memo(() => {
         {
             field: 'Deal Value',
             headerName: 'Deal Value',
+            width: 70,
             sortable: true,
             sortDirection: sortField === 'Deal Value' ? sortDirection : undefined,
-            renderHeader: () => (
-                <button
-                    type="button"
-                    className="flex items-center hover:text-blue-700"
-                    onClick={() => handleHeaderClick('Deal Value')}
-                >
-                    Deal Value
-                    {sortField === 'Deal Value' && (
-                        <Iconify
-                            icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
-                            className="ml-1.5"
-                        />
-                    )}
-                </button>
-            ),
+            onHeaderClick: () => handleHeaderClick('Deal Value'),
             renderCell: (row) => formatCurrency(row['Deal Value']) ?? "-",
         },
         {
             field: 'Close Probability',
             headerName: 'Close Probability',
+            width: 80,
             sortable: true,
             sortDirection: sortField === 'Close Probability' ? sortDirection : undefined,
-            renderHeader: () => (
-                <button
-                    type="button"
-                    className="  hover:text-blue-700 block overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]"
-                    onClick={() => handleHeaderClick('Close Probability')}
-                >
-                    Close Probability
-                    {sortField === 'Close Probability' && (
-                        <Iconify
-                            icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
-                            className="ml-1.5"
-                        />
-                    )}
-                </button>
-            ),
+            onHeaderClick: () => handleHeaderClick('Close Probability'),
             renderCell: (row) => row['Close Probability'] ? `${row['Close Probability'] * 100}%` : '-',
         },
         {
@@ -381,23 +317,7 @@ const OpportunitiesCRMPage = memo(() => {
             headerName: 'General Notes',
             sortable: true,
             sortDirection: sortField === 'General Notes' ? sortDirection : undefined,
-            renderHeader: () => (
-                <button
-                    type="button"
-                    className="flex items-center hover:text-blue-700"
-                    onClick={() => handleHeaderClick('General Notes')}
-                >
-                    General Notes
-                    {sortField === 'General Notes' && (
-                        <Iconify
-                            icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-                            width={12}
-                            height={12}
-                            className="ml-1.5"
-                        />
-                    )}
-                </button>
-            ),
+            onHeaderClick: () => handleHeaderClick('General Notes'),
             renderCell: (row) => (
                 <span className="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" title={row['General Notes']}>
                     {row['General Notes']}
@@ -460,7 +380,6 @@ const OpportunitiesCRMPage = memo(() => {
 
     // Memoize callbacks to prevent unnecessary rerenders
     const handleColumnsCreated = useCallback((columns: KanbanColumn[]) => {
-        console.log('Kanban columns created:', columns);
         kanbanColumnsRef.current = columns;
         // Check for duplicate IDs
         const ids = columns.map(col => col.id);
@@ -686,13 +605,34 @@ const OpportunitiesCRMPage = memo(() => {
         }
     };
 
+
+    // Add new callback for rendering loading skeleton rows
+    const renderLoadingSkeletonRows = useCallback(() => (
+        Array.from({ length: 15 }).map((_, rowIndex) => (
+            <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                {columnsConfig.map((column, cellIndex) => (
+                    <td
+                        key={cellIndex}
+                        className="py-3 px-2 border-b border-r border-gray-200"
+                        style={{
+                            width: `var(--col-${cellIndex}-width, ${column.width || 150}px)`,
+                            maxWidth: `var(--col-${cellIndex}-width, ${column.width || 150}px)`,
+                        }}
+                    >
+                        <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                ))}
+            </tr>
+        ))
+    ), [columnsConfig]);
+
     // Handle loading or error states for stages
     if (stagesLoading || explanationsLoading) return <div>Loading...</div>;
     if (stagesError) return <div>Error loading stages</div>;
 
     return (
-        <div className="w-full text-xs">
-            <div className="flex justify-between mb-2">
+        <div className="w-full h-full text-xs pb-0">
+            <div className="flex justify-between pb-0">
                 <div className="flex items-center">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -859,37 +799,58 @@ const OpportunitiesCRMPage = memo(() => {
             </div>
 
             {viewType === 'list' ? (
-                <DynamicTable<Partial<OpportunitiesRecord>>
-                    columns={columnsConfig}
-                    data={sortedData}
-                    isLoading={isLoading}
-                    isError={isError}
-                    error={error}
-                    onRowClick={handleRowClick}
-                    getRowId={(row) => row.id || `row-${Math.random().toString(36).substr(2, 9)}`}
-                    loadingMessage="Loading opportunities..."
-                    errorMessage="Error loading data"
-                    noDataMessage="No opportunities found."
-                />
+                <div className="h-[calc(100vh-120px)] flex flex-col">
+                    <div className="flex-grow overflow-auto">
+                        <DynamicTable<Partial<OpportunitiesRecord>>
+                            columns={columnsConfig}
+                            data={opportunities}
+                            isLoading={isLoading}
+                            isError={isError}
+                            error={error}
+                            onRowClick={handleRowClick}
+                            getRowId={(row) => row.id || `row-${Math.random().toString(36).substr(2, 9)}`}
+                            errorMessage="Error loading data"
+                            noDataMessage="No opportunities found."
+                            bottomComponent={
+                                <>
+                                    {hasMore ? <LoadMoreObserver onIntersect={loadMore} loading={isLoading} /> : null}
+                                    {hasMore || isLoading ? renderLoadingSkeletonRows() : null}
+                                    {!hasMore && !isLoading && opportunities.length > 0 && (
+                                        <tr className="text-center  text-gray-500 text-sm">
+                                            <td colSpan={columnsConfig.length} className="py-4">
+                                                All data loaded ({opportunities.length} records)
+                                            </td>
+                                        </tr>
+                                    )}
+                                </>
+                            }
+                        />
+                    </div>
+                </div>
             ) : (
-                <div className="w-full h-[calc(100vh-180px)] overflow-x-auto flex">
-                    <DynamicKanban
-                        items={mapItemsFromSortedData(sortedData)}
-                        config={{
-                            groupByField,
-                            maxColumns: 10,
-                            allowDrag: true,
-                            onColumnsCreated: handleColumnsCreated as (columns: KanbanColumn[]) => void,
-                            columnMap,
-                            onItemClick: handleKanbanItemClick,
-                            displayFields,
-                            renderColumnHeader,
-                            renderItem
-                        }}
-                        isLoading={isLoading}
-                        isError={isError}
-                        error={error}
-                    />
+                <div className="h-[calc(100vh-180px)] flex flex-col">
+                    <div className="flex-grow overflow-auto">
+                        <DynamicKanban
+                            items={mapItemsFromSortedData(opportunities)}
+                            config={{
+                                groupByField,
+                                maxColumns: 10,
+                                allowDrag: true,
+                                onColumnsCreated: handleColumnsCreated as (columns: KanbanColumn[]) => void,
+                                columnMap,
+                                onItemClick: handleKanbanItemClick,
+                                displayFields,
+                                renderColumnHeader,
+                                renderItem
+                            }}
+                            isLoading={isLoading}
+                            isError={isError}
+                            error={error}
+                        />
+                        {hasMore && (
+                            <LoadMoreObserver onIntersect={loadMore} loading={isLoading} />
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -960,7 +921,7 @@ const OpportunitiesCRMPage = memo(() => {
                 isLoading={activityLoading}
             />
             {SnackbarComponent}
-        </div >
+        </div>
     );
 });
 

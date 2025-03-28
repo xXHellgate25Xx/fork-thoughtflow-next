@@ -1,13 +1,13 @@
 import { createTableHooks } from './useAirtableTable';
 
 import type {
-    Activity_LogRecord,
-    EmployeesRecord,
-    LeadsRecord,
-    OpportunitiesRecord,
-    Pipeline_StagesRecord,
-    Stage_ExplanationRecord,
-    ThoughtFlow___ContentRecord
+  Activity_LogRecord,
+  EmployeesRecord,
+  LeadsRecord,
+  OpportunitiesRecord,
+  Pipeline_StagesRecord,
+  Stage_ExplanationRecord,
+  ThoughtFlow___ContentRecord
 } from '../types/airtableTypes';
 import type { TableQueryOptions } from './useAirtableTable';
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 
 
 import { Iconify } from '../../iconify';
@@ -23,6 +23,7 @@ export interface ColumnDef<T> {
     sortDirection?: 'asc' | 'desc';
     renderCell?: (row: T) => ReactNode;
     renderHeader?: () => ReactNode;
+    onHeaderClick?: () => void;
     align?: 'left' | 'right' | 'center';
 }
 
@@ -36,12 +37,12 @@ export interface DynamicTableProps<T> {
     onRowClick?: (row: T) => void;
     getRowId?: (row: T) => string | number;
     noDataMessage?: string;
-    loadingMessage?: string;
+    bottomComponent?: ReactNode;
     errorMessage?: string;
-    pageSize?: number;
     showRowActions?: boolean;
     onRowActionSelect?: (action: string, row: T) => void;
     rowActions?: string[];
+    onSort?: (field: string, direction: 'asc' | 'desc') => void;
 }
 
 export default function DynamicTable<T extends Record<string, any>>({
@@ -53,64 +54,34 @@ export default function DynamicTable<T extends Record<string, any>>({
     onRowClick,
     getRowId = (row) => row.id,
     noDataMessage = "No data found.",
-    loadingMessage = "Loading data...",
     errorMessage = "Error loading data",
-    pageSize = 20,
     showRowActions = false,
     onRowActionSelect,
-    rowActions = ['Edit', 'Delete']
+    rowActions = ['Edit', 'Delete'],
+    bottomComponent = null,
+    onSort
 }: DynamicTableProps<T>) {
-    const handleActionSelect = (action: string, row: T) => {
+
+    const handleActionSelect = useCallback((action: string, row: T) => {
         if (onRowActionSelect) {
             onRowActionSelect(action, row);
         }
-    };
+    }, [onRowActionSelect]);
 
-    // Render loading state
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center p-6 border border-gray-200 bg-white h-40">
-                <div className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span className="text-sm text-gray-500 font-medium">{loadingMessage}</span>
-                </div>
-            </div>
-        );
-    }
-
-    // Render error state
-    if (isError) {
-        return (
-            <div className="flex justify-center p-6 border border-red-200 bg-white">
-                <div className="flex items-center gap-2">
-                    <Iconify icon="lucide:alert-circle" width={20} className="text-red-500" />
-                    <span className="text-sm text-red-500 font-medium">
-                        {errorMessage}: {error?.toString()}
-                    </span>
-                </div>
-            </div>
-        );
-    }
-
-    // Render empty state
-    if (!data || data.length === 0) {
-        return (
-            <div className="flex justify-center p-6 border border-gray-200 bg-white">
-                <div className="flex items-center gap-2">
-                    <Iconify icon="lucide:info" width={20} className="text-blue-500" />
-                    <span className="text-sm text-gray-500 font-medium">
-                        {noDataMessage}
-                    </span>
-                </div>
-            </div>
-        );
-    }
+    // Helper function to get text alignment based on the column's align property
+    const getTextAlign = useCallback((align?: string) => {
+        switch (align) {
+            case 'right':
+                return 'text-right';
+            case 'center':
+                return 'text-center';
+            default:
+                return 'text-left';
+        }
+    }, []);
 
     // Helper function to render cell content with appropriate styling based on field value
-    const renderCellContent = (row: T, column: ColumnDef<T>) => {
+    const renderCellContent = useCallback((row: T, column: ColumnDef<T>) => {
         if (column.renderCell) {
             return column.renderCell(row);
         }
@@ -161,111 +132,141 @@ export default function DynamicTable<T extends Record<string, any>>({
 
         // Default value display
         return value;
-    };
+    }, []);
 
-    // Helper function to get text alignment based on the column's align property
-    const getTextAlign = (align?: string) => {
-        switch (align) {
-            case 'right':
-                return 'text-right';
-            case 'center':
-                return 'text-center';
-            default:
-                return 'text-left';
-        }
-    };
 
-    return (
-        <div className="border-none shadow-none">
-            <div className="w-full relative">
-                <div className="max-h-[80vh] overflow-y-auto overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead className="sticky top-0 z-10">
-                            <tr className="border-b border-gray-200">
-                                {columns.map((column, index) => (
-                                    <th
-                                        key={index}
-                                        className={`${getTextAlign(column.align)} bg-gray-100 text-xs font-bold text-gray-700 uppercase py-3 px-4 ${index !== 0 ? 'border-l border-gray-200' : ''} border-b border-gray-200`}
-                                        style={column.width ? { width: `${column.width}px` } : undefined}
-                                    >
-                                        {column.renderHeader ? (
-                                            column.renderHeader()
-                                        ) : (
-                                            <div className="flex items-center">
-                                                <span>{column.headerName}</span>
-                                                {column.sortable && (
-                                                    <Iconify
-                                                        icon={column.sortDirection === 'asc'
-                                                            ? 'lucide:arrow-up'
-                                                            : column.sortDirection === 'desc'
-                                                                ? 'lucide:arrow-down'
-                                                                : 'lucide:chevrons-up-down'}
-                                                        width={14}
-                                                        height={14}
-                                                        className="ml-1 opacity-70"
-                                                    />
-                                                )}
-                                            </div>
-                                        )}
-                                    </th>
-                                ))}
-                                {showRowActions && (
-                                    <th className="text-right bg-gray-100 text-[10px] font-medium text-gray-500 uppercase py-3 px-2 border-b border-gray-200 ">
-                                        Actions
-                                    </th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((row, rowIndex) => (
-                                <tr
-                                    key={getRowId(row) || rowIndex}
-                                    onClick={onRowClick ? () => onRowClick(row) : undefined}
-                                    className={`border-t border-gray-200 ${onRowClick ? 'cursor-pointer' : ''} ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors duration-150`}
-                                >
-                                    {columns.map((column, cellIndex) => (
-                                        <td
-                                            key={cellIndex}
-                                            className={`${getTextAlign(column.align)} py-3 px-2`}
-                                        >
-                                            {renderCellContent(row, column)}
-                                        </td>
-                                    ))}
-                                    {showRowActions && (
-                                        <td className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                                        <Iconify icon="lucide:more-horizontal" className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    {rowActions.map((action, i) => (
-                                                        <React.Fragment key={action}>
-                                                            <DropdownMenuItem onClick={() => handleActionSelect(action, row)}>
-                                                                <Iconify
-                                                                    icon={action.toLowerCase() === 'edit'
-                                                                        ? 'lucide:pencil'
-                                                                        : action.toLowerCase() === 'delete'
-                                                                            ? 'lucide:trash-2'
-                                                                            : 'lucide:more-horizontal'}
-                                                                    className="mr-2 h-4 w-4"
-                                                                />
-                                                                <span>{action}</span>
-                                                            </DropdownMenuItem>
-                                                            {i < rowActions.length - 1 && <DropdownMenuSeparator />}
-                                                        </React.Fragment>
-                                                    ))}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </td>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+    // Render error state
+    if (isError) {
+        return (
+            <div className="flex justify-center p-6 border border-red-200 bg-white">
+                <div className="flex items-center gap-2">
+                    <Iconify icon="lucide:alert-circle" width={20} className="text-red-500" />
+                    <span className="text-sm text-red-500 font-medium">
+                        {errorMessage}: {error?.toString()}
+                    </span>
                 </div>
             </div>
+        );
+    }
+
+    return (
+        <div className="w-full h-full border border-gray-200 rounded-md overflow-auto relative">
+            <table className="w-full border-collapse table-fixed">
+                <thead className="sticky top-0 z-10">
+                    <tr>
+                        {columns.map((column, index) => (
+                            <th
+                                key={index}
+                                className={`${getTextAlign(column.align)} bg-gray-100 text-xs font-bold text-gray-700 capitalize py-3 px-4 border-b border-r border-gray-200 truncate relative group hover:bg-gray-200 transition-colors duration-150 ${column.sortable ? 'cursor-pointer' : ''}`}
+                                style={{
+                                    width: `var(--col-${index}-width, ${column.width || 100}px)`,
+                                    maxWidth: `var(--col-${index}-width, ${column.width || 200}px)`,
+                                }}
+                                onClick={() => {
+                                    if (column.onHeaderClick) {
+                                        column.onHeaderClick();
+                                    }
+                                }}
+                            >
+                                {column.renderHeader ? (
+                                    column.renderHeader()
+                                ) : (
+                                    <div className="flex items-center overflow-hidden whitespace-nowrap">
+                                        <span className="truncate">{column.headerName}</span>
+                                        {column.sortable && column.sortDirection && (
+                                            <Iconify
+                                                icon={column.sortDirection === 'asc'
+                                                    ? 'lucide:arrow-up'
+                                                    : 'lucide:arrow-down'}
+                                                width={14}
+                                                height={14}
+                                                className="ml-1 text-blue-600 flex-shrink-0"
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </th>
+                        ))}
+                        {showRowActions && (
+                            <th className="text-right bg-gray-100 text-[10px] font-medium text-gray-500 uppercase py-3 px-2 border-b border-gray-200 w-[80px]">
+                                Actions
+                            </th>
+                        )}
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.map((row, rowIndex) => (
+                        <tr
+                            key={getRowId(row) || rowIndex}
+                            onClick={onRowClick ? () => onRowClick(row) : undefined}
+                            className={`${onRowClick ? 'cursor-pointer' : ''} ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors duration-150`}
+                        >
+                            {columns.map((column, cellIndex) => (
+                                <td
+                                    key={cellIndex}
+                                    className={`${getTextAlign(column.align)} py-3 px-2 border-b border-r border-gray-200 overflow-hidden`}
+                                    style={{
+                                        width: `var(--col-${cellIndex}-width, ${column.width || 150}px)`,
+                                        maxWidth: `var(--col-${cellIndex}-width, ${column.width || 150}px)`,
+                                    }}
+                                >
+                                    {renderCellContent(row, column)}
+                                </td>
+                            ))}
+                            {showRowActions && (
+                                <td className="text-right py-3 px-2 border-b border-gray-200 w-[80px]">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                                <Iconify icon="lucide:more-horizontal" className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            {rowActions.map((action, i) => (
+                                                <React.Fragment key={action}>
+                                                    <DropdownMenuItem onClick={() => handleActionSelect(action, row)}>
+                                                        <Iconify
+                                                            icon={action.toLowerCase() === 'edit'
+                                                                ? 'lucide:pencil'
+                                                                : action.toLowerCase() === 'delete'
+                                                                    ? 'lucide:trash-2'
+                                                                    : 'lucide:more-horizontal'}
+                                                            className="mr-2 h-4 w-4"
+                                                        />
+                                                        <span>{action}</span>
+                                                    </DropdownMenuItem>
+                                                    {i < rowActions.length - 1 && <DropdownMenuSeparator />}
+                                                </React.Fragment>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </td>
+                            )}
+                        </tr>
+                    ))}
+
+                    {data.length === 0 && !isLoading && (
+                        <tr>
+                            <td colSpan={columns.length + (showRowActions ? 1 : 0)} className="py-12">
+                                <div className="flex flex-col items-center justify-center text-center px-4">
+                                    <Iconify
+                                        icon="lucide:inbox"
+                                        width={48}
+                                        className="text-gray-400 mb-4"
+                                    />
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                        {noDataMessage}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 max-w-sm">
+                                        {`Try adjusting your filters or search criteria to find what you're looking for.`}
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    )}
+                    {bottomComponent}
+                </tbody>
+            </table>
         </div>
     );
 } 

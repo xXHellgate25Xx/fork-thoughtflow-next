@@ -20,7 +20,8 @@ export interface QueryOptions {
   filters?: FilterCondition[];
   sort?: SortCondition[];
   limit?: number;
-  offset?: number;
+  offset?: string;
+  view?: string;
 }
 
 // Base interface for Airtable records

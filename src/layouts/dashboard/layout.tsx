@@ -153,9 +153,7 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
       }}
     >
       <Main>
-        <DashboardContent>
-          {children}
-        </DashboardContent>
+        {children}
       </Main>
     </LayoutSection>
   );

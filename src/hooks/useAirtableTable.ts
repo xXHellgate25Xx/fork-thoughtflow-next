@@ -1,16 +1,18 @@
+import { useCallback, useEffect, useState } from 'react';
 import {
-  useQueryTableQuery,
-  useGetRecordByIdQuery,
   useCreateRecordMutation,
   useDeleteRecordMutation,
+  useGetRecordByIdQuery,
+  useQueryTableQuery,
   useUpdateRecordMutation
 } from '../libs/service/airtable/generalService';
 
 import type {
-  SortCondition,
   AirtableRecord,
-  FilterCondition
+  FilterCondition,
+  SortCondition
 } from '../types/airtableTypes';
+
 
 // Interface for table hook options
 export interface TableQueryOptions {
@@ -28,6 +30,9 @@ export interface TableQueryResult<T> {
   isError: boolean;
   error: any;
   refetch: () => void;
+  hasMore: boolean;
+  loadMore: () => Promise<void>;
+  resetRecords: () => void;
 }
 
 // Interface for single record hook results
@@ -80,27 +85,59 @@ export function createTableHooks<T>(tableId: string) {
    * @param options Query options including filters, sort, pagination
    * @returns Object containing records data and status
    */
-  const useTable = (options: TableQueryOptions = {}): TableQueryResult<T> => {
-    const { filters = [], sort = [], limit, offset, view } = options;
-    const queryOptions = {
+  const useTable = (opts: TableQueryOptions = {}): TableQueryResult<T> => {
+    const [options, setOptions] = useState<TableQueryOptions>(opts); 
+    const [offset, setOffset] = useState<string | undefined>(undefined);
+    const [allRecords, setAllRecords] = useState<Partial<T>[]>([]);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [needLoadMore, setNeedLoadMore] = useState(true);
+ 
+    const { data, isLoading, isError, error, refetch } = useQueryTableQuery({
       tableId,
-      filters,
-      sort,
-      limit,
-      offset,
-      view
-    };
-    
-    const { data, isLoading, isError, error, refetch } = useQueryTableQuery(queryOptions);
-    
-    const records = (data || []).map(convertToTypedRecord);
+      ...options,
+      offset: offset || undefined
+    }, {
+      skip: !tableId
+    });
+
+    // Handle initial data load
+    useEffect(() => { 
+      if (needLoadMore && data) {
+        setAllRecords(prevRecords => [...prevRecords, ...data.records.map(convertToTypedRecord)]);
+        setHasMore(!!data.offset);
+        setOffset(data.offset);
+        setNeedLoadMore(false);
+        setIsLoadingMore(false);
+      }
+    }, [data, offset, needLoadMore]);
+
+    const resetRecords = useCallback(() => {
+      console.log('resetRecords',options);
+      setAllRecords([]);
+      setOffset(undefined);
+      refetch();
+      setHasMore(true);
+      setNeedLoadMore(true);
+    }, [refetch, options]);
+
+    // Function to load more records
+    const loadMore = useCallback(async () => {
+      if (!hasMore || isLoadingMore) return;
+      
+      setIsLoadingMore(true);
+      setNeedLoadMore(true);
+    }, [hasMore, isLoadingMore, offset, refetch]);
     
     return {
-      records,
-      isLoading,
+      records: allRecords || [],
+      isLoading: isLoading || isLoadingMore,
       isError,
       error,
       refetch,
+      hasMore,
+      loadMore, 
+      resetRecords
     };
   };
 

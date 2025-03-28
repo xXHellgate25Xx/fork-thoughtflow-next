@@ -103,9 +103,9 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         }}
         {...other}
       >
-        <Avatar 
-          src={profile?.photo_url} 
-          alt={profile?.custom_display_name} 
+        <Avatar
+          src={profile?.photo_url}
+          alt={profile?.custom_display_name}
           sx={{ width: 1, height: 1 }}
         >
           {profile?.custom_display_name}
@@ -172,7 +172,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <Box sx={{ p: 1 }}>
-          <Button  onClick={handleLogout} fullWidth color="error" size="medium" variant="text">
+          <Button onClick={handleLogout} fullWidth color="error" size="medium" variant="text">
             Logout
           </Button>
         </Box>
