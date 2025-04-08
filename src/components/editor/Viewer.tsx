@@ -1,9 +1,8 @@
 import {
-  fromDraft,
   RicosViewer,
   pluginHeadings,
-  pluginLinkViewer,
   pluginImageViewer,
+  pluginLinkViewer,
   pluginTextColorViewer,
   pluginTextHighlightViewer,
 } from '@wix/ricos';
@@ -11,19 +10,20 @@ import {
 function Viewer({ content }: { content: any }) {
   return (
     <RicosViewer
-        content={fromDraft(content)}
+        content={content}
         // content={draftcon}
         plugins={[
           pluginImageViewer({disableExpand: true, disableTransition: true, imageProps(src) {
             // console.log(src)
             return new Image()
-          },}),
-          pluginTextColorViewer(),
-          pluginTextHighlightViewer(),
-          pluginHeadings(),
-          pluginLinkViewer(),
-        ]}
-      />
+          },
+        }),
+        pluginTextColorViewer(),
+        pluginTextHighlightViewer(),
+        pluginHeadings(),
+        pluginLinkViewer(),
+      ]}
+    />
   );
 }
 

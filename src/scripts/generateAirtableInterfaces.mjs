@@ -211,6 +211,7 @@ export interface FilterCondition {
   field: string;
   operator: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains' | 'notContains';
   value: any;
+  isArray?: boolean;
 }
 
 // Base interface for sort conditions
@@ -225,7 +226,8 @@ export interface QueryOptions {
   filters?: FilterCondition[];
   sort?: SortCondition[];
   limit?: number;
-  offset?: number;
+  offset?: string;
+  view?: string;
 }
 
 // Base interface for Airtable records

@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useCreateRecordMutation,
   useDeleteRecordMutation,
   useGetRecordByIdQuery,
-  useQueryTableQuery,
   useUpdateRecordMutation
 } from '../libs/service/airtable/generalService';
+import { useAirtableInfinite } from './useAirtableInfinite';
 
 import type {
   AirtableRecord,
@@ -32,7 +31,7 @@ export interface TableQueryResult<T> {
   refetch: () => void;
   hasMore: boolean;
   loadMore: () => Promise<void>;
-  resetRecords: (opts: TableQueryOptions) => void;
+  resetRecords: ( ) => void;
 }
 
 // Interface for single record hook results
@@ -85,72 +84,7 @@ export function createTableHooks<T>(tableId: string) {
    * @param options Query options including filters, sort, pagination
    * @returns Object containing records data and status
    */
-  const useTable = (opts: TableQueryOptions = {}): TableQueryResult<T> => {
-    const [options, setOptions] = useState<TableQueryOptions>(opts); 
-    const [allRecords, setAllRecords] = useState<Partial<T>[]>([]);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-    const [needLoadMore, setNeedLoadMore] = useState(true);
- 
-    const queryParams= useMemo(() => {
-      console.log('queryParams', tableId,options);
-      return {
-      tableId,
-        ...options,
-      }
-    }, [needLoadMore]);
-    const result = useQueryTableQuery(queryParams, {
-      skip: !tableId
-    });
-    const { data, isLoading, isError, error, refetch } = result
-    useEffect(() => {
-      console.log('opts in useTable',opts);
-    }, [opts]);
-    useEffect(() => {
-      console.log('resutl in useTable', tableId,result);
-    }, [result]);
-
-    // Handle initial data load
-    useEffect(() => { 
-      if (needLoadMore && data) {
-        if (data.offset !== options.offset) {
-          setAllRecords(prevRecords => [...prevRecords, ...data.records.map(convertToTypedRecord)]);
-          setHasMore(!!data.offset);
-          setOptions({...options, offset: data.offset});
-          setNeedLoadMore(false);
-          setIsLoadingMore(false);
-        }
-      }
-    }, [data, needLoadMore]);
-
-    const resetRecords = useCallback((resetOptions: TableQueryOptions) => {
-      console.log('resetRecords',resetOptions); 
-      setAllRecords([]);
-      setOptions(resetOptions);
-      // refetch();
-      setHasMore(true);
-      setNeedLoadMore(true);
-    }, [options]);
-
-    // Function to load more records
-    const loadMore = useCallback(async () => {
-      if (!hasMore || isLoadingMore) return;
-      
-      setIsLoadingMore(true);
-      setNeedLoadMore(true);
-    }, [hasMore, isLoadingMore,  refetch]);
-    
-    return {
-      records: allRecords || [],
-      isLoading: isLoading || isLoadingMore,
-      isError,
-      error,
-      refetch,
-      hasMore,
-      loadMore, 
-      resetRecords
-    };
-  };
+  const useTable = (opts: TableQueryOptions = {}): TableQueryResult<T> =>useAirtableInfinite<T>(tableId, opts);
 
   /**
    * Hook to fetch a single record by ID

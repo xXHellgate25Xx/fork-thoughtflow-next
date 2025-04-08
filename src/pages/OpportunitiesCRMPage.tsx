@@ -1,17 +1,16 @@
-import type { OpportunitiesRecord, Stage_ExplanationRecord } from 'src/types/airtableTypes';
-import type { KanbanColumn, KanbanRecord } from 'src/types/kanbanTypes';
-
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
 import { Button as MuiButton } from '@mui/material';
-
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FieldDef } from 'src/components/CRM/Modals/types';
 import { DynamicKanban } from 'src/components/ui/kanban/DynamicKanban';
 import { useCreateActivityLog, useEmployees, useOpportunities, usePipelineStages, useStageExplanations, useUpdateOpportunity } from 'src/hooks/tablehooks';
 import { useSnackbar } from 'src/hooks/use-snackbar';
-
-import { FieldDef } from 'src/components/CRM/Modals/types';
+import { TableQueryOptions } from 'src/hooks/useAirtableTable';
+import type { OpportunitiesRecord, Stage_ExplanationRecord } from 'src/types/airtableTypes';
+import type { KanbanColumn, KanbanRecord } from 'src/types/kanbanTypes';
+import { ActivityLogRecord } from 'src/types/supabase';
 import ActivityLogModal from '../components/CRM/Modals/ActivityLogModal';
 import EditDrawer from '../components/CRM/Modals/EditDrawer';
+import FilterModal, { FilterField, FilterValue } from '../components/CRM/Modals/FilterModal';
 import ViewDrawer from '../components/CRM/Modals/ViewDrawer';
 import OpportunityDetails from '../components/CRM/Opportunities/OpportunityDetails';
 import type { ColumnDef } from '../components/CRM/Views/DynamicTable';
@@ -23,12 +22,19 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../components/ui/select';
 import { opportunityFields, sourceChannelOptions } from '../config/opportunityFormFields';
 
 type ViewType = 'list' | 'kanban';
 
 // Add this component before the OpportunitiesCRMPage
-const LoadMoreObserver = ({ onIntersect, loading }: { onIntersect: () => void, loading: boolean }) => {
+const LoadMoreObserver = ({ onIntersect, loading, columns }: { onIntersect: () => void, loading: boolean, columns: ColumnDef<any>[] }) => {
     const observerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -55,24 +61,32 @@ const LoadMoreObserver = ({ onIntersect, loading }: { onIntersect: () => void, l
     }, [onIntersect, loading]);
 
     return (
-        <div ref={observerRef} className="h-0 w-full" />
+        <tr>
+            <td colSpan={columns.length}>
+                <div ref={observerRef} className="h-0 w-full" />
+            </td>
+        </tr>
     );
 };
 
 const OpportunitiesCRMPage = memo(() => {
     const { showSnackbar, SnackbarComponent } = useSnackbar();
-    const { records: stages, isLoading: stagesLoading, isError: stagesError } = usePipelineStages();
-    const { records: stageExplanations, isLoading: explanationsLoading } = useStageExplanations();
-    const { records: employees, isLoading: employeesLoading } = useEmployees();
+    const { records: stages, isError: stagesError } = usePipelineStages();
+    const { records: stageExplanations } = useStageExplanations();
+    const { records: employees } = useEmployees();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
     const [activityModalOpen, setActivityModalOpen] = useState(false);
-    const [sortField, setSortField] = useState<string>('Prospect ID');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [options, setOptions] = useState<TableQueryOptions>({
+        sort: [{ field: "Prospect ID", direction: "asc" }],
+        limit: 10000,
+        filters: []
+    });
     const [viewType, setViewType] = useState<ViewType>('list');
     const [selectedOpportunity, setSelectedOpportunity] = useState<Partial<OpportunitiesRecord> | null>(null);
     const [groupByField, setGroupByField] = useState<string>('Stage ID');
     const kanbanColumnsRef = useRef<any[]>([]);
+    const { field: sortField, direction: sortDirection } = options.sort?.[0] || {};
     const { mutate: createActivityLogMutation, isLoading: activityLoading } = useCreateActivityLog();
     const {
         records: opportunities,
@@ -83,15 +97,193 @@ const OpportunitiesCRMPage = memo(() => {
         hasMore,
         loadMore,
         resetRecords
-    } = useOpportunities({
-        sort: [{
-            field: sortField,
-            direction: sortDirection
-        }],
-        limit: 10000
-    });
+    } = useOpportunities(options);
 
     const { mutate: updateOpportunityMutation, isLoading: updateOpportunityLoading } = useUpdateOpportunity();
+    const tableContainerRef = useRef<HTMLDivElement>(null);
+    const [filterModalOpen, setFilterModalOpen] = useState(false);
+
+    // Define filter fields based on master data
+    const filterFields: FilterField[] = useMemo(() => [
+        {
+            field: 'Current Stage',
+            label: 'Current Stage',
+            type: 'select',
+            options: stages?.map(stage => ({
+                value: stage['Stage ID'] || '',
+                label: stage['Stage ID'] || ''
+            })) || []
+        },
+        {
+            field: 'Salesperson',
+            label: 'Salesperson',
+            type: 'select',
+            options: employees?.map(employee => ({
+                value: employee.Name || '',
+                label: employee.Name || ''
+            })) || []
+        },
+        {
+            field: 'Source Channel (from Leads)',
+            label: 'Source Channel',
+            type: 'select',
+            options: sourceChannelOptions.map(option => ({
+                value: option.value,
+                label: option.label
+            }))
+        },
+        {
+            field: 'Close Probability',
+            label: 'Close Probability',
+            type: 'number'
+        },
+        {
+            field: 'Deal Value',
+            label: 'Deal Value',
+            type: 'number'
+        }
+    ], [stages, employees]);
+
+    // Handle toolbar filter changes
+    const handleToolbarFilterChange = useCallback((field: string, value: string) => {
+        if (!options.filters) return;
+        const newFilters = options.filters.filter(f => f.field !== field);
+        if (value) {
+            if (value === 'unassigned') {
+                newFilters.push({
+                    field,
+                    operator: 'eq',
+                    value: ''
+                });
+            } else {
+                newFilters.push({
+                    field,
+                    operator: 'eq',
+                    value: field === 'Current Stage'
+                        ? stages?.find(s => s.id === value)?.['Stage ID'] || value
+                        : field === 'Salesperson'
+                            ? employees?.find(e => e.id === value)?.Name || value
+                            : value
+                });
+            }
+        }
+        setOptions(prev => ({
+            ...prev,
+            filters: newFilters
+        }));
+        resetRecords();
+    }, [options.filters, stages, employees, resetRecords]);
+
+    // Handle filter changes from FilterModal
+    const handleFilterModalApply = useCallback((filters: FilterValue[]) => {
+        // Convert FilterValue[] to Airtable filter conditions
+        const airtableFilters = filters.map(filter => {
+            switch (filter.operator) {
+                case 'eq':
+                    return {
+                        field: filter.field,
+                        operator: 'eq' as const,
+                        value: filter.value
+                    };
+                case 'contains':
+                    return {
+                        field: filter.field,
+                        operator: 'contains' as const,
+                        value: filter.value
+                    };
+                case 'gt':
+                    return {
+                        field: filter.field,
+                        operator: 'gt' as const,
+                        value: filter.field === 'Close Probability' ? Number(filter.value) / 100 : Number(filter.value)
+                    };
+                case 'lt':
+                    return {
+                        field: filter.field,
+                        operator: 'lt' as const,
+                        value: filter.field === 'Close Probability' ? Number(filter.value) / 100 : Number(filter.value)
+                    };
+                case 'gte':
+                    return {
+                        field: filter.field,
+                        operator: 'gte' as const,
+                        value: filter.field === 'Close Probability' ? Number(filter.value) / 100 : Number(filter.value)
+                    };
+                case 'lte':
+                    return {
+                        field: filter.field,
+                        operator: 'lte' as const,
+                        value: filter.field === 'Close Probability' ? Number(filter.value) / 100 : Number(filter.value)
+                    };
+                default:
+                    return null;
+            }
+        }).filter((filter): filter is NonNullable<typeof filter> => filter !== null);
+
+        setOptions(prev => ({
+            ...prev,
+            filters: airtableFilters
+        }));
+        resetRecords();
+    }, [stages, employees, resetRecords]);
+
+    // Convert Airtable filters to FilterValue[] for FilterModal
+    const currentFilterValues = useMemo(() => {
+        if (!options.filters) return [];
+        const filters = options.filters.map(filter => {
+            // Only include operators that are supported by FilterValue
+            if (!['eq', 'contains', 'gt', 'lt', 'gte', 'lte'].includes(filter.operator)) {
+                return null;
+            }
+            return {
+                field: filter.field,
+                value: filter.value,
+                operator: filter.operator as FilterValue['operator']
+            } as FilterValue;
+        }).filter((filter): filter is FilterValue => filter !== null);
+        return filters;
+    }, [options.filters]);
+
+    // Get current stage filter value
+    const currentStageFilter = useMemo(() => {
+        if (!options.filters) return null;
+        return options.filters.find(f => f.field === 'Current Stage');
+    }, [options.filters]);
+
+    // Get current salesperson filter value
+    const currentSalespersonFilter = useMemo(() => {
+        if (!options.filters) return null;
+        return options.filters.find(f => f.field === 'Salesperson');
+    }, [options.filters]);
+
+    // Remove the client-side filtering logic
+    const filteredOpportunities = opportunities;
+
+    // Update the filter button click handler
+    const handleFilterClick = useCallback(() => {
+        setFilterModalOpen(true);
+    }, []);
+
+    // Modify view type handler
+    const handleViewTypeChange = useCallback((type: ViewType) => {
+        setViewType(type);
+    }, []);
+
+    // Modify group by handler
+    const handleGroupByChange = useCallback((field: string) => {
+        setGroupByField(field);
+    }, []);
+
+    // Handler for sorting
+    const handleHeaderClick = useCallback((field: string) => {
+        const newDirection = sortField === field
+            ? (sortDirection === 'asc' ? 'desc' : 'asc')
+            : 'asc';
+
+        // Update sort parameters
+        setOptions({ ...options, sort: [{ field, direction: newDirection }] });
+    }, [sortField, sortDirection, options]);
+
     // Map stages to statusLabels
     const statusLabels = stages.reduce((acc, stage) => {
         if (stage.id && stage["Stage ID"]) {
@@ -201,15 +393,14 @@ const OpportunitiesCRMPage = memo(() => {
                 }
                 return acc;
             }, {} as Partial<OpportunitiesRecord>);
-            console.log(changedFields);
             // Only proceed if there are changes
             if (Object.keys(changedFields).length > 0) {
 
-                if (changedFields['Salesperson (linked)']) {
-                    changedFields['Salesperson (linked)'] = [changedFields['Salesperson (linked)']];
+                if (changedFields.Salesperson) {
+                    changedFields.Salesperson = [changedFields.Salesperson];
                 }
-                if (changedFields['Current Stage (linked)']) {
-                    changedFields['Current Stage (linked)'] = [changedFields['Current Stage (linked)']];
+                if (changedFields['Current Stage']) {
+                    changedFields['Current Stage'] = [changedFields['Current Stage']];
                 }
 
                 // Update the opportunity using the mutation with only changed fields
@@ -230,42 +421,27 @@ const OpportunitiesCRMPage = memo(() => {
         }
     }, [updateOpportunityMutation, refetch, showSnackbar]);
 
-    // Handle column header click for sorting
-    const handleHeaderClick = useCallback((field: string) => {
-        const newDirection = sortField === field
-            ? (sortDirection === 'asc' ? 'desc' : 'asc')
-            : 'asc';
-
-        // Update sort parameters
-        setSortField(field);
-        setSortDirection(newDirection);
-
-        // Reset and refetch with new sort parameters
-        resetRecords({
-            sort: [{
-                field,
-                direction: newDirection
-            }],
-            limit: 10000
-        });
-        // resetRecords();
-        refetch();
-    }, [sortField, sortDirection, resetRecords, refetch]);
-
     // Define table columns
     const columnsConfig: ColumnDef<any>[] = [
         {
             field: 'Prospect ID',
             headerName: 'Prospect ID',
-            width: 70,
+            width: 100,
+            minWidth: 100,
             sortable: true,
             onHeaderClick: () => handleHeaderClick('Prospect ID'),
             sortDirection: sortField === 'Prospect ID' ? sortDirection : undefined,
+            renderCell: (row) => (
+                <span className="block overflow-hidden text-ellipsis whitespace-nowrap" title={row['Prospect ID']}>
+                    {row['Prospect ID']}
+                </span>
+            ),
         },
         {
             field: 'Last Name',
             headerName: 'Last Name',
-            width: 70,
+            width: 120,
+            minWidth: 120,
             sortable: true,
             sortDirection: sortField === 'Last Name' ? sortDirection : undefined,
             onHeaderClick: () => handleHeaderClick('Last Name'),
@@ -273,6 +449,8 @@ const OpportunitiesCRMPage = memo(() => {
         {
             field: 'Email',
             headerName: 'Email',
+            width: 200,
+            minWidth: 200,
             sortable: true,
             sortDirection: sortField === 'Email' ? sortDirection : undefined,
             onHeaderClick: () => handleHeaderClick('Email'),
@@ -283,21 +461,39 @@ const OpportunitiesCRMPage = memo(() => {
             ),
         },
         {
-            field: 'Current Stage (linked)',
+            field: 'Current Stage',
             headerName: 'Current Stage',
+            width: 150,
+            minWidth: 150,
             sortable: true,
-            sortDirection: sortField === 'Current Stage (linked)' ? sortDirection : undefined,
-            onHeaderClick: () => handleHeaderClick('Current Stage (linked)'),
+            sortDirection: sortField === 'Current Stage' ? sortDirection : undefined,
+            onHeaderClick: () => handleHeaderClick('Current Stage'),
             renderCell: (row) => (
-                <span className="border-1 border-black/50 text-gray-700 font-normal px-2 py-1 text-xs inline-block rounded-md overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]">
-                    {statusLabels[row['Current Stage (linked)']] || row['Current Stage (linked)']}
-                </span>
+                <div className="py-1">
+                    <span className="border-1 border-black/50 text-gray-700 font-normal px-2.5 py-1 text-xs inline-block rounded-md overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]">
+                        {statusLabels[row['Current Stage']] || row['Current Stage']}
+                    </span>
+                </div>
             ),
+        },
+        {
+            field: 'Salesperson',
+            headerName: 'Salesperson',
+            width: 150,
+            minWidth: 150,
+            sortable: true,
+            sortDirection: sortField === 'Salesperson' ? sortDirection : undefined,
+            onHeaderClick: () => handleHeaderClick('Salesperson'),
+            renderCell: (row) => {
+                const salespersonId = row.Salesperson?.[0];
+                return salespersonId ? employeeMap[salespersonId] || '-' : '-';
+            },
         },
         {
             field: 'Deal Value',
             headerName: 'Deal Value',
-            width: 70,
+            width: 120,
+            minWidth: 120,
             sortable: true,
             sortDirection: sortField === 'Deal Value' ? sortDirection : undefined,
             onHeaderClick: () => handleHeaderClick('Deal Value'),
@@ -306,7 +502,8 @@ const OpportunitiesCRMPage = memo(() => {
         {
             field: 'Close Probability',
             headerName: 'Close Probability',
-            width: 80,
+            width: 120,
+            minWidth: 120,
             sortable: true,
             sortDirection: sortField === 'Close Probability' ? sortDirection : undefined,
             onHeaderClick: () => handleHeaderClick('Close Probability'),
@@ -315,6 +512,8 @@ const OpportunitiesCRMPage = memo(() => {
         {
             field: 'General Notes',
             headerName: 'General Notes',
+            width: 200,
+            minWidth: 200,
             sortable: true,
             sortDirection: sortField === 'General Notes' ? sortDirection : undefined,
             onHeaderClick: () => handleHeaderClick('General Notes'),
@@ -324,38 +523,11 @@ const OpportunitiesCRMPage = memo(() => {
                 </span>
             ),
         },
-        // {
-        //     field: 'Salesperson (linked)',
-        //     headerName: 'Salesperson',
-        //     sortable: true,
-        //     sortDirection: sortField === 'Salesperson (linked)' ? sortDirection : undefined,
-        //     renderHeader: () => (
-        //         <button
-        //             type="button"
-        //             className="flex items-center hover:text-blue-700"
-        //             onClick={() => handleHeaderClick('Salesperson (linked)')}
-        //         >
-        //             Salesperson
-        //             {sortField === 'Salesperson (linked)' && (
-        //                 <Iconify
-        //                     icon={sortDirection === 'asc' ? "mdi:arrow-up" : "mdi:arrow-down"}
-        //                     width={12}
-        //                     height={12}
-        //                     className="ml-1.5"
-        //                 />
-        //             )}
-        //         </button>
-        //     ),
-        //     renderCell: (row) => {
-        //         const salespersonId = row['Salesperson (linked)']?.[0];
-        //         return salespersonId ? employeeMap[salespersonId] || '-' : '-';
-        //     },
-        // },
     ];
 
     // Define form fields for the drawer
     const formFields: FieldDef<OpportunitiesRecord>[] = opportunityFields.map(field => {
-        if (field.name === 'Current Stage (linked)') {
+        if (field.name === 'Current Stage') {
             return {
                 ...field,
                 options: Object.entries(statusLabels).map(([value, label]) => ({
@@ -365,7 +537,7 @@ const OpportunitiesCRMPage = memo(() => {
                 disabled: true
             };
         }
-        if (field.name === 'Salesperson (linked)') {
+        if (field.name === 'Salesperson') {
 
             return {
                 ...field,
@@ -378,8 +550,25 @@ const OpportunitiesCRMPage = memo(() => {
         return field;
     });
 
-    // Memoize callbacks to prevent unnecessary rerenders
-    const handleColumnsCreated = useCallback((columns: KanbanColumn[]) => {
+    // Memoize the item mapping function for sorted data
+    const mapItemsFromSortedData = useMemo(() => (data: any[]) => data.map(item => ({
+        id: item['Prospect ID'],
+        title: item['Last Name'],
+        status: item[groupByField as keyof typeof item],
+        dealValue: item['Deal Value'],
+        closeProbability: item['Close Probability'],
+        email: item.Email,
+        company: item.Company,
+        jobTitle: item['Job Title'],
+        phone: item.Phone,
+        generalNotes: item['General Notes'],
+        salesperson: item.Salesperson?.[0],
+        [groupByField]: item[groupByField as keyof typeof item],
+        ...item
+    })), [groupByField]);
+
+    // Memoize the handleColumnsCreated callback
+    const handleColumnsCreated = useMemo(() => (columns: KanbanColumn[]) => {
         kanbanColumnsRef.current = columns;
         // Check for duplicate IDs
         const ids = columns.map(col => col.id);
@@ -405,7 +594,7 @@ const OpportunitiesCRMPage = memo(() => {
                     return acc;
                 }, {} as Record<string, { id: string; title: string }>);
         }
-        if (groupByField === 'Source Channel') {
+        if (groupByField === 'Source Channel (from Leads)') {
             return {
                 'Facebook': { id: 'source_facebook', title: 'Facebook' },
                 'Instagram': { id: 'source_instagram', title: 'Instagram' },
@@ -429,7 +618,7 @@ const OpportunitiesCRMPage = memo(() => {
                 '100': { id: 'prob_100', title: '100%' },
             };
         }
-        if (groupByField === 'Salesperson (linked)') {
+        if (groupByField === 'Salesperson') {
             return employees?.reduce((acc, employee) => {
                 if (employee.id && employee.Name) {
                     acc[employee.id] = {
@@ -467,101 +656,84 @@ const OpportunitiesCRMPage = memo(() => {
         }
     ], [employeeMap]);
 
-    // Memoize the item mapping function for sorted data
-    const mapItemsFromSortedData = useCallback((data: any[]) => data.map(item => ({
-        id: item['Prospect ID'],
-        title: item['Last Name'],
-        status: item[groupByField as keyof typeof item],
-        dealValue: item['Deal Value'],
-        closeProbability: item['Close Probability'],
-        email: item.Email,
-        company: item.Company,
-        jobTitle: item['Job Title'],
-        phone: item.Phone,
-        generalNotes: item['General Notes'],
-        salesperson: item['Salesperson (linked)']?.[0],
-        [groupByField]: item[groupByField as keyof typeof item],
-        ...item
-    })), [groupByField]);
-
     // Memoize the renderColumnHeader function
-    const renderColumnHeader = useCallback((column: any) => (
+    const renderColumnHeader = useMemo(() => ({ title, records }: { title: string; records?: any[] }) => (
         <div className="sticky top-0 z-10 p-3 font-medium border-b border-black/40 flex items-center">
-            <span className="text-gray-800 text-lg">{column.title}</span>
+            <span className="text-gray-800 text-lg">{title}</span>
             <span className="ml-2 text-xs text-gray-500 font-normal">
-                {column.records?.length || 0}
+                {records?.length || 0}
             </span>
         </div>
     ), []);
 
-    // Memoize the renderItem function
-    const renderItem = useCallback((item: any) => (
+    // Memoize the mapped items for Kanban
+    const mappedItems = useMemo(() => {
+        if (!filteredOpportunities) return [];
+        return mapItemsFromSortedData(filteredOpportunities);
+    }, [filteredOpportunities, mapItemsFromSortedData]);
+
+    // Memoize the renderItem function with proper dependencies
+    const renderItem = useMemo(() => ({ title, id, status, dealValue, closeProbability, generalNotes, salesperson }: KanbanRecord) => (
         <div className="bg-white border-1 rounded-lg p-3 mb-2 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
             <div className="mb-1.5 border-b border-black/40 pb-1.5 font-medium text-sm">
-                {item.title}
+                {title}
             </div>
 
             <div className="grid grid-cols-1 gap-2 text-xs ">
                 <div className="flex items-center justify-between">
                     <div className="text-gray-500 font-medium mb-0.5">Prospect ID</div>
-                    <div className="text-black ">Pros - {item.id}</div>
+                    <div className="text-black ">Pros - {id}</div>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="text-gray-500 mb-0.5">{
-                        groupByField === 'Current Stage (linked)'
+                        groupByField === 'Current Stage'
                             ? 'Current Stage'
                             : groupByField
                     }</div>
                     <div className="text-gray-700 flex items-center">
                         {
-                            groupByField === 'Current Stage (linked)'
-                                ? statusLabels[String(item[groupByField])] || item[groupByField]
-                                : item[groupByField]
+                            groupByField === 'Current Stage'
+                                ? statusLabels[String(status)] || status
+                                : status
                         }
                     </div>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="text-gray-500 mb-0.5">Close Probability</div>
-                    <div className="text-gray-700">{item.closeProbability ? `${item.closeProbability}%` : '30%'}</div>
+                    <div className="text-gray-700">{closeProbability ? `${closeProbability}%` : '30%'}</div>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="text-gray-500 mb-0.5">Deal Value</div>
-                    <div className="text-gray-700">{formatCurrency(item.dealValue)}</div>
+                    <div className="text-gray-700">{formatCurrency(dealValue)}</div>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="text-gray-500 mb-0.5">Salesperson</div>
-                    <div className="text-gray-700">{item.salesperson ? employeeMap[item.salesperson] || '-' : '-'}</div>
+                    <div className="text-gray-700">{salesperson ? employeeMap[salesperson] || '-' : '-'}</div>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="text-gray-500 mb-0.5">Last Name</div>
-                    <div className="text-gray-700">{item.title}</div>
+                    <div className="text-gray-700">{title}</div>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="text-gray-500 mb-0.5">General Notes</div>
-                    <div className="text-gray-700">{item.generalNotes}</div>
+                    <div className="text-gray-700">{generalNotes}</div>
                 </div>
             </div>
         </div>
-    ), [groupByField, employeeMap]);
+    ), [employeeMap, statusLabels, formatCurrency]);
 
     const handleCloseActivityModal = () => {
         setActivityModalOpen(false);
     };
 
-    const handleOpenActivityModal = () => {
-        if (!selectedOpportunity) return;
 
-        // Just open the modal - the component will handle its own state
-        setActivityModalOpen(true);
-    };
-
-    const handleActivitySubmit = async (formValues: Record<string, any>) => {
+    const handleActivitySubmit = async (formValues: Partial<ActivityLogRecord>) => {
         try {
             // Format dates to yyyy/mm/dd
             const formatDate = (dateStr: string) => {
@@ -571,13 +743,14 @@ const OpportunitiesCRMPage = memo(() => {
             };
 
             // Filter out empty values and prepare the activity log data
-            const activityLogData: Record<string, any> = {
+            const activityLogData: Partial<ActivityLogRecord> = {
                 Prospect: [formValues.prospectId],
                 'Log Date': formatDate(formValues.logDate),
                 'Current Stage': [formValues.currentStage],
                 'New Stage': [formValues.newStage],
                 'Close Probability from Salesperson': formValues.closeProbability,
-                'Explanation': [formValues.explanation]
+                'Explanation': [formValues.explanation],
+                'Assigned To': formValues.assignedTo ? [formValues.assignedTo] : []
             };
 
             // Only add optional fields if they have values
@@ -588,20 +761,23 @@ const OpportunitiesCRMPage = memo(() => {
                 activityLogData.Note = formValues.note;
             }
 
-            await createActivityLogMutation(activityLogData).then(async () => {
-                // Update opportunity's current stage
-                await updateOpportunityMutation(formValues.prospectId, {
-                    'Current Stage (linked)': [formValues.newStage]
-                }).then(() => {
-                    showSnackbar('Activity created, Opportunity updated successfully', 'success', true);
-                });
-            }).catch(() => {
-                showSnackbar('Failed to create activity log', 'error');
-            }).finally(() => {
-                handleCloseActivityModal();
-            });
+            // Close modal immediately to prevent UI flashing
+            handleCloseActivityModal();
+            await Promise.all([
+                // Create activity log first
+                createActivityLogMutation(activityLogData),
+
+                // Then update opportunity's current stage and assigned to
+                updateOpportunityMutation(formValues.prospectId, {
+                    'Current Stage': [formValues.newStage],
+                    'Salesperson': formValues.assignedTo ? [formValues.assignedTo] : []
+                })]);
+
+            // Show success message
+            showSnackbar('Activity created, Opportunity updated successfully', 'success', true);
         } catch (err) {
             console.error('Failed to create activity log:', err);
+            showSnackbar('Failed to create activity log', 'error');
         }
     };
 
@@ -627,8 +803,10 @@ const OpportunitiesCRMPage = memo(() => {
     ), [columnsConfig]);
 
     // Handle loading or error states for stages
-    if (stagesLoading || explanationsLoading) return <div>Loading...</div>;
     if (stagesError) return <div>Error loading stages</div>;
+
+    // Only show loading state for initial load, not during mutations
+    if (!stages || !stageExplanations || !employees) return <div>Loading...</div>;
 
     return (
         <div className="w-full h-full text-xs pb-0">
@@ -648,7 +826,7 @@ const OpportunitiesCRMPage = memo(() => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent sideOffset={5} align="start" className="w-40 bg-white border border-gray-200 shadow-md p-0">
                             <DropdownMenuItem
-                                onClick={() => setViewType('list')}
+                                onClick={() => handleViewTypeChange('list')}
                                 className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${viewType === 'list' ? "bg-blue-100" : ""}`}
                             >
                                 <div className="flex items-center w-full">
@@ -662,7 +840,7 @@ const OpportunitiesCRMPage = memo(() => {
                                 </div>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                onClick={() => setViewType('kanban')}
+                                onClick={() => handleViewTypeChange('kanban')}
                                 className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${viewType === 'kanban' ? "bg-blue-100" : ""}`}
                             >
                                 <div className="flex items-center w-full">
@@ -678,11 +856,62 @@ const OpportunitiesCRMPage = memo(() => {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
+                    {/* Add toolbar filters */}
+                    <div className="flex items-center gap-2 ml-2 pb-1">
+                        <Select
+                            value={currentStageFilter?.value === '' ? 'unassigned' : (currentStageFilter?.value ? String(stages?.find(s => s['Stage ID'] === currentStageFilter.value)?.id) : 'all')}
+                            onValueChange={(value) => handleToolbarFilterChange('Current Stage', value === 'all' ? '' : value)}
+                        >
+                            <SelectTrigger className="w-[150px] h-8 text-xs focus:ring-0">
+                                <SelectValue placeholder="All Stages">
+                                    {currentStageFilter?.value === ''
+                                        ? "Unassigned"
+                                        : currentStageFilter?.value
+                                            ? stages?.find(s => s['Stage ID'] === currentStageFilter.value)?.['Stage ID']
+                                            : "All Stages"}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Stages</SelectItem>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                {stages?.map((stage) => (
+                                    <SelectItem key={stage.id} value={stage.id || ''}>
+                                        {stage['Stage ID']}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select
+                            value={currentSalespersonFilter?.value === '' ? 'unassigned' : (currentSalespersonFilter?.value ? String(employees?.find(e => e.Name === currentSalespersonFilter.value)?.id) : 'all')}
+                            onValueChange={(value) => handleToolbarFilterChange('Salesperson', value === 'all' ? '' : value)}
+                        >
+                            <SelectTrigger className="w-[150px] h-8 text-xs focus:ring-0">
+                                <SelectValue placeholder="All Salespersons">
+                                    {currentSalespersonFilter?.value === ''
+                                        ? "Unassigned"
+                                        : currentSalespersonFilter?.value
+                                            ? employees?.find(e => e.Name === currentSalespersonFilter.value)?.Name
+                                            : "All Salesperson"}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Salespersons</SelectItem>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                {employees?.map((employee) => (
+                                    <SelectItem key={employee.id} value={employee.id || ''}>
+                                        {employee.Name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     {viewType === 'kanban' && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <MuiButton className="cursor-pointer ml-1 flex items-center text-xs px-2 py-0.5">
-                                    <span>Group By: {groupByField === 'Current Stage (linked)' ? 'Current Stage' : groupByField}</span>
+                                    <span>Group By: {groupByField === 'Current Stage' ? 'Current Stage' : groupByField}</span>
                                     <Iconify
                                         icon="mdi:chevron-down"
                                         width={14}
@@ -693,23 +922,23 @@ const OpportunitiesCRMPage = memo(() => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent sideOffset={5} align="start" className="w-56 bg-white border border-gray-200 shadow-md p-0">
                                 <DropdownMenuItem
-                                    onClick={() => setGroupByField('Current Stage (linked)')}
-                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Current Stage (linked)' ? "bg-blue-100" : ""}`}
+                                    onClick={() => handleGroupByChange('Current Stage')}
+                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Current Stage' ? "bg-blue-100" : ""}`}
                                 >
                                     <div className="flex items-center w-full">
-                                        <span className={groupByField === 'Current Stage (linked)' ? "font-medium text-blue-700" : ""}>Current Stage</span>
+                                        <span className={groupByField === 'Current Stage' ? "font-medium text-blue-700" : ""}>Current Stage</span>
                                     </div>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onClick={() => setGroupByField('Source Channel')}
-                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Source Channel' ? "bg-blue-100" : ""}`}
+                                    onClick={() => handleGroupByChange('Source Channel (from Leads)')}
+                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Source Channel (from Leads)' ? "bg-blue-100" : ""}`}
                                 >
                                     <div className="flex items-center w-full">
-                                        <span className={groupByField === 'Source Channel' ? "font-medium text-blue-700" : ""}>Source Channel</span>
+                                        <span className={groupByField === 'Source Channel (from Leads)' ? "font-medium text-blue-700" : ""}>Source Channel</span>
                                     </div>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onClick={() => setGroupByField('Close Probability')}
+                                    onClick={() => handleGroupByChange('Close Probability')}
                                     className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Close Probability' ? "bg-blue-100" : ""}`}
                                 >
                                     <div className="flex items-center w-full">
@@ -717,11 +946,11 @@ const OpportunitiesCRMPage = memo(() => {
                                     </div>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onClick={() => setGroupByField('Salesperson (linked)')}
-                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Salesperson (linked)' ? "bg-blue-100" : ""}`}
+                                    onClick={() => handleGroupByChange('Salesperson')}
+                                    className={`cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50 ${groupByField === 'Salesperson' ? "bg-blue-100" : ""}`}
                                 >
                                     <div className="flex items-center w-full">
-                                        <span className={groupByField === 'Salesperson (linked)' ? "font-medium text-blue-700" : ""}>Salesperson</span>
+                                        <span className={groupByField === 'Salesperson' ? "font-medium text-blue-700" : ""}>Salesperson</span>
                                     </div>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -735,16 +964,6 @@ const OpportunitiesCRMPage = memo(() => {
                         onClick={handleAddOpportunity}
                     >
                         Add opportunity
-                    </MuiButton>
-
-                    {viewType !== 'kanban' && (
-                        <MuiButton className="mr-1 text-xs px-2 py-0.5">
-                            Group
-                        </MuiButton>
-                    )}
-
-                    <MuiButton className="mr-1 cursor-pointer text-xs px-2 py-0.5">
-                        Filter
                     </MuiButton>
 
                     <DropdownMenu>
@@ -792,18 +1011,47 @@ const OpportunitiesCRMPage = memo(() => {
                         <Iconify icon="mdi:magnify" width={16} height={16} />
                     </button>
 
-                    <button type="button" className="p-1 rounded-full hover:bg-gray-100">
-                        <Iconify icon="mdi:dots-horizontal" width={16} height={16} />
-                    </button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button type="button" className="p-1 rounded-full hover:bg-gray-100">
+                                <Iconify icon="mdi:dots-horizontal" width={16} height={16} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent sideOffset={5} align="end" className="w-48 bg-white border border-gray-200 shadow-md p-0">
+                            <DropdownMenuItem
+                                onClick={handleFilterClick}
+                                className="cursor-pointer py-1.5 px-2 text-xs hover:bg-gray-50"
+                            >
+                                <div className="flex items-center w-full">
+                                    <Iconify
+                                        icon="mdi:filter-variant"
+                                        width={14}
+                                        height={14}
+                                        className="mr-2"
+                                    />
+                                    <span>Advanced Filters</span>
+                                </div>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
+            {/* Add FilterModal component */}
+            <FilterModal
+                open={filterModalOpen}
+                onClose={() => setFilterModalOpen(false)}
+                onApply={handleFilterModalApply}
+                fields={filterFields}
+                currentFilters={currentFilterValues}
+            />
+
             {viewType === 'list' ? (
                 <div className="h-[calc(100vh-120px)] flex flex-col">
-                    <div className="flex-grow overflow-auto">
+                    <div className="flex-grow overflow-auto" ref={tableContainerRef}>
                         <DynamicTable<Partial<OpportunitiesRecord>>
                             columns={columnsConfig}
-                            data={opportunities}
+                            data={filteredOpportunities}
                             isLoading={isLoading}
                             isError={isError}
                             error={error}
@@ -813,12 +1061,12 @@ const OpportunitiesCRMPage = memo(() => {
                             noDataMessage="No opportunities found."
                             bottomComponent={
                                 <>
-                                    {hasMore ? <LoadMoreObserver onIntersect={loadMore} loading={isLoading} /> : null}
+                                    {hasMore ? <LoadMoreObserver onIntersect={loadMore} loading={isLoading} columns={columnsConfig} /> : null}
                                     {hasMore || isLoading ? renderLoadingSkeletonRows() : null}
-                                    {!hasMore && !isLoading && opportunities.length > 0 && (
+                                    {!hasMore && !isLoading && filteredOpportunities.length > 0 && (
                                         <tr className="text-center  text-gray-500 text-sm">
-                                            <td colSpan={columnsConfig.length} className="py-4">
-                                                All data loaded ({opportunities.length} records)
+                                            <td className="py-4" colSpan={columnsConfig.length}>
+                                                All data loaded ({filteredOpportunities.length} records)
                                             </td>
                                         </tr>
                                     )}
@@ -831,7 +1079,7 @@ const OpportunitiesCRMPage = memo(() => {
                 <div className="h-[calc(100vh-180px)] flex flex-col">
                     <div className="flex-grow overflow-auto">
                         <DynamicKanban
-                            items={mapItemsFromSortedData(opportunities)}
+                            items={mappedItems}
                             config={{
                                 groupByField,
                                 maxColumns: 10,
@@ -848,7 +1096,7 @@ const OpportunitiesCRMPage = memo(() => {
                             error={error}
                         />
                         {hasMore && (
-                            <LoadMoreObserver onIntersect={loadMore} loading={isLoading} />
+                            <LoadMoreObserver onIntersect={loadMore} loading={isLoading} columns={columnsConfig} />
                         )}
                     </div>
                 </div>
@@ -919,6 +1167,7 @@ const OpportunitiesCRMPage = memo(() => {
                 stageExplanationLabels={groupedStageExplanationLabels}
                 onSubmit={handleActivitySubmit}
                 isLoading={activityLoading}
+                employees={employees || []}
             />
             {SnackbarComponent}
         </div>

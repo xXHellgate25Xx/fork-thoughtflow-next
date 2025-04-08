@@ -10,9 +10,10 @@ interface ActivityListProps {
     prospectId: string;
     statusLabels: Record<string, string>;
     explanationLabels: Record<string, Record<string, string>>;
+    employeeMap: Record<string, string>;
 }
 
-export default function ActivityList({ statusLabels, explanationLabels, prospectId }: ActivityListProps) {
+export default function ActivityList({ statusLabels, explanationLabels, prospectId, employeeMap }: ActivityListProps) {
     const { records: activities, isLoading, isError, refetch } = useActivityLogs({
         filters: [{
             field: 'Prospect',
@@ -30,7 +31,7 @@ export default function ActivityList({ statusLabels, explanationLabels, prospect
         if (prospectId) {
             refetch();
         }
-    }, [prospectId, refetch]);
+    }, [prospectId]); // Only depend on prospectId, not refetch
 
     // Format date to a readable format
     const formatDate = (dateString: string) => {
@@ -68,7 +69,7 @@ export default function ActivityList({ statusLabels, explanationLabels, prospect
     if (!activities?.length) {
         return (
             <Box className="bg-gray-100/40 border border-gray-200 p-6 rounded-lg max-w ">
-                <h2 className="text-gray-700 font-medium text-sm mb-4">ACTIVITIES (0)</h2>
+                <h2 className="text-gray-700 font-medium text-sm mt-0 mb-4">RECENT ACTIVITIES (0)</h2>
                 <div className="text-center p-6 rounded border border-dashed border-gray-300 bg-gray-50">
                     <div className="mb-2 text-gray-400">
                         <Iconify
@@ -86,69 +87,73 @@ export default function ActivityList({ statusLabels, explanationLabels, prospect
     }
 
     return (
-        <Box className="bg-gray-100/40 border border-gray-200 p-6 rounded-lg max-w-full">
-            <h2 className="text-gray-700 font-medium text-sm mb-4">
-                ACTIVITIES ({activities.length})
+        <Box className="bg-gray-100/10 border border-gray-200 p-6 rounded-lg max-w-full">
+            <h2 className="text-gray-700 uppercase font-medium text-sm mt-0 mb-4">
+                Recent Activities ({activities.length})
             </h2>
 
             <div className="space-y-4 overflow-y-auto">
                 {activities.map((activity, index) => {
                     const isLast = index === activities.length - 1;
+                    const assignedTo = activity['Assigned To']?.[0];
                     const currentStage = activity['Current Stage']?.[0];
                     const newStage = activity['New Stage']?.[0];
-                    const explanationId = activity.Explanation?.[0];
-
-                    // Get the explanation text for the current stage
-                    const explanationText = newStage && explanationId
-                        ? explanationLabels[newStage]?.[explanationId] || '-'
-                        : '-';
 
                     return (
                         <div
                             key={activity.id}
                             className={`${!isLast ? 'border-b border-gray-300 pb-4' : ''}`}
                         >
-                            <div className="flex items-center gap-2">
-                                {currentStage && (
-                                    <Chip
-                                        label={statusLabels[currentStage]}
-                                        size="small"
-                                        color="default"
-                                    />
-                                )}
-                                {currentStage && newStage && (
-                                    <Iconify
-                                        icon="mdi:arrow-right"
-                                        width={20}
-                                        height={20}
-                                        className="text-gray-400"
-                                    />
-                                )}
-                                {newStage && (
-                                    <Chip
-                                        label={statusLabels[newStage]}
-                                        size="small"
-                                        color="primary"
-                                    />
-                                )}
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    {currentStage && (
+                                        <Chip
+                                            label={statusLabels[currentStage]}
+                                            size="small"
+                                            color="default"
+                                        />
+                                    )}
+                                    {currentStage && newStage && (
+                                        <Iconify
+                                            icon="mdi:arrow-right"
+                                            width={20}
+                                            height={20}
+                                            className="text-gray-400"
+                                        />
+                                    )}
+                                    {newStage && (
+                                        <Chip
+                                            label={statusLabels[newStage]}
+                                            size="small"
+                                            color="primary"
+                                        />
+                                    )}
+                                </div>
+                                <div className="flex justify-between items-baseline">
+                                    <span className="text-gray-500 text-sm">Log Date:</span>
+                                    <span className="text-sm">
+                                        {activity['Log Date'] ? formatDate(activity['Log Date']) : '-'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-baseline">
+                                    <span className="text-gray-500 text-sm">Assigned To:</span>
+                                    <span className="text-sm">
+                                        {assignedTo ? employeeMap[assignedTo] || '-' : '-'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-baseline">
+                                    <span className="text-gray-500 text-sm">Next Contact Date:</span>
+                                    <span className="text-sm">
+                                        {activity['Next Contact Date'] ? formatDate(activity['Next Contact Date']) : '-'}
+                                    </span>
+                                </div>
+                                <div className="mt-2">
+                                    <div className="text-gray-500 text-sm mb-1">Notes:</div>
+                                    <div className="text-sm pl-0">
+                                        {activity.Note}
+                                    </div>
+                                </div>
                             </div>
-                            <p className="mt-1 text-sm">
-                                <span className="text-gray-500 text-sm">Next Contact Date:</span> {
-                                    activity['Next Contact Date'] ? (
-                                        formatDate(activity['Next Contact Date'])
-                                    ) : (
-                                        '-'
-                                    )
-                                }
-                            </p>
-                            {explanationId && (
-                                <p className="mt-1 text-sm">
-                                    <span className="text-gray-500 text-sm">Explanation:</span> {explanationText}
-                                </p>
-                            )}
-                            <p className="mt-1 text-sm">
-                                <span className="text-gray-500 text-sm">Note:</span> {activity.Note ? activity.Note : '-'}
-                            </p>
                         </div>
                     );
                 })}

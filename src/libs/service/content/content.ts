@@ -1,4 +1,4 @@
-import type { RichContent } from 'ricos-schema';
+import type { RichContent } from '@wix/ricos';
 
 import { createApi } from "@reduxjs/toolkit/query/react";
 

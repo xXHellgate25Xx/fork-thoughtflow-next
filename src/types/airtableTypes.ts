@@ -6,6 +6,7 @@ export interface FilterCondition {
   field: string;
   operator: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains' | 'notContains';
   value: any;
+  isArray?: boolean;
 }
 
 // Base interface for sort conditions
@@ -20,8 +21,8 @@ export interface QueryOptions {
   filters?: FilterCondition[];
   sort?: SortCondition[];
   limit?: number;
-  offset?: string;
-  view?: string;
+  offset?: string;  // Airtable uses string-based pagination
+  view?: string;    // Airtable view ID
 }
 
 // Base interface for Airtable records
@@ -73,13 +74,25 @@ export interface EmployeesRecord {
   'Pipeline Log': any;
   'Pipeline Log 2': any;
   'Opportunities': any;
-  'Opportunities 2': any;
+  'Opportunities 2': string;
   'Opportunities 3': any;
   createdTime: string;
   lastModifiedTime: string;
 }
 
-export interface LeadsRecord {
+export interface ContactsRecord {
+  id: string;
+  'Name': string;
+  'First Name': string;
+  'Last Name': string;
+  'Email': string;
+  'Phone': any;
+  'Job Title': string;
+  createdTime: string;
+  lastModifiedTime: string;
+}
+
+export interface Chat_Bot_LeadsRecord {
   id: string;
   'Email': string;
   'Opportunities': any;
@@ -102,36 +115,22 @@ export interface LeadsRecord {
   lastModifiedTime: string;
 }
 
-export interface ContactsRecord {
-  id: string;
-  'Name': string;
-  'First Name': string;
-  'Last Name': string;
-  'Email': string;
-  'Phone': any;
-  'Job Title': string;
-  createdTime: string;
-  lastModifiedTime: string;
-}
-
 export interface OpportunitiesRecord {
   id: string;
   'Prospect ID': any;
   'First Name': string;
   'Last Name': string;
   'Email': string;
-  'Company': string;
   'Job Title': string;
   'Phone': string;
-  'Source Channel': string;
   'Spouse': number;
   '# of Children': number;
   'Additional Dependents': number;
   'Deal Value': number;
   'Close Probability': number;
-  'Current Stage (linked)': any;
+  'Current Stage': any;
   'FB Excluded': string;
-  'Salesperson (linked)': any;
+  'Salesperson': any;
   'Retention Expiration Date': string;
   'Communication Consent': string;
   'Consent Granted Date': string;
@@ -141,29 +140,20 @@ export interface OpportunitiesRecord {
   'City': string;
   'Province': string;
   'Country': string;
-  'Created By (linked)': any;
   'Created Date': string;
-  'Initial Stage': string;
-  'Initial Stage (linked)': any;
   'Last Updated By (linked)': any;
   'General Notes': string;
   'Activity Log': any;
-  'Campaign': string;
-  'Highest education': string;
-  'Networth': string;
-  'Networth Amount': number;
-  'Family Income': string;
-  'EB3 Cost Awareness': string;
-  'FBUserID': number;
-  'FB Form Name': string;
-  'Audience': any;
-  'Meta Leads': any;
-  'Audience (from Meta Leads)': any;
-  'FB Form Name (from Meta Leads)': any;
+  'Leads': any;
+  'Audience (from Leads)': any;
+  'FB Form Name (from Leads)': any;
   'Campaign (from Meta Leads)': any;
-  'Prospect Auto Number': number;
-  'ContactID': number;
   'Last Modified': string;
+  'Family Income (from Leads)': any;
+  'Networth (from Leads)': any;
+  'Highest Education (from Leads)': any;
+  'Prospect Auto Number': number;
+  'Source Channel (from Leads)': any;
   createdTime: string;
   lastModifiedTime: string;
 }
@@ -198,7 +188,7 @@ export interface Pipeline_StagesRecord {
   'Notes': string;
   'Next Steps': string;
   'Opportunities': any;
-  'Opportunities 2': any;
+  'Opportunities 2': string;
   'Activity Log': any;
   'Activity Log 2': any;
   'Stage Explanation': any;
@@ -270,4 +260,28 @@ export interface ThoughtFlow___IdeasRecord {
   lastModifiedTime: string;
 }
 
-export type AirtableTableName = 'Employees' | 'Leads' | 'Contacts' | 'Opportunities' | 'Activity_Log' | 'Pipeline_Stages' | 'Stage_Explanation' | '_Sales__Lead_Information_Chatbot' | 'ThoughtFlow___Content' | 'ThoughtFlow___Prompts' | 'ThoughtFlow___Ideas';
+export interface ArchiveRecord {
+  id: string;
+  'First Name': string;
+  'Last Name': string;
+  'Email': string;
+  'Phone': string;
+  'Job Title': string;
+  'Deal Value': number;
+  'Close Probability': number;
+  'Salesperson': string;
+  'Current Stage': string;
+  'Spouse': number;
+  '# of Children': number;
+  'Additional Dependents': number;
+  'Audience (from Leads)': string;
+  'FB Form Name (from Leads)': string;
+  'Campaign (from Meta Leads)': string;
+  'Family Income (from Leads)': string;
+  'Networth (from Leads)': string;
+  'Source Channel (from Leads)': string;
+  createdTime: string;
+  lastModifiedTime: string;
+}
+
+export type AirtableTableName = 'Employees' | 'Contacts' | 'Chat_Bot_Leads' | 'Opportunities' | 'Activity_Log' | 'Pipeline_Stages' | 'Stage_Explanation' | '_Sales__Lead_Information_Chatbot' | 'ThoughtFlow___Content' | 'ThoughtFlow___Prompts' | 'ThoughtFlow___Ideas' | 'Archive';

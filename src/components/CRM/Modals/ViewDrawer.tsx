@@ -385,7 +385,6 @@ export default function ViewDrawer<T extends FormRecord>({
                     sx={{
                         display: customContent && !customActions ? 'none' : 'flex',
                         justifyContent: 'flex-end',
-                        pt: 2,
                         mt: 3,
                         borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`
                     }}

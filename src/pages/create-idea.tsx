@@ -3,7 +3,8 @@ import type { IdeaFormat } from 'src/interfaces/idea-interfaces';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
-import { fromPlainText } from 'ricos-content/libs/fromPlainText';
+
+import { fromPlainText } from '@wix/ricos';
 
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
@@ -182,7 +183,7 @@ export default function Page() {
           title: generationData?.title,
           excerpt: generationData?.excerpt || '',
           status: 'draft',
-          content_type: 'Blog Post',
+          content_type: 'Blog Post', // To be refactored
           seo_meta_description: generationData?.seo_meta_description || null,
           seo_slug: generationData?.seo_slug || null,
           seo_title_tag: generationData?.title || null,

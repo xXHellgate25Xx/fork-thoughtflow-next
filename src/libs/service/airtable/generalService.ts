@@ -22,23 +22,29 @@ export const generalService = createApi({
         const params: Record<string, string> = {};        
         // Apply filters if they exist
         if (filters && filters.length > 0) {
-          // Convert filters to formula format
-          const filterFormula = filters.map(filter => {
-            const { field, operator, value } = filter;
+          const filterConditions = filters.map(({ field, operator, value, isArray }) => {
+            const fieldName = field.replace(/\s+/g, ' ');
             switch (operator) {
-              case 'eq': return `{${field}} = '${value}'`;
-              case 'neq': return `{${field}} != '${value}'`;
-              case 'lt': return `{${field}} < ${value}`;
-              case 'lte': return `{${field}} <= ${value}`;
-              case 'gt': return `{${field}} > ${value}`;
-              case 'gte': return `{${field}} >= ${value}`;
-              case 'contains': return `FIND('${value}', {${field}})`;
-              case 'notContains': return `NOT(FIND('${value}', {${field}}))`;
-              default: return value;
+              case 'eq':
+                if (isArray) {
+                  return `FIND('${value}', ARRAYJOIN({${fieldName}}, ','))`;
+                }
+                return `{${fieldName}}='${value}'`;
+              case 'contains':
+                return `FIND('${value}', {${fieldName}})`;
+              case 'gt':
+                return `{${fieldName}}>${value}`;
+              case 'lt':
+                return `{${fieldName}}<${value}`;
+              case 'gte':
+                return `{${fieldName}}>=${value}`;
+              case 'lte':
+                return `{${fieldName}}<=${value}`;
+              default:
+                return '';
             }
-          }).join(', ');
-          
-          params.filterByFormula = `AND(${filterFormula})`;
+          }).filter(Boolean);
+          params.filterByFormula = `AND(${filterConditions.join(',')})`;
         }
         
         // Apply sorting if it exists
@@ -141,6 +147,7 @@ export const generalService = createApi({
 // Export hooks for usage in functional components
 export const {
   useQueryTableQuery,
+  useLazyQueryTableQuery,
   useGetRecordByIdQuery,
   useCreateRecordMutation,
   useUpdateRecordMutation,

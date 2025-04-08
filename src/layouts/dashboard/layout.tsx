@@ -1,10 +1,10 @@
-import type { Theme, SxProps, Breakpoint } from '@mui/material/styles';
+import type { Breakpoint, SxProps, Theme } from '@mui/material/styles';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 
 import { useRouter } from 'src/routes/hooks';
@@ -14,13 +14,13 @@ import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 import { Iconify } from 'src/components/iconify';
 
 import { layoutClasses } from '../classes';
-import { NavMobile, NavDesktop } from './nav';
-import { Main, DashboardContent } from './main';
-import { navData } from '../config-nav-dashboard';
+import { AccountPopover } from '../components/account-popover';
 import { MenuButton } from '../components/menu-button';
+import { navData } from '../config-nav-dashboard';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
-import { AccountPopover } from '../components/account-popover';
+import { Main } from './main';
+import { NavDesktop, NavMobile } from './nav';
 
 // ----------------------------------------------------------------------
 

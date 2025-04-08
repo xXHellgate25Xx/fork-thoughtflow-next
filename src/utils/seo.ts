@@ -1,6 +1,6 @@
-import type { Node, TextData, LinkData, Decoration, RichContent} from "ricos-schema";
-
-import { Node_Type, Decoration_Type } from "ricos-schema";
+import type { Node, TextData, Decoration, RichContent} from "@wix/ricos";
+import type { LinkData } from "ricos-schema"
+import { Node_Type, Decoration_Type } from "@wix/ricos";
 
 export const handleSeoSlugChange = (
   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,

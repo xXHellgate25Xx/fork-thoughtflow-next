@@ -19,6 +19,7 @@ export interface ColumnDef<T> {
     field: string;
     headerName: string;
     width?: number;
+    minWidth?: number;
     sortable?: boolean;
     sortDirection?: 'asc' | 'desc';
     renderCell?: (row: T) => ReactNode;
@@ -161,6 +162,7 @@ export default function DynamicTable<T extends Record<string, any>>({
                                 style={{
                                     width: `var(--col-${index}-width, ${column.width || 100}px)`,
                                     maxWidth: `var(--col-${index}-width, ${column.width || 200}px)`,
+                                    padding: `var(--col-${index}-padding, 10px 8px)`,
                                 }}
                                 onClick={() => {
                                     if (column.onHeaderClick) {
@@ -171,7 +173,7 @@ export default function DynamicTable<T extends Record<string, any>>({
                                 {column.renderHeader ? (
                                     column.renderHeader()
                                 ) : (
-                                    <div className="flex items-center overflow-hidden whitespace-nowrap">
+                                    <div className="flex items-center overflow-hidden whitespace-nowrap border-r border-gray-200">
                                         <span className="truncate">{column.headerName}</span>
                                         {column.sortable && column.sortDirection && (
                                             <Iconify
@@ -204,7 +206,7 @@ export default function DynamicTable<T extends Record<string, any>>({
                             {columns.map((column, cellIndex) => (
                                 <td
                                     key={cellIndex}
-                                    className={`${getTextAlign(column.align)} py-3 px-2 border-b border-r border-gray-200 overflow-hidden`}
+                                    className={`${getTextAlign(column.align)} py-2 px-2 border-b border-r border-gray-200 overflow-hidden`}
                                     style={{
                                         width: `var(--col-${cellIndex}-width, ${column.width || 150}px)`,
                                         maxWidth: `var(--col-${cellIndex}-width, ${column.width || 150}px)`,
@@ -245,7 +247,7 @@ export default function DynamicTable<T extends Record<string, any>>({
                         </tr>
                     ))}
 
-                    {data.length === 0 && !isLoading && (
+                    {data.length === 0 && !isLoading && !isError && (
                         <tr>
                             <td colSpan={columns.length + (showRowActions ? 1 : 0)} className="py-12">
                                 <div className="flex flex-col items-center justify-center text-center px-4">

@@ -56,6 +56,9 @@
   overflow: hidden;
 }
 
+.editor-container [data-hook="footer-toolbar"] {
+  display: none !important;
+}
 /* Improve scrolling behavior for the editor content */
 .editor-container [data-hook="ricos-tiptap-editor"]::-webkit-scrollbar,
 .editor-container .tiptap.ProseMirror::-webkit-scrollbar {
@@ -81,5 +84,10 @@
 
 /* Hide the plus button */
 .editor-container button[data-hook="addPluginFloatingToolbar"]  {
+  display: none !important;
+} 
+
+/* Hide the camera button */
+.editor-container button[data-hook="insert-image-button disabled"]  {
   display: none !important;
 } 

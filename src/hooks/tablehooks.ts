@@ -2,8 +2,8 @@ import { createTableHooks } from './useAirtableTable';
 
 import type {
   Activity_LogRecord,
+  Chat_Bot_LeadsRecord,
   EmployeesRecord,
-  LeadsRecord,
   OpportunitiesRecord,
   Pipeline_StagesRecord,
   Stage_ExplanationRecord,
@@ -21,15 +21,15 @@ export const {
   useDeleteRecord: useDeleteOpportunity
 } = OpportunityHooks;
 
-// Create hooks for Meta Leads table
-export const MetaLeadsHooks = createTableHooks<LeadsRecord>('Meta_Leads');
+// Create hooks for Chat Bot Leads table
+export const ChatBotLeadsHooks = createTableHooks<Chat_Bot_LeadsRecord>('Chat_Bot_Leads');
 export const {
-  useTable: useMetaLeads,
-  useRecordById: useMetaLeadById,
-  useCreateRecord: useCreateMetaLead,
-  useUpdateRecord: useUpdateMetaLead,
-  useDeleteRecord: useDeleteMetaLead
-} = MetaLeadsHooks;
+  useTable: useChatBotLeads,
+  useRecordById: useChatBotLeadById,
+  useCreateRecord: useCreateChatBotLead,
+  useUpdateRecord: useUpdateChatBotLead,
+  useDeleteRecord: useDeleteChatBotLead
+} = ChatBotLeadsHooks;
 
 // Create hooks for ThoughtFlow Content table
 export const ContentHooks = createTableHooks<ThoughtFlow___ContentRecord>('ThoughtFlow___Content');

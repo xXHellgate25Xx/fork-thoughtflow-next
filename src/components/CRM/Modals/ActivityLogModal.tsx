@@ -1,6 +1,7 @@
 import { Box, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Button as MuiButton, Select, TextField } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-import type { OpportunitiesRecord } from 'src/types/airtableTypes';
+import type { EmployeesRecord, OpportunitiesRecord } from 'src/types/airtableTypes';
+import { ActivityLogRecord } from 'src/types/supabase';
 
 interface ActivityLogModalProps {
     open: boolean;
@@ -8,8 +9,9 @@ interface ActivityLogModalProps {
     selectedOpportunity: Partial<OpportunitiesRecord> | null;
     statusLabels: Record<string, string>;
     stageExplanationLabels: Record<string, Record<string, string>>;
-    onSubmit: (formValues: Record<string, any>) => Promise<void>;
+    onSubmit: (formValues: Partial<ActivityLogRecord>) => Promise<void>;
     isLoading: boolean;
+    employees: Partial<EmployeesRecord>[];
 }
 
 const ActivityLogModal = ({
@@ -19,18 +21,20 @@ const ActivityLogModal = ({
     statusLabels,
     stageExplanationLabels,
     onSubmit,
-    isLoading
+    isLoading,
+    employees
 }: ActivityLogModalProps) => {
     // Local state for the form values
-    const [localFormValues, setLocalFormValues] = useState<Record<string, any>>(() => ({
+    const [localFormValues, setLocalFormValues] = useState<Partial<ActivityLogRecord>>(() => ({
         prospectId: selectedOpportunity?.id || '',
         logDate: new Date().toISOString().split('T')[0],
-        currentStage: selectedOpportunity?.['Current Stage (linked)']?.[0] || '',
+        currentStage: selectedOpportunity?.['Current Stage']?.[0] || '',
         newStage: '',
         nextContactDate: '',
         closeProbability: selectedOpportunity?.['Close Probability'] || '',
         note: '',
         explanation: '',
+        assignedTo: selectedOpportunity?.Salesperson?.[0] || '',
     }));
 
     // Reset form values when modal opens with different opportunity
@@ -39,12 +43,13 @@ const ActivityLogModal = ({
             setLocalFormValues({
                 prospectId: selectedOpportunity?.id || '',
                 logDate: new Date().toISOString().split('T')[0],
-                currentStage: selectedOpportunity?.['Current Stage (linked)']?.[0] || '',
+                currentStage: selectedOpportunity?.['Current Stage']?.[0] || '',
                 newStage: '',
                 nextContactDate: '',
                 closeProbability: selectedOpportunity?.['Close Probability'] || '',
                 note: '',
                 explanation: '',
+                assignedTo: selectedOpportunity?.Salesperson?.[0] || '',
             });
             // Clear any previous errors
             setErrors({});
@@ -76,6 +81,9 @@ const ActivityLogModal = ({
         }
         if (!localFormValues.closeProbability) {
             newErrors.closeProbability = 'Close Probability is required';
+        }
+        if (!localFormValues.assignedTo) {
+            newErrors.assignedTo = 'Assigned To is required';
         }
         // Require explanation for all stages
         if (!localFormValues.explanation) {
@@ -134,19 +142,8 @@ const ActivityLogModal = ({
                     }}
                 >
                     <TextField
-                        label="Log Date"
-                        type="date"
-                        fullWidth
-                        value={localFormValues.logDate || ''}
-                        onChange={(e) => handleLocalInputChange('logDate', e.target.value)}
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
-
-                    <TextField
                         label="Current Stage"
-                        value={statusLabels[selectedOpportunity?.['Current Stage (linked)']?.[0] || ''] || ''}
+                        value={statusLabels[selectedOpportunity?.['Current Stage']?.[0] || ''] || ''}
                         disabled
                         fullWidth
                         InputLabelProps={{
@@ -155,7 +152,7 @@ const ActivityLogModal = ({
                     />
 
                     <FormControl fullWidth>
-                        <InputLabel shrink>New Stage</InputLabel>
+                        <InputLabel shrink>New Stage *</InputLabel>
                         <Select
                             value={localFormValues.newStage || ''}
                             onChange={(e) => handleLocalInputChange('newStage', e.target.value)}
@@ -176,7 +173,7 @@ const ActivityLogModal = ({
                         )}
                     </FormControl>
 
-                    <FormControl fullWidth error={!!errors.explanation}>
+                    <FormControl fullWidth>
                         <InputLabel shrink>Explanation *</InputLabel>
                         <Select
                             value={localFormValues.explanation || ''}
@@ -198,7 +195,28 @@ const ActivityLogModal = ({
                         )}
                     </FormControl>
 
-                    <FormControl fullWidth error={!!errors.closeProbability}>
+                    <FormControl fullWidth>
+                        <InputLabel shrink>Assigned To *</InputLabel>
+                        <Select
+                            value={localFormValues.assignedTo || ''}
+                            onChange={(e) => handleLocalInputChange('assignedTo', e.target.value)}
+                            displayEmpty
+                            label="Assigned To"
+                            inputProps={{ 'aria-label': 'Assigned To' }}
+                            required
+                        >
+                            {employees.map((employee) => (
+                                <MenuItem key={employee.id} value={employee.id}>
+                                    {employee.Name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        {errors.assignedTo && (
+                            <div className="text-red-500 text-xs mt-1">{errors.assignedTo}</div>
+                        )}
+                    </FormControl>
+
+                    <FormControl fullWidth>
                         <InputLabel shrink>Close Probability (%)</InputLabel>
                         <Select
                             value={localFormValues.closeProbability || ''}
@@ -241,6 +259,17 @@ const ActivityLogModal = ({
                         onChange={(e) => handleLocalInputChange('note', e.target.value)}
                         error={!!errors.note}
                         helperText={errors.note || (['rec2LE93oDi5jf8ei', 'recJswG7wMvNozrvm'].includes(localFormValues.newStage) ? 'Note is required for this new stage' : '')}
+                    />
+
+                    <TextField
+                        label="Log Date"
+                        type="date"
+                        fullWidth
+                        value={localFormValues.logDate || ''}
+                        disabled
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
                     />
                 </Box>
             </DialogContent>

@@ -1,13 +1,12 @@
-import type { RichContent } from 'ricos-schema';
-
 import { Icon } from '@iconify/react';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 import { useRef, useState, useEffect } from 'react';
-import { toDraft } from 'ricos-content/libs/toDraft';
-import { toPlainText } from 'ricos-content/libs/toPlainText';
-import { fromPlainText } from 'ricos-content/libs/fromPlainText';
-import { toHtml } from 'ricos-content/libs/server-side-converters';
+
+// @wix/ricos imports
+import type { RichContent } from '@wix/ricos';
+import { fromPlainText, toHtml } from '@wix/ricos';
+//
 
 import { Box, Card, Link, List, Button, Checkbox, ListItem, Typography, FormControlLabel } from '@mui/material';
 
@@ -16,6 +15,7 @@ import { useRouter } from 'src/routes/hooks';
 import { fDateTime } from 'src/utils/format-time';
 import { deepCloneAs } from 'src/utils/object-utils';
 import { checkSEO, handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
+import { htmlToMd} from 'src/utils/md-html';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -114,7 +114,8 @@ export default function Page() {
   const [publishedAt, setPublishedAt] = useState('Loading...');
   const [views, setViews] = useState('Loading...');
   const [channelType, setChannelType] = useState<string | null>('');
-  const [richContent, setRichContent] = useState(toDraft(fromPlainText('Loading...')));
+  // const [richContent, setRichContent] = useState(toDraft(fromPlainText('Loading...')));
+  const [richContent, setRichContent] = useState(fromPlainText('Loading...'));
   const [editorRichContent, setEditorRichContent] = useState<RichContent>(fromPlainText('Loading...'));
   const [isInitRichContent, setIisInitRichContent] = useState(true);
   const [pillarName, setPillarName] = useState('Loading...');
@@ -220,15 +221,20 @@ export default function Page() {
         setOriginalContent(read_richContent);
         let parsedContent;
         if (typeof read_richContent === 'string') {
-          parsedContent = toDraft(JSON.parse(read_richContent));
+          // parsedContent = toDraft(JSON.parse(read_richContent));
+          parsedContent = JSON.parse(read_richContent);
+
         } else {
-          parsedContent = toDraft(read_richContent);
+          // parsedContent = toDraft(read_richContent);
+          parsedContent = read_richContent;
         }
         setRichContent(parsedContent);
         setIisInitRichContent(false);
       } catch (error) {
         console.error('Error parsing richContent:', error);
-        setRichContent(toDraft(fromPlainText('Error loading content')));
+        // setRichContent(toDraft(fromPlainText('Error loading content')));
+        setRichContent(fromPlainText('Error loading content'));
+
       }
       setSeoSlug(content.seo_slug || '');
       setMetaDescription(content.seo_meta_description || '');
@@ -350,8 +356,8 @@ export default function Page() {
     try {
       setIsLoading(true);
 
-      const plaintext = await toPlainText(editorRichContent);
       const contentHtml = toHtml(deepCloneAs<RichContent, RichContent>(editorRichContent));
+      const plaintext = htmlToMd(contentHtml);
       if (plaintext) {
         const { data: updateData } = await updateContentSupabase({
           contentId: contentId || '',
@@ -456,7 +462,8 @@ export default function Page() {
   const handleFeedbackSubmit = async () => {
     if (feedback.trim() && channel_id && content) {
       try {
-        const plaintext = await toPlainText(editorRichContent);
+        const contentHtml = toHtml(deepCloneAs<RichContent, RichContent>(editorRichContent));
+        const plaintext = htmlToMd(contentHtml);
 
         const { data: feedbackResponse } = await generateContentWithFeedback({
           channel_id,

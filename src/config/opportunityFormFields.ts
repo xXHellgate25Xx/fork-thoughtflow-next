@@ -42,8 +42,9 @@ export const opportunityFields: FieldDef<OpportunitiesRecord>[] = [
         type: 'text',
     },
     {
-        name: 'Source Channel',
+        name: 'Source Channel (from Leads)',
         label: 'Source Channel',
+        disabled: true,
         type: 'select',
         options: sourceChannelOptions,
     },
@@ -79,18 +80,19 @@ export const opportunityFields: FieldDef<OpportunitiesRecord>[] = [
 
     // Additional Information
     {
-        name: 'Audience (from Meta Leads)',
+        name: 'Audience (from Leads)',
         label: 'Audience',
+        disabled: true,
         type: 'text',
     },
     {
-        name: 'Salesperson (linked)',
+        name: 'Salesperson',
         label: 'Salesperson',
         type: 'select',
         options: [], // Will be populated dynamically from employees data
     },
     {
-        name: 'Current Stage (linked)',
+        name: 'Current Stage',
         label: 'Current Stage',
         type: 'select',
         required: true,

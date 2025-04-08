@@ -38,13 +38,13 @@ export default function OpportunityDetails({ opportunity, statusLabels, stageExp
                 }
                 return value;
             case 'select':
-                if (field.name === 'Current Stage (linked)') {
+                if (field.name === 'Current Stage') {
                     return getStatusChip(value?.[0]);
                 }
-                if (field.name === 'Salesperson (linked)') {
+                if (field.name === 'Salesperson') {
                     return salespersonLabels[value?.[0]] || value?.[0];
                 }
-                if (field.name === 'Source Channel') {
+                if (field.name === 'Source Channel (from Leads)') {
                     return sourceChannelLabels[value];
                 }
                 return value;
@@ -72,7 +72,7 @@ export default function OpportunityDetails({ opportunity, statusLabels, stageExp
                 {opportunityFields.map((field) => (
                     <div key={field.name} className="space-y-1 min-w-[200px] max-w-[400px]">
                         <h3 className="text-sm font-medium text-gray-500">{field.label}</h3>
-                        <p className="text-sm text-gray-900">
+                        <p className="text-sm text-gray-900 my-0.5">
                             {renderFieldValue(field, opportunity[field.name as keyof OpportunitiesRecord])}
                         </p>
                     </div>
@@ -80,11 +80,11 @@ export default function OpportunityDetails({ opportunity, statusLabels, stageExp
             </div>
 
             <div className="mt-8 mx-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
                 <ActivityList
                     prospectId={opportunity['Prospect ID']}
                     statusLabels={statusLabels}
                     explanationLabels={stageExplanationLabels}
+                    employeeMap={salespersonLabels}
                 />
             </div>
         </div>

@@ -1,15 +1,9 @@
 import './editor.css';
-
-import type { EditorCommands } from 'ricos-types';
-
-import { Icon } from '@iconify/react';
-import { IMAGE_TYPE } from 'ricos-content';
-import { RicosEditor } from 'ricos-editor';
 import { useRef, useState, useEffect } from 'react';
-import { pluginLink } from "wix-rich-content-plugin-link";
-import { pluginImage } from 'wix-rich-content-plugin-image';
-import { pluginHeadings } from "wix-rich-content-plugin-headings";
-import { pluginTextColor, pluginTextHighlight } from 'wix-rich-content-plugin-text-color';
+import { Icon } from '@iconify/react';
+
+import type { PublicCommands } from '@wix/ricos/dist/src/ricos-types';
+import { RicosEditor, IMAGE_TYPE, pluginLink, pluginImage, pluginHeadings, pluginTextColor, pluginTextHighlight } from '@wix/ricos';
 
 import { Button, CircularProgress } from '@mui/material';
 
@@ -18,10 +12,11 @@ import { processingFilePath } from 'src/utils/file-path-with-hash';
 
 import { useUploadToWixMutation, useUploadToSupabaseMutation } from 'src/libs/service/wix/wix';
 
+
 function Editor({ content, callback, channel_id, content_id }: { content?: any, callback?: any, channel_id?: any, content_id?: any }) {
   const isInitialMount = useRef(true);
   const [editorState, setEditorState] = useState(content);
-  const editorRef = useRef<EditorCommands | null>(null);
+  const editorRef = useRef<PublicCommands | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const [uploadToWix] = useUploadToWixMutation();

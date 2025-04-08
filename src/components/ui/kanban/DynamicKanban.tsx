@@ -1,8 +1,8 @@
-import type { KanbanProps, KanbanColumn as KanbanColumnType } from 'src/types/kanbanTypes';
+import type { KanbanColumn as KanbanColumnType, KanbanProps } from 'src/types/kanbanTypes';
 
-import { AlertCircle } from 'lucide-react';
 import * as Progress from '@radix-ui/react-progress';
-import { useState, useEffect, useCallback } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { KanbanColumn } from './KanbanColumn';
 import { groupItemsIntoColumns } from './lib';
@@ -23,8 +23,8 @@ export function DynamicKanban({
         }
     }, [config.onColumnsCreated]);
 
-    // Create columns from items whenever items or necessary config changes
-    useEffect(() => {
+    // Memoize the column generation logic
+    const generateColumns = useCallback(() => {
         if (items && items.length > 0) {
             console.log('items', items);
             console.log('config', config);
@@ -39,15 +39,12 @@ export function DynamicKanban({
         } else {
             setColumns([]);
         }
-    }, [
-        items,
-        config.groupByField,
-        config.maxColumns,
-        // Use JSON.stringify for object comparisons to prevent unnecessary rerenders
-        // Only trigger if the actual mapping changes
-        JSON.stringify(config.columnMap),
-        notifyColumnsCreated
-    ]);
+    }, [items, config.groupByField, config.maxColumns, config.columnMap, notifyColumnsCreated]);
+
+    // Create columns from items whenever items or necessary config changes
+    useEffect(() => {
+        generateColumns();
+    }, [generateColumns]);
 
     // Render loading state
     if (isLoading) {

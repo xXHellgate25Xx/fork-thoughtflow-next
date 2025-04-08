@@ -24,25 +24,15 @@ export default function CRMPage() {
         return 0;
     });
 
-    // Todo: Remove this in the future if having authorization 
-    // Hardcoded whitelist of authorized emails
-    const whitelistedEmails = [
-        'test2@email.com',
-        'kate.tran@edge8.ai',
-        'dave@edge8.ai',
-        'dave@talentedge.io',
-        'dave@edge8.co',
-        'chris@investmigrate.com',
-        'hoa@investmigrate.com',
-        'marketing@investmigrate.com',
-        'tyrone@investmigrate.com',
-        'josh@investmigrate.com'
-        // Add more emails as needed
-    ];
-
+    // Hardcoded whitelist of account IDs eligible for CRM feature
+    const whitelistedAccountIds = [
+        '5b7a773e-6095-4257-aff0-34ba1a99fe24'  // Invest Migrate
+    ]
     // Check authorization directly without useEffect
     const userEmail = profileData?.data?.[0]?.email || '';
-    const isAuthorized = whitelistedEmails.includes(userEmail);
+    // Get accountId from local storage
+    const accountId = localStorage.getItem('accountId') || '';
+    const isAuthorized = whitelistedAccountIds.includes(accountId);
 
     const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
         setTab(newValue);
