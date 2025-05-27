@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { Helmet } from 'react-helmet-async';
 
-import { Box, Card, Button, TextField, Typography } from '@mui/material';
+import { Box, Card, Button, TextField, Typography, Alert, Snackbar} from '@mui/material';
 
 import { useRouter } from 'src/routes/hooks';
 
@@ -10,6 +10,8 @@ import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { channelIcons } from 'src/theme/icons/channel-icons';
 import { useCreateChannelMutation } from 'src/libs/service/channel/channel';
+import { useGetLinkedinAccessTokenMutation } from 'src/libs/service/linkedin/linkedin';
+import { useValidateWixMutation } from 'src/libs/service/wix/wix'
 import { hashPassword } from 'src/utils/ecrypt';
 
 // ----------------------------------------------------------------------
@@ -24,8 +26,16 @@ export default function Page() {
   const [wixAccountId, setWixAccountId] = useState('')
   const [wixSiteId, setWixSiteId] = useState('')
 
+  const [linkedinAccessToken, setLinkedinAccessToken] = useState('');
+  const [linkedinexpiresIn, setLinkedinexpiresIn] = useState(0);
+  const [linkedinRefreshToken, setLinkedinRefreshToken] = useState('');
+  const [linkedinRefreshTokenExpiresIn, setLinkedinRefreshTokenExpiresIn] = useState(0);
+  const [linkedinScope, setLinkedinScope] = useState('');
+
   const [createChannel] = useCreateChannelMutation();
-  
+  const [getLinkedinAccessToken] = useGetLinkedinAccessTokenMutation();
+  const [validateWix] = useValidateWixMutation();
+
   const availableTypes = [
     { id: 'wix', label: 'Wix' },
     { id: 'linkedin', label: 'LinkedIn' },
@@ -33,8 +43,89 @@ export default function Page() {
     { id: 'facebook', label: 'Facebook' },
   ]
 
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
+
+  const handleConnectLinkedin = async () => {
+    const linkedin_client_id = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
+    const thoughtflow_url = import.meta.env.VITE_PUBLIC_BASE_URL;
+    const redirect_uri = `${thoughtflow_url}/linkedin-integration-popup`;
+    const scopes = ['w_member_social'].join(' ');
+  
+  const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}`;
+  
+    const popup = window.open(
+      authUrl,
+      'LinkedInLogin',
+      'width=600,height=600,left=400,top=200'
+    );
+  
+    const receiveMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      const { code } = event.data;
+      if (code) {
+        popup?.close();
+        window.removeEventListener('message', receiveMessage);
+        const {data: result, error: result_error}= await getLinkedinAccessToken(
+          { 
+            code: hashPassword(code) 
+          });
+        setLinkedinAccessToken(result?.access_token || "");
+        setLinkedinexpiresIn(result?.expires_in || 0);
+        setLinkedinScope(result?.scope || "");
+      }
+    };
+  
+    window.addEventListener('message', receiveMessage);
+  }
+
   const handleCreateChannel = async () => {
-      const en_wix_api_key = await hashPassword(wixAPIKey);
+    if (channelType === 'wix') {
+      const {data: validateWixData, error: validateWixError} = await validateWix({
+        ValidateWix: {
+          wix_account_id: wixAccountId,
+          wix_site_id: wixSiteId,
+          wix_api_key: wixAPIKey
+        }
+      })
+      if (validateWixError) {
+        // Narrow the type to FetchBaseQueryError before accessing `data`
+        const message = (validateWixError as any)?.data?.error?.message || 'Unexpected error occurred';
+
+        setSnackbar({
+          open: true,
+          message,
+          severity: 'error',
+        });
+      }
+      else {
+        const en_wix_api_key = await hashPassword(wixAPIKey);
+        await createChannel({
+        payload:{
+          name: channelName,
+          channel_type: channelType,
+          url: channelUrl,
+          is_active: true,
+          brand_voice_initial: channelVoice,
+          encrypted_wix_api_key: en_wix_api_key,
+          wix_account_id: wixAccountId,
+          wix_site_id: wixSiteId
+          }
+        });
+        router.push("/settings");
+      }
+    }
+    else if (channelType === 'linkedin') {
       await createChannel({
       payload:{
         name: channelName,
@@ -42,13 +133,36 @@ export default function Page() {
         url: channelUrl,
         is_active: true,
         brand_voice_initial: channelVoice,
-        account_id: localStorage.getItem('accountId'),
-        encrypted_wix_api_key: en_wix_api_key,
-        wix_account_id: wixAccountId,
-        wix_site_id: wixSiteId
-      }
-    });
-    router.push("/settings");
+        access_token: linkedinAccessToken,
+        expires_in: linkedinexpiresIn,
+        }
+      });
+      router.push("/settings");
+    }
+    else if (channelType === 'instagram') {
+      await createChannel({
+      payload:{
+        name: channelName,
+        channel_type: channelType,
+        url: channelUrl,
+        is_active: true,
+        brand_voice_initial: channelVoice,
+        }
+      });
+      router.push("/settings");
+    }
+    else if (channelType === 'facebook') {
+      await createChannel({
+      payload:{
+        name: channelName,
+        channel_type: channelType,
+        url: channelUrl,
+        is_active: true,
+        brand_voice_initial: channelVoice,
+        }
+      });
+      router.push("/settings");
+    }
   };
 
   const integrationFields: any = {
@@ -84,7 +198,19 @@ export default function Page() {
       </Box>
     ),
     // Future channel types can be added here
-    // linkedin: <Box>LinkedIn Fields here</Box>,
+    linkedin: (
+      <Box display='flex' flexDirection='column' gap='0.5rem'>
+      <Button
+              size='large'
+              color='inherit'
+              variant='contained'
+              sx={{ mt: '1rem' , width: '33%' }}
+              onClick={handleConnectLinkedin}
+            >
+              Connect to Linkedin
+      </Button>
+      </Box>
+    )
     // instagram: <Box>Instagram Fields here</Box>,
   };
 
@@ -175,6 +301,22 @@ export default function Page() {
             </Button>
           </Box>
         </Card>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={20000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert
+            variant='outlined'
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </DashboardContent>
     </>
   );

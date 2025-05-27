@@ -1,19 +1,19 @@
 import type { BoxProps } from '@mui/material/Box';
 import type { CardProps } from '@mui/material/Card';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
-import Popover from '@mui/material/Popover';
-import Divider from '@mui/material/Divider';
-import MenuList from '@mui/material/MenuList';
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
 import CardHeader from '@mui/material/CardHeader';
+import Checkbox from '@mui/material/Checkbox';
+import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import Popover from '@mui/material/Popover';
+import Stack from '@mui/material/Stack';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
@@ -81,23 +81,19 @@ function Item({ item, checked, onChange, sx, ...other }: ItemProps) {
 
   const handleMarkComplete = useCallback(() => {
     handleClosePopover();
-    console.info('MARK COMPLETE', item.id);
-  }, [handleClosePopover, item.id]);
+  }, [handleClosePopover]);
 
   const handleShare = useCallback(() => {
     handleClosePopover();
-    console.info('SHARE', item.id);
-  }, [handleClosePopover, item.id]);
+  }, [handleClosePopover]);
 
   const handleEdit = useCallback(() => {
     handleClosePopover();
-    console.info('EDIT', item.id);
-  }, [handleClosePopover, item.id]);
+  }, [handleClosePopover]);
 
   const handleDelete = useCallback(() => {
     handleClosePopover();
-    console.info('DELETE', item.id);
-  }, [handleClosePopover, item.id]);
+  }, [handleClosePopover]);
 
   return (
     <>

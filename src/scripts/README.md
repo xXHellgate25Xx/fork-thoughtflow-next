@@ -30,7 +30,7 @@ The script:
 2. Fetches complete schema information using the endpoint: `https://api.airtable.com/v0/meta/bases/{baseId}/tables`
 3. Processes the response to extract tables, fields, and options
 4. Generates TypeScript interfaces based on the accurate schema information
-5. Creates a `src/types/airtableTypes.ts` file with the generated interfaces
+5. Creates a `src/types/mapAirtableTypes.ts` file with the generated interfaces
 
 ## Generated Types
 

@@ -1,25 +1,25 @@
 import type { ProfileProps } from "src/interfaces/profile-interfaces"
 
+import React, { useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
-import React, { useState, useEffect } from "react"
 
 import EditIcon from "@mui/icons-material/Edit"
 import Visibility from "@mui/icons-material/Visibility"
 import VisibilityOff from "@mui/icons-material/VisibilityOff"
-import MuiAlert, { type AlertProps } from "@mui/material/Alert"
 import {
   Box,
-  Paper,
   Button,
-  Divider,
-  Snackbar,
+  CircularProgress,
   Container,
-  TextField,
-  Typography,
+  Divider,
   IconButton,
   InputAdornment,
-  CircularProgress,
+  Paper,
+  Snackbar,
+  TextField,
+  Typography,
 } from "@mui/material"
+import MuiAlert, { type AlertProps } from "@mui/material/Alert"
 
 import { getRefreshToken } from "src/utils/auth"
 import { toBase64 } from "src/utils/encodeFileToBase64"
@@ -27,9 +27,9 @@ import { toBase64 } from "src/utils/encodeFileToBase64"
 import { CONFIG } from "src/config-global"
 import {
   useGetProfileQuery,
-  useUpdatePasswordMutation,
-  useUpdateDisplayNameMutation,
   useUpdateDisplayImageMutation,
+  useUpdateDisplayNameMutation,
+  useUpdatePasswordMutation,
 } from "src/libs/service/profile/profile"
 
 // Alert component using MuiAlert
@@ -110,12 +110,8 @@ const AvatarChange: React.FC<AvatarChangeProps> = ({ onSuccess, onError }) => {
       setIsUploading(true)
       const base64File = await toBase64(selectedFile);
       const displayName = profileData?.data[0]?.custom_display_name || "user"
-      console.log(profileData)
-      console.log("displayName", displayName)
       // Random uuid for the file
       const fileName = `${displayName}-${Date.now()}`
-      console.log("base64File" )
-      console.log( base64File)
       const response = await updateDisplayImage({
         file: base64File,
         bucketName: "media",

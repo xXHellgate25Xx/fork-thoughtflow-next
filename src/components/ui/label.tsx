@@ -1,6 +1,6 @@
 import * as LabelPrimitive from "@radix-ui/react-label"
 import * as React from "react"
-import { cn } from "src/lib/utils"
+import { cn } from "src/libs/utils/tailwindUtils"
 
 const Label = React.forwardRef<
     React.ElementRef<typeof LabelPrimitive.Root>,
@@ -18,3 +18,4 @@ const Label = React.forwardRef<
 Label.displayName = LabelPrimitive.Root.displayName
 
 export { Label }
+

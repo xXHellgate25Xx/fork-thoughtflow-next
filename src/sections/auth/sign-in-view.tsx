@@ -1,24 +1,19 @@
 import type { AlertColor } from '@mui/material';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
-import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
-import { Alert, Snackbar } from '@mui/material';
-import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import InputAdornment from '@mui/material/InputAdornment';
+import { Alert, Box, Button, Divider, Link, Snackbar, TextField, Typography } from '@mui/material';
 
 import { useRouter } from 'src/routes/hooks';
 
 import { setToken } from 'src/utils/auth';
 import { hashPassword } from 'src/utils/ecrypt';
 
-import { useSignInWithEmailAndPasswordMutation } from 'src/libs/service/auth/auth';
+import { useSignInWithEmailAndPasswordMutation, useSignInWithOAuthMutation } from 'src/libs/service/auth/auth';
 
 import { Iconify } from 'src/components/iconify';
+
 
 export function SignInView() {
   const router = useRouter();
@@ -37,6 +32,21 @@ export function SignInView() {
   });
 
   const [signIn, { isLoading }] = useSignInWithEmailAndPasswordMutation();
+
+  const [signInWithOAuth] = useSignInWithOAuthMutation();
+  const handleGoogleSignIn = useCallback(async () => {
+    try {
+      const result = await signInWithOAuth({ provider: 'google' }).unwrap();
+      window.location.href = result.data.url;
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to initiate Google sign-in',
+        severity: 'error',
+      });
+    }
+  }, []);
 
   const handleSignIn = useCallback(async () => {
     try {
@@ -79,109 +89,83 @@ export function SignInView() {
     router.push('/auth/sign-up');
   }, [router]);
 
-  const renderForm = (
-    <Box
-      component="form"
-      display="flex"
-      flexDirection="column"
-      alignItems="flex-end"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSignIn();
-      }}
-    >
-      <TextField
-        fullWidth
-        name="email"
-        label="Email Address"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        InputLabelProps={{ shrink: true }}
-        sx={{ mb: 3 }}
-        required
-      />
-
-
-      <TextField
-        fullWidth
-        name="password"
-        label="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        InputLabelProps={{ shrink: true }}
-        type={showPassword ? 'text' : 'password'}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                <Iconify icon={showPassword ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-        sx={{ mb: 1.5 }}
-        required
-      />
-
-      <Link
-        component="button"
-        onClick={() => router.push('/auth/reset-password-request')}
-        variant="subtitle2"
-        sx={{ alignSelf: 'start', ml: 1, mb: 3 }}
-      >
-        Forgot password?
-      </Link>
-      <LoadingButton
-        fullWidth
-        size="large"
-        type="submit"
-        color="primary"
-        variant="contained"
-        loading={isLoading}
-      >
-        Sign In
-      </LoadingButton>
-    </Box>
-  );
-
   return (
-    <Box>
-      <Box gap={1.5} display="flex" flexDirection="column" alignItems="center" sx={{ mb: 5 }}>
-        <Typography variant="h5">Sign In</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {`Don't have an account?`}
-          <Link
-            variant="subtitle2"
-            sx={{ ml: 0.5, cursor: 'pointer' }}
-            onClick={handleGetStartedClick}
-          >
-            Get started
-          </Link>
-        </Typography>
-      </Box>
+    <Box >
+      <Typography variant="h4" align="center" gutterBottom>
+        Sign In
+      </Typography>
 
-      {renderForm}
-      {/* TODO */}
-      {/* <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
-        <Typography
-          variant="overline"
-          sx={{ color: 'text.secondary', fontWeight: 'fontWeightMedium' }}
+      <Typography variant="body2" align="center" sx={{ mb: 3 }}>
+        {`Don't have an account? `}
+        <Link
+          variant="subtitle2"
+          sx={{ ml: 0.5, cursor: 'pointer' }}
+          onClick={handleGetStartedClick}
         >
-          OR
-        </Typography>
-      </Divider>
+          Get started
+        </Link>
+      </Typography>
 
-      <Box gap={1} display="flex" justifyContent="center">
-        <IconButton color="inherit" aria-label="Sign in with Google">
-          <Iconify icon="logos:google-icon" />
-        </IconButton>
-        <IconButton color="inherit" aria-label="Sign in with GitHub">
-          <Iconify icon="eva:github-fill" />
-        </IconButton>
-        <IconButton color="inherit" aria-label="Sign in with Twitter">
-          <Iconify icon="ri:twitter-x-fill" />
-        </IconButton>
-      </Box> */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <TextField
+          fullWidth
+          label="Email Address *"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <TextField
+          fullWidth
+          label="Password *"
+          type={showPassword ? 'text' : 'password'}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          InputProps={{
+            endAdornment: (
+              <Button
+                onClick={() => setShowPassword(!showPassword)}
+                sx={{ minWidth: 'auto', p: 0.5 }}
+              >
+                <Iconify icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} />
+              </Button>
+            ),
+          }}
+        />
+        <Link
+          variant="subtitle2"
+          sx={{ alignSelf: 'flex-start', cursor: 'pointer', ml: 1 }}
+          onClick={() => router.push('/auth/reset-password-request')}
+        >
+          Forgot password?
+        </Link>
+
+        <LoadingButton
+          fullWidth
+          size="large"
+          variant="contained"
+          loading={isLoading}
+          onClick={handleSignIn}
+          sx={{ mt: 1 }}
+        >
+          Sign In
+        </LoadingButton>
+
+        <Divider sx={{ my: 0 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Or continue with
+          </Typography>
+        </Divider>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          size="large"
+          startIcon={<Iconify icon="mdi:google" />}
+          onClick={handleGoogleSignIn}
+        >
+          Continue with Google
+        </Button>
+      </Box>
 
       <Snackbar
         open={snackbar.open}
@@ -189,7 +173,11 @@ export function SignInView() {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

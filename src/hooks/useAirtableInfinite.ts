@@ -1,13 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useLazyQueryTableQuery } from "src/libs/service/airtable/generalService";
-import type {
-  AirtableRecord,
-  FilterCondition,
-  QueryOptions,
-  SortCondition
-} from "src/types/airtableTypes";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryTableQuery } from 'src/libs/service/airtable/generalService';
+import type { AirtableRecord, QueryOptions } from 'src/types/airtableTypes';
 
 // Interface for table hook results
 interface TableQueryResult<T> {
@@ -17,105 +12,103 @@ interface TableQueryResult<T> {
   error: any;
   refetch: () => void;
   hasMore: boolean;
-  loadMore: () => Promise<void>;
+  loadMore: () => void;
   resetRecords: () => void;
+  currentOffset: string;
 }
 
-export const useAirtableInfinite = <T>(tableId: string, opts: Omit<QueryOptions, 'tableId'> = {}): TableQueryResult<T> => {
-  const [options, setOptions] = useState<Omit<QueryOptions, 'tableId'>>(opts)
-  const [allRecords, setAllRecords] = useState<Partial<T>[]>([])
-  const [hasMore, setHasMore] = useState(true)
-  const [isInitialized, setIsInitialized] = useState(false)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [isProcessingData, setIsProcessingData] = useState(false)
-
-  const prevFilters = useRef<FilterCondition[] | undefined>(opts.filters)
-  const prevSort = useRef<SortCondition[] | undefined>(opts.sort)
-
-  // Use lazy query to have more control over when to fetch
-  const [fetchData, { data, isFetching, isError, error }] = useLazyQueryTableQuery()
-
   // Convert AirtableRecord to typed record
-  const convertToTypedRecord = (record: AirtableRecord): Partial<T> => ({
+  const convertToTypedRecord = <T>(record: AirtableRecord): Partial<T> => ({
     id: record.id,
     ...record.fields,
     createdTime: record.createdTime
   } as unknown as Partial<T>)
 
-  // Combined effect for fetching and processing data
-  useEffect(() => {
-    const shouldReset = isInitialized && (
-      JSON.stringify(prevFilters.current) !== JSON.stringify(opts.filters) || 
-      JSON.stringify(prevSort.current) !== JSON.stringify(opts.sort)
-    )
+export const useAirtableInfinite = <T>(
+  tableId: string,
+  opts: Omit<QueryOptions, 'tableId'> = {},
+  isSkip: boolean = false
+): TableQueryResult<T> => {
+  // Store records by offset
+  const [recordsByOffset, setRecordsByOffset] = useState<Record<string, Partial<T>[]>>({});
+  const [currentOffset, setCurrentOffset] = useState<string>('');
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isResetting, setIsResetting] = useState<boolean>(false);
 
-    if (!isInitialized || shouldReset) {
-      prevFilters.current = opts.filters
-      prevSort.current = opts.sort
-      setOptions((prev: Omit<QueryOptions, 'tableId'>) => ({ ...prev, offset: "" }))
-      setAllRecords([])
-      setHasMore(true)
-      setIsProcessingData(true)
+  // Memoize query options to avoid unnecessary fetches
+  const queryOptions = useMemo(() => ({
+    tableId,
+    ...opts,
+    offset: currentOffset || undefined,
+  }), [tableId, opts, currentOffset]);
 
-      fetchData({ 
-        tableId,
-        ...opts,
-        offset: "" 
-      })
-      setIsInitialized(true)
-    }
-  }, [opts.filters, opts.sort, opts.limit, opts.view, tableId, isInitialized, fetchData])
+  // Use the eager query hook
+  const { data, isLoading, isFetching, isError, error, refetch } = useQueryTableQuery(queryOptions, {skip: isSkip});
 
-  // Process data when it arrives
+  // Merge new data into recordsByOffset when data or offset changes
   useEffect(() => {
     if (data?.records) {
-      setIsProcessingData(true)
-      setAllRecords((prev: Partial<T>[]) => (options.offset ? [...prev, ...data.records.map(convertToTypedRecord)] : data.records.map(convertToTypedRecord)))
-      setOptions((prev: Omit<QueryOptions, 'tableId'>) => ({ ...prev, offset: data.offset || "" }))
-      setHasMore(!!data.offset)
-      setIsLoadingMore(false)
-      setIsProcessingData(false)
+      setRecordsByOffset(prev => {
+        const key = currentOffset || 'start';
+        return {
+          ...prev,
+          [key]: data.records.map(convertToTypedRecord<T>),
+        };
+      });
+      setHasMore(!!data.offset);
+      setIsResetting(false); // Data arrived, done resetting/loading
     }
-  }, [data])
+  }, [data, currentOffset]);
 
-  // Function to fetch next page
-  const loadMore = useCallback(async () => {
-    if (hasMore && !isFetching && options.offset) {
-      setIsLoadingMore(true)
-      setIsProcessingData(true)
-      fetchData({ 
-        tableId,
-        ...options
-      })
+  // Function to load more (fetch next page)
+  const loadMore = useCallback(() => {
+    if (data?.offset) {
+      setCurrentOffset(data.offset);
     }
-  }, [hasMore, isFetching, options, tableId, fetchData])
+  }, [data]);
 
+  // Function to reset (e.g., when filters change)
   const resetRecords = useCallback(() => {
-    setAllRecords([])
-    setOptions((prev: Omit<QueryOptions, 'tableId'>) => ({ ...prev, offset: "" }))
-    setHasMore(true)
-    setIsInitialized(false)
-  }, [])
+    setRecordsByOffset({});
+    setCurrentOffset('');
+    setHasMore(true);
+    setIsResetting(true); // Set local loading state
+  }, []);
+
+  // Merge all records from all offsets in order
+  const allRecords = useMemo(() => {
+    // Sort keys to maintain order: 'start' first, then by offset string order
+    const keys = Object.keys(recordsByOffset).sort((a, b) => {
+      if (a === 'start') return -1;
+      if (b === 'start') return 1;
+      return a.localeCompare(b);
+    });
+    // Flatten arrays, deduplicate by id
+    const seen = new Set();
+    const merged: Partial<T>[] = [];
+    keys.forEach(key => {
+      (recordsByOffset[key] || []).forEach(rec => {
+        // @ts-ignore
+        if (rec.id && !seen.has(rec.id)) {
+          // @ts-ignore]
+          seen.add(rec.id);
+          merged.push(rec);
+        }
+      });
+    });
+    return merged;
+  }, [recordsByOffset]);
 
   return {
     records: allRecords,
-    isLoading: isFetching || isLoadingMore || isProcessingData,
+    isLoading: isLoading ||isFetching|| isResetting, // Use combined loading state
     isError,
     error,
-    refetch: () => {
-      setOptions((prev: Omit<QueryOptions, 'tableId'>) => ({ ...prev, offset: "" }))
-      setAllRecords([])
-      setHasMore(true)
-      setIsInitialized(false)
-      fetchData({ 
-        tableId,
-        ...opts,
-        offset: "" 
-      })
-    },
+    refetch,
     hasMore,
     loadMore,
-    resetRecords
-  }
-}
+    resetRecords,
+    currentOffset,
+  };
+};
 

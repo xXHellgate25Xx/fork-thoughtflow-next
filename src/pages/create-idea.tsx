@@ -4,11 +4,9 @@ import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 
-import { fromPlainText } from '@wix/ricos';
-
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import EditIcon from '@mui/icons-material/Edit';
 import {
   Box,
   Card,
@@ -24,15 +22,14 @@ import { useRouter } from 'src/routes/hooks';
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { useGetAllPillarQuery } from 'src/libs/service/pillar/home';
-import { useGetAllChannelsOfUserQuery } from 'src/libs/service/channel/channel';
-import { useGenerateContentHTMLMutation } from 'src/libs/service/content/generate';
-import { useCreateIdeaMutation, useCreateIdeaContentMutation } from 'src/libs/service/idea/idea';
+import { useIdeaToContentMutation } from 'src/libs/service/idea/idea';
 
 import IdeaForm from 'src/components/text-voice-input/IdeaForm';
 import VoiceToTextButton from 'src/components/text-voice-input/VoiceRecorderButton';
 
 import { PillarSelect } from 'src/sections/pillar/pillar-select';
-import { ChannelSelect } from 'src/sections/channel/channel-select';
+import { ModelSelect } from 'src/sections/model/model-select';
+import { ModelList } from 'src/utils/model_list';
 
 // ----------------------------------------------------------------------
 
@@ -47,18 +44,16 @@ export default function Page() {
     }
   }, [navigationState]);
   
-  const [createIdea] = useCreateIdeaMutation();
-  const [generateContentHTML] = useGenerateContentHTMLMutation();
-  const [createIdeaContent] = useCreateIdeaContentMutation();
+  const [ideaToContent] = useIdeaToContentMutation();
   const [pillarIdAndName, setPillarIdAndName] = useState<
     { id: string; name: string; primaryKeyword: string }[] | undefined
   >(undefined);
-  const [channelId, setChannelId] = useState<string>('');
-  const [channelIdAndName, setChannelIdAndName] = useState<
+
+  const [modelId, setModelId] = useState<string>(ModelList[0].id);
+  const [modelIdAndName, setModelIdAndName] = useState<
     {id: string; name: string}[] | undefined
-  >(undefined);
+  >(ModelList);
   const { data: pillarData, error: pillarError } = useGetAllPillarQuery();
-  const { data: channelData } = useGetAllChannelsOfUserQuery(); 
 
   useEffect(() => {
     if (pillarData) {
@@ -79,18 +74,7 @@ export default function Page() {
     }
   }, [pillarData]);
 
-  useEffect(()=>{
-    if(channelData){
-      const formattedChannels = channelData?.data.map((channel: any)=>{
-        const requiredPairs = {id: channel.id, name: channel.name};
-        return requiredPairs;
-      }) ?? [];
-      setChannelId(channelData?.data?.[0]?.id ?? '');
-      setChannelIdAndName(formattedChannels.length > 0?
-        formattedChannels:
-        [{id: '1', name: 'No existing channels'}]);
-    }
-  },[channelData]);
+
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -104,7 +88,6 @@ export default function Page() {
 
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
-  const [progress, setProgress] = useState<number>(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [pillar, setPillar] = useState<string>('');
@@ -123,11 +106,20 @@ export default function Page() {
     setPillar(newPillar);
   }, []);
 
-  const handleSelectChannel = (chosenChannelId: string) => {
-    setChannelId(chosenChannelId);
+  const handleSelectModel = (chosenModelId: string) => {
+    setModelId(chosenModelId);
   };
 
+
   const handleSubmit = async (updatedIdea?: Partial<IdeaFormat>) => {
+    if (!updatedIdea?.text) {
+      setSnackbar({
+        open: true,
+        message: 'Please enter your idea!',
+        severity: 'error'
+      });
+      return;
+    }
     try {
       setIsGenerating(true);
       setNewIdea({
@@ -135,78 +127,25 @@ export default function Page() {
         voice_input: updatedIdea?.voice_input
       });
 
-      const { 
-        data: latestIdeaData,
-        error: createIdeaError
-       } = await createIdea({
+      const { data: ideaToContentData } = await ideaToContent({
         text: updatedIdea?.text || '',
         voice_input: updatedIdea?.voice_input || null,
-        pillar_id: updatedIdea?.pillar_id || '',
+        pillar_id: pillar,
+        model: modelId
       });
-
-      if(!latestIdeaData){
+      if(!ideaToContentData){
         setSnackbar({
           open: true,
-          message: 'Fail to create to idea!',
+          message: 'Fail to create content from idea!',
           severity: 'error'
         });
         setIsGenerating(false);
         return;
       }
 
-      setProgress(30);
-
-      const { data: generationData } = await generateContentHTML({
-        channel_id: channelId,
-        gen_content: {
-          idea: updatedIdea?.text,
-          pillar_name: pillarIdAndName?.find(item => item.id === pillar)?.name ?? '',
-          keyword: pillarIdAndName?.find(item => item.id === pillar)?.primaryKeyword ?? ''
-        }
-      });
-      if(!generationData){
-        setSnackbar({
-          open: true,
-          message: 'Fail to generate content from new idea!',
-          severity: 'error'
-        });
-        setIsGenerating(false);
-        return;
-      }
-
-      setProgress(80);
-      const { data: contentData } = await createIdeaContent({
-        ideaId: latestIdeaData?.data?.[0]?.id,
-        payload: {
-          content_body: generationData?.content,
-          rich_content: generationData?.rich_content || fromPlainText(generationData?.content || ""),
-          title: generationData?.title,
-          excerpt: generationData?.excerpt || '',
-          status: 'draft',
-          content_type: 'Blog Post', // To be refactored
-          seo_meta_description: generationData?.seo_meta_description || null,
-          seo_slug: generationData?.seo_slug || null,
-          seo_title_tag: generationData?.title || null,
-          channel_id: channelId,
-          long_tail_keyword: generationData?.long_tail || null,
-          content_html: generationData?.content_html,
-        }
-      });
-      
-      if(!contentData){
-        setSnackbar({
-          open: true,
-          message: 'Fail to save content!',
-          severity: 'error'
-        });
-        setIsGenerating(false);
-        return;
-      }
-
-      setProgress(100);
 
       setIsGenerating(false);
-      router.replace(`/content/${contentData?.data?.[0]?.content_id}`);
+      router.replace(`/idea/${ideaToContentData?.idea_id}`);
     } catch (error: any) {
       setIsGenerating(false);
       console.error('Error during creating content:', error);
@@ -236,68 +175,22 @@ export default function Page() {
               Generating content...
             </Typography>
             <Typography variant="body1" mb="1rem" align="center">
-              Please wait while we generating content from your ideas
+              Hang tight—your genius is being transformed into magic ✨🧠
             </Typography>
             <Box sx={{ width: '70%' }}>
               <LinearProgress
-                variant="determinate"
-                value={progress}
+                variant="indeterminate"
                 color='inherit'
                 sx={{ mt: 1 }}
               />
             </Box>
-            <Card
-              sx={{
-                padding: '1.5rem',
-                my: '2rem',
-                width: '70%',
-              }}
-            >
-              <Box display='flex' alignItems='center' mb='1rem'>
-                {progress < 30 ? (
-                  <CircularProgress size="1.25rem" sx={{ color: 'black', mr: 2 }} />
-                ) : (
-                  <CheckCircleOutlineIcon sx={{ mr: 2 }} />
-                )}
-                <Typography>Analyzing content requirement</Typography>
-              </Box>
-              <Box display='flex' alignItems='center' mb='1rem'>
-                {progress < 80 ? (
-                  progress < 30 ? (
-                    <PendingOutlinedIcon sx={{ color: 'grey', mr: 2, fontSize: '1.5rem' }} />
-                  ) : (
-                    <CircularProgress
-                      size="1.25rem"
-                      sx={{ color: 'black', mr: 2, fontSize: '1.5rem' }}
-                    />
-                  )
-                ) : (
-                  <CheckCircleOutlineIcon sx={{ color: 'black', mr: 2 }} />
-                )}
-                <Typography sx={{ color: progress < 30 ? 'grey' : 'black' }}>Writing content draft</Typography>
-              </Box>
-              <Box display='flex' alignItems='center'>
-                {progress < 100 ? (
-                  progress < 80 ? (
-                    <PendingOutlinedIcon sx={{ color: 'grey', mr: 2, fontSize: '1.5rem' }} />
-                  ) : (
-                    <CircularProgress
-                      size="1.25rem"
-                      sx={{ color: 'black', mr: 2, fontSize: '1.5rem' }}
-                    />
-                  )
-                ) : (
-                  <CheckCircleOutlineIcon sx={{ color: 'black', mr: 2 }} />
-                )}
-                <Typography sx={{ color: progress < 80 ? 'grey' : 'black' }}>Finalize formating</Typography>
-              </Box>
-            </Card>
           </Card>
         ) : (
           <Card sx={{ padding: '2rem' }}>
             {/* Title */}
-            <Typography variant="h4" mb="1rem">
-              Share Your Idea
+            <Typography variant="h4" mb="1rem" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              Let&apos;s get this thought out of your head
+              <EditIcon sx={{ fontSize: '1.5rem' }} />
             </Typography>
 
             <Box sx={{display: 'flex', flexDirection:'row', gap: 2}}>
@@ -307,11 +200,11 @@ export default function Page() {
                 onSort={handleSelectPillar}
                 options={pillarIdAndName}
               />
-              {/* Select content channel */}
-              <ChannelSelect
-                channelId={channelId}
-                onSort={handleSelectChannel}
-                options={channelIdAndName}
+              {/* Select model */}
+              <ModelSelect
+                modelId={modelId}
+                onSort={handleSelectModel}
+                options={modelIdAndName}
               />
             </Box>    
 

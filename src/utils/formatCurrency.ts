@@ -1,4 +1,8 @@
-export const formatCurrency = (value: number | string): string => {
-    if (!value) return '$0';
-    return `$${Number(value).toLocaleString()}`;
-}; 
+export const formatCurrency = (value?: number) => {
+    if (!value) return '-';
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+    }).format(value);
+};

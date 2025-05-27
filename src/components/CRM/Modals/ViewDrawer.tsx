@@ -1,4 +1,4 @@
-import { Close as CloseIcon, DragHandle as DragHandleIcon } from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
 import {
     alpha,
     Box,
@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { formatCurrency } from 'src/utils/formatCurrency';
 import type { FieldDef, FormRecord } from './types';
 
 // Custom hook for handling resize
@@ -22,7 +23,21 @@ const useResize = (initialWidth: number | string) => {
     const [startWidth, setStartWidth] = useState(0);
     const [resizeFromLeft, setResizeFromLeft] = useState(false);
 
+    // Convert initialWidth to number for calculations
+    useEffect(() => {
+        if (typeof initialWidth === 'string' && initialWidth.endsWith('%')) {
+            // Convert percentage to pixels
+            const percentage = parseInt(initialWidth, 10);
+            setWidth(window.innerWidth * (percentage / 100));
+        } else if (typeof initialWidth === 'string') {
+            setWidth(parseInt(initialWidth, 10));
+        } else {
+            setWidth(initialWidth);
+        }
+    }, [initialWidth]);
+
     const handleMouseDown = useCallback((e: React.MouseEvent, fromLeft: boolean = false) => {
+        e.preventDefault();
         setIsResizing(true);
         setStartX(e.clientX);
         setStartWidth(typeof width === 'number' ? width : parseInt(width as string, 10));
@@ -32,8 +47,18 @@ const useResize = (initialWidth: number | string) => {
     const handleMouseMove = useCallback((e: MouseEvent) => {
         if (!isResizing) return;
 
-        const diff = startX - e.clientX;
-        const newWidth = Math.max(400, Math.min(window.innerWidth * 0.9, startWidth + (resizeFromLeft ? -diff : diff)));
+        const diff = e.clientX - startX;
+
+        // Calculate new width with direction considered
+        let newWidth = startWidth + (resizeFromLeft ? -diff : diff);
+
+        // Set constraints based on screen size
+        const minWidth = Math.min(380, window.innerWidth * 0.3); // Minimum 380px or 30% of screen
+        const maxWidth = Math.min(1200, window.innerWidth * 0.8); // Maximum 1200px or 80% of screen
+
+        // Apply constraints
+        newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+
         setWidth(newWidth);
     }, [isResizing, startX, startWidth, resizeFromLeft]);
 
@@ -44,17 +69,43 @@ const useResize = (initialWidth: number | string) => {
 
     useEffect(() => {
         if (isResizing) {
+            // Add move and up handlers to window to handle dragging outside the component
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('mouseup', handleMouseUp);
+            // Add a class to the body to prevent text selection during resize
+            document.body.classList.add('resizing');
+        } else {
+            document.body.classList.remove('resizing');
         }
 
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
+            document.body.classList.remove('resizing');
         };
     }, [isResizing, handleMouseMove, handleMouseUp]);
 
-    return { width, handleMouseDown };
+    // Also handle window resize to ensure drawer stays within bounds
+    useEffect(() => {
+        const handleWindowResize = () => {
+            if (typeof width === 'number') {
+                // On window resize, ensure width is still within constraints
+                const minWidth = Math.min(380, window.innerWidth * 0.3);
+                const maxWidth = Math.min(1200, window.innerWidth * 0.8);
+
+                if (width > maxWidth) {
+                    setWidth(maxWidth);
+                } else if (width < minWidth) {
+                    setWidth(minWidth);
+                }
+            }
+        };
+
+        window.addEventListener('resize', handleWindowResize);
+        return () => window.removeEventListener('resize', handleWindowResize);
+    }, [width]);
+
+    return { width, handleMouseDown, isResizing };
 };
 
 // Drawer props type
@@ -69,20 +120,19 @@ export interface ViewDrawerProps<T extends FormRecord> {
     customContent?: ReactNode;
 }
 
-export default function ViewDrawer<T extends FormRecord>({
+export const ViewDrawer = <T extends FormRecord>({
     open,
     onClose,
     title,
     record,
     fields,
-    width = 450,
+    width = 700,
     customActions,
     customContent,
-}: ViewDrawerProps<T>) {
-    const { width: drawerWidth, handleMouseDown } = useResize(width);
+}: ViewDrawerProps<T>) => {
+    const { width: drawerWidth, handleMouseDown, isResizing } = useResize(width);
     const theme = useTheme();
     const drawerRef = useRef<HTMLDivElement>(null);
-
     useEffect(() => {
         if (open) {
             // When drawer opens, focus the first focusable element
@@ -117,15 +167,6 @@ export default function ViewDrawer<T extends FormRecord>({
         return field.defaultValue || '';
     };
 
-    // Format currency values
-    const formatCurrency = (value?: number) => {
-        if (value === undefined || value === null) return '-';
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-        }).format(value);
-    };
 
     return (
         <Drawer
@@ -147,57 +188,68 @@ export default function ViewDrawer<T extends FormRecord>({
             }}
             PaperProps={{
                 sx: {
-                    width: { xs: '100%', sm: drawerWidth },
-                    maxWidth: '100%',
+                    width: drawerWidth,
+                    minWidth: { xs: '90%', sm: '380px' },
+                    maxWidth: { xs: '95%', sm: '80%', md: '1200px' },
                     borderTopLeftRadius: 8,
                     borderBottomLeftRadius: 8,
                     boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.08)',
                     background: '#FFFFFF',
                     borderLeft: '1px solid rgba(0, 0, 0, 0.08)',
-                    transition: theme.transitions.create(['width', 'box-shadow'], {
-                        duration: theme.transitions.duration.shorter,
-                        easing: theme.transitions.easing.easeInOut,
-                    }),
+                    overflow: 'hidden',
+                    transition: isResizing ? 'none' : 'width 0.1s ease-out'
                 },
             }}
         >
             {/* Left resize handle */}
             <Box
-                onMouseDown={handleMouseDown}
+                onMouseDown={(e) => handleMouseDown(e, true)}
                 sx={{
                     position: 'absolute',
-                    left: '8px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    height: '100px',
-                    width: '4px',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: '12px',
                     cursor: 'ew-resize',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    zIndex: 10,
+                    '&:hover': {
+                        '& .resize-handle': {
+                            opacity: 1,
+                            width: '4px',
+                        }
+                    },
+                    // Hide on mobile
                     [theme.breakpoints.down('sm')]: {
                         display: 'none'
                     }
                 }}
             >
-                <Tooltip title="Drag to resize" placement="right">
-                    <DragHandleIcon sx={{
-                        color: 'text.secondary',
-                        opacity: 0.5,
-                        rotate: '90deg',
-                        '&:hover': { opacity: 1 }
-                    }} />
+                <Tooltip title="Drag to resize" placement="left">
+                    <Box
+                        className="resize-handle"
+                        sx={{
+                            height: '50px',
+                            width: '3px',
+                            backgroundColor: theme.palette.primary.main,
+                            opacity: 0.3,
+                            borderRadius: '2px',
+                            transition: 'opacity 0.2s, width 0.2s',
+                        }}
+                    />
                 </Tooltip>
             </Box>
 
             <Box
                 ref={drawerRef}
                 sx={{
-                    p: title ? 3 : '24px 20px',
+                    p: customContent ? 0 : (title ? 3 : '10px 10px 24px 10px'),
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    bgcolor: '#FFFFFF',
+                    bgcolor: customContent ? 'transparent' : '#FFFFFF',
                 }}
             >
                 <Box
@@ -244,6 +296,8 @@ export default function ViewDrawer<T extends FormRecord>({
                         overflowY: 'auto',
                         pr: 1,
                         mr: -1,
+                        minWidth: { sm: '380px' },
+                        width: '100%',
                         '&::-webkit-scrollbar': {
                             width: '6px',
                         },
@@ -257,9 +311,23 @@ export default function ViewDrawer<T extends FormRecord>({
                     }}
                 >
                     {
-                        customContent
-                        ||
-                        (
+                        customContent ? (
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    minWidth: 'inherit',
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    flexGrow: 1,
+                                    m: 0,
+                                    p: 0,
+                                    backgroundColor: 'transparent',
+                                }}
+                            >
+                                {customContent}
+                            </Box>
+                        ) : (
                             fields && record && fields.map((field: FieldDef<T>, index: number) => (
                                 <Box
                                     key={`field-${String(field.name)}-${index}`}
@@ -309,7 +377,7 @@ export default function ViewDrawer<T extends FormRecord>({
                                                 border: `1px solid ${alpha(theme.palette.divider, 0.3)}`
                                             }}
                                         >
-                                            {field.options?.find((option: { value: string | number | boolean; label: string }) => option.value === getFieldValue(field))?.label || '-'}
+                                            {field.options?.[getFieldValue(field)] || getFieldValue(field) || '-'}
                                         </Box>
                                     ) : field.type === 'multiselect' ? (
                                         <Box
@@ -327,7 +395,7 @@ export default function ViewDrawer<T extends FormRecord>({
                                                 ? getFieldValue(field).map((value: any) => (
                                                     <Chip
                                                         key={value}
-                                                        label={field.options?.find((option: { value: string | number | boolean; label: string }) => option.value === value)?.label || value}
+                                                        label={field.options?.[value] || value}
                                                         size="small"
                                                     />
                                                 ))

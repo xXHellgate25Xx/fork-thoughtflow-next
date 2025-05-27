@@ -1,6 +1,6 @@
 import type { TypographyOptions } from '@mui/material/styles/createTypography';
 
-import { setFont, pxToRem, responsiveFontSizes } from '../styles/utils';
+import { pxToRem, responsiveFontSizes, setFont } from '../styles/utils';
 
 // ----------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ export const secondaryFont = setFont('Barlow');
 // ----------------------------------------------------------------------
 
 export const typography: TypographyOptions = {
-  fontFamily: primaryFont,
+  fontFamily: setFont(defaultFont),
   fontSecondaryFamily: secondaryFont,
   fontWeightLight: '300',
   fontWeightRegular: '400',

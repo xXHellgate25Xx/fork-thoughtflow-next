@@ -56,6 +56,7 @@ interface IdeaRes {
         content_id?: string;
         idea_id?: string;
         channel_id?: string;
+        channel_type?: string;
         content_body?: string;
         excerpt?: string;
         content_type?: string;
@@ -67,8 +68,53 @@ interface IdeaRes {
         seo_title_tag?: string;
         seo_meta_description?: string ;
         rich_content?: RichContent;
+        long_tail_keyword?: string;
     }[];
     error?: any
+}
+
+interface IdeaItemRes {
+    data: {
+        id?: string;
+        created_at?: any;
+        updated_at?: any;
+        text?: string;
+        voice_input?: string;
+        pillar_id?: string;
+        account_id?: string;
+        user_id?: string;
+        title?: string;
+    }[]
+}
+
+interface ideaToContentReq {
+    text: string;
+    voice_input: string | null;
+    pillar_id: string;
+    model: string;
+}
+
+interface ideaToContentRes {
+    idea_id: string;
+}
+
+// New response type for paginated ideas
+export interface ListIdeasResponse {
+  data: IdeaRes['data'];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+  };
+}
+
+// Query params for listIdeas
+export interface ListIdeasRequest {
+  page?: number;
+  page_size?: number;
+  sort_field?: 'created_at' | 'title' | 'pillar_id' | 'status';
+  sort_direction?: 'asc' | 'desc';
+  [key: string]: any; // for arbitrary filters
 }
 
 const IdeaApi = createApi({
@@ -76,10 +122,20 @@ const IdeaApi = createApi({
     baseQuery,
     endpoints: (builder) => ({
         // -----------------------LIST IDEAs--------------------------
-        listIdeas: builder.query<IdeaRes, void>({
-            query: () => ({
-                url: "functions/v1/api/idea"
-            })
+        listIdeas: builder.query<ListIdeasResponse, ListIdeasRequest | void>({
+            query: (params) => {
+                const safeParams = params || {};
+                const queryParams = new URLSearchParams();
+                Object.entries(safeParams).forEach(([key, value]) => {
+                  if (value !== undefined && value !== null && value !== '') {
+                    queryParams.append(key, String(value));
+                  }
+                });
+                return {
+                  url: `functions/v1/api/idea${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
+                  method: 'GET',
+                };
+            }
         }),
 
         // -----------------------CREATE IDEA-------------------------
@@ -103,6 +159,28 @@ const IdeaApi = createApi({
                 body: payload
             })
         }),
+        // -----------------------GET IDEA BY ID-------------------------
+        getIdeaById: builder.query<IdeaItemRes, { ideaId: string | undefined }>({
+            query: ({ ideaId }) => ({
+                url: `functions/v1/api/idea/${ideaId}`,
+                method: "GET"
+            })
+        }),
+        // -----------------------GET IDEA BY ID-------------------------
+        getContentByIdea: builder.query<IdeaRes, { ideaId: string | undefined }>({
+            query: ({ ideaId }) => ({
+                url: `functions/v1/api/idea/${ideaId}/contents`,
+                method: "GET"
+            })
+        }),
+        // -----------------------IDEA TO CONTENT-------------------------
+        ideaToContent: builder.mutation<ideaToContentRes, ideaToContentReq>({
+            query: (payload) => ({
+                url: "functions/v1/api/idea-to-content",
+                method: "POST",
+                body: payload
+            })
+        })
     })
 })
 
@@ -110,5 +188,8 @@ export const {
     useListIdeasQuery,
     useCreateIdeaMutation,
     useCreateIdeaContentMutation,
+    useGetIdeaByIdQuery,
+    useGetContentByIdeaQuery,
+    useIdeaToContentMutation
 } = IdeaApi;
 export { IdeaApi };

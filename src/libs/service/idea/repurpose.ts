@@ -7,6 +7,7 @@ import { baseQuery } from "../supabase/baseQuery";
 interface repurposeContentProps {
     content_body: string;
     channel_id: string;
+    model: string;
 }
 
 interface RepurposeRes {

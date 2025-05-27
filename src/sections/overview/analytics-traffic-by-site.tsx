@@ -45,7 +45,6 @@ export function AnalyticsTrafficBySite({ title, subheader, list, sx, ...other }:
             {site.value === 'linkedin' && (
               <Iconify icon="eva:linkedin-fill" color="#0A66C2" width={32} />
             )}
-            {site.value === 'twitter' && <Iconify icon="ri:twitter-x-fill" width={32} />}
 
             <Typography variant="h6" sx={{ mt: 1 }}>
               {fShortenNumber(site.total)}

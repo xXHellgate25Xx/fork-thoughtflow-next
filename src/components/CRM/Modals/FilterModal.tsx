@@ -5,12 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from 'src/components
 import { Input } from 'src/components/ui/input';
 import { Label } from 'src/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'src/components/ui/select';
+import { HierarchicalOption } from 'src/types/filterDropdownTypes';
 
 export type FilterField = {
     field: string;
     label: string;
     type: 'select' | 'text' | 'number' | 'date';
-    options?: { value: string; label: string }[];
+    options?: HierarchicalOption[];
 };
 
 export type FilterValue = {
@@ -23,7 +24,7 @@ type FilterModalProps = {
     open: boolean;
     onClose: () => void;
     onApply: (filters: FilterValue[]) => void;
-    fields: FilterField[];
+    fields: Record<string, FilterField>;
     currentFilters: FilterValue[];
 };
 
@@ -38,7 +39,7 @@ const FilterModal = memo(({ open, onClose, onApply, fields, currentFilters }: Fi
     const handleAddFilter = useCallback(() => {
         if (!selectedField) return;
 
-        const field = fields.find(f => f.field === selectedField);
+        const field = fields[selectedField];
         if (!field) return;
 
         let initialValue: string | number;
@@ -106,7 +107,7 @@ const FilterModal = memo(({ open, onClose, onApply, fields, currentFilters }: Fi
                                 <SelectValue placeholder="Select field" />
                             </SelectTrigger>
                             <SelectContent>
-                                {fields.map((field) => (
+                                {Object.values(fields).map((field) => (
                                     <SelectItem key={field.field} value={field.field}>
                                         {field.label}
                                     </SelectItem>
@@ -125,7 +126,7 @@ const FilterModal = memo(({ open, onClose, onApply, fields, currentFilters }: Fi
 
                     <div className="space-y-2">
                         {filters.map((filter, index) => {
-                            const field = fields.find(f => f.field === filter.field);
+                            const field = fields[filter.field];
                             if (!field) return null;
 
                             return (
@@ -149,7 +150,7 @@ const FilterModal = memo(({ open, onClose, onApply, fields, currentFilters }: Fi
                                                 </SelectTrigger>
                                                 <SelectContent className="max-h-[200px] overflow-y-auto">
                                                     {field.options?.map((option) => (
-                                                        <SelectItem key={option.value} value={option.value}>
+                                                        <SelectItem key={option.value || ''} value={option.value || ''}>
                                                             {option.label}
                                                         </SelectItem>
                                                     ))}

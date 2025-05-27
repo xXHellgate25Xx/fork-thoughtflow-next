@@ -1,16 +1,16 @@
-import './editor.css';
-import { useRef, useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
+import { useEffect, useRef, useState } from 'react';
+import './editor.css';
 
+import { IMAGE_TYPE, pluginHeadings, pluginImage, pluginLink, pluginTextColor, pluginTextHighlight, RicosEditor } from '@wix/ricos';
 import type { PublicCommands } from '@wix/ricos/dist/src/ricos-types';
-import { RicosEditor, IMAGE_TYPE, pluginLink, pluginImage, pluginHeadings, pluginTextColor, pluginTextHighlight } from '@wix/ricos';
 
 import { Button, CircularProgress } from '@mui/material';
 
 import { toBase64 } from 'src/utils/encodeFileToBase64';
 import { processingFilePath } from 'src/utils/file-path-with-hash';
 
-import { useUploadToWixMutation, useUploadToSupabaseMutation } from 'src/libs/service/wix/wix';
+import { useUploadToSupabaseMutation, useUploadToWixMutation } from 'src/libs/service/wix/wix';
 
 
 function Editor({ content, callback, channel_id, content_id }: { content?: any, callback?: any, channel_id?: any, content_id?: any }) {
@@ -29,7 +29,6 @@ function Editor({ content, callback, channel_id, content_id }: { content?: any, 
       return;
     }
     if (content !== undefined && JSON.stringify(content) !== JSON.stringify(editorState)) {
-      console.log("Content prop changed, updating editor state", content);
       setEditorState(content);
     }
   }, [content]);
@@ -188,12 +187,6 @@ function Editor({ content, callback, channel_id, content_id }: { content?: any, 
     };
     input.click(); // Trigger the file picker
   };
-
-  // useEffect(() => {
-  //   console.log(content);
-  //   console.log("EditorState: ");
-  //   console.log(editorState);
-  // }, [editorState]);
 
   return (
     <>

@@ -1,104 +1,160 @@
+import { Team_MembersRecord } from 'src/types/airtableTypes';
 import { createTableHooks } from './useAirtableTable';
 
 import type {
-  Activity_LogRecord,
-  Chat_Bot_LeadsRecord,
-  EmployeesRecord,
+  AccountsRecord,
+  ActivityLogRecord,
+  ContactsRecord,
   OpportunitiesRecord,
-  Pipeline_StagesRecord,
-  Stage_ExplanationRecord,
-  ThoughtFlow___ContentRecord
-} from '../types/airtableTypes';
-import type { TableQueryOptions } from './useAirtableTable';
+  PipelineStageActivitiesRecord,
+  PipelineStagesRecord,
+  PlaybookRecord,
+  SurveyQuestionsRecord,
+  SurveyResponsesRecord,
+  SurveysRecord
+} from '../types/mapAirtableTypes';
 
+export const CRMTablesIds = {
+  Opportunities: '%5BCRM%5D%20Opportunities',
+  ActivityLog: '%5BCRM%5D%20Activity%20Log',
+  TeamMembers: '%5BCRM%5D%20Salespersons',
+  PipelineStages: '%5BCRM%5D%20Pipeline%20Stages',
+  PipelineStageActivities: '%5BCRM%5D%20Pipeline%20Stage%20Activities',
+  Surveys: '%5BCRM%5D%20Surveys',
+  SurveyQuestions: '%5BCRM%5D%20Survey%20Questions',
+  SurveyResponses: '%5BCRM%5D%20Survey%20Responses',
+  Contacts: '%5BCRM%5D%20Contacts',
+  Accounts: '%5BCRM%5D%20Accounts',
+  Playbook: '%5BCRM%5D%20Sales%20Playbook'
+}
 // Create hooks for Opportunities table
-export const OpportunityHooks = createTableHooks<OpportunitiesRecord>('Opportunities');
+export const OpportunityHooks = createTableHooks<OpportunitiesRecord>(CRMTablesIds.Opportunities);
 export const {
   useTable: useOpportunities,
+  useManualTable: useManualOpportunities,
   useRecordById: useOpportunityById,
   useCreateRecord: useCreateOpportunity,
   useUpdateRecord: useUpdateOpportunity,
-  useDeleteRecord: useDeleteOpportunity
+  useDeleteRecord: useDeleteOpportunity,
+  useAllAirtableRecords: useAllOpportunities
 } = OpportunityHooks;
-
-// Create hooks for Chat Bot Leads table
-export const ChatBotLeadsHooks = createTableHooks<Chat_Bot_LeadsRecord>('Chat_Bot_Leads');
-export const {
-  useTable: useChatBotLeads,
-  useRecordById: useChatBotLeadById,
-  useCreateRecord: useCreateChatBotLead,
-  useUpdateRecord: useUpdateChatBotLead,
-  useDeleteRecord: useDeleteChatBotLead
-} = ChatBotLeadsHooks;
-
-// Create hooks for ThoughtFlow Content table
-export const ContentHooks = createTableHooks<ThoughtFlow___ContentRecord>('ThoughtFlow___Content');
-export const {
-  useTable: useContent,
-  useRecordById: useContentById,
-  useCreateRecord: useCreateContent,
-  useUpdateRecord: useUpdateContent,
-  useDeleteRecord: useDeleteContent
-} = ContentHooks;
-
+  
 // Create hooks for Activity Log table
-export const ActivityLogHooks = createTableHooks<Activity_LogRecord>('Activity%20Log');
+export const ActivityLogHooks = createTableHooks<ActivityLogRecord>(CRMTablesIds.ActivityLog);
 export const {
-  useTable: useActivityLogs,
+  useTable: useActivityLog,
+  useManualTable: useManualActivityLog,
   useRecordById: useActivityLogById,
   useCreateRecord: useCreateActivityLog,
   useUpdateRecord: useUpdateActivityLog,
-  useDeleteRecord: useDeleteActivityLog
+  useDeleteRecord: useDeleteActivityLog,
+  useAllAirtableRecords: useAllActivityLog
 } = ActivityLogHooks;
 
-// Create hooks for Employees table
-export const EmployeesHooks = createTableHooks<EmployeesRecord>('Employees');
+// Create hooks for Team Members table
+export const TeamMembersHooks = createTableHooks<Team_MembersRecord>(CRMTablesIds.TeamMembers);
 export const {
-  useTable: useEmployees,
-  useRecordById: useEmployeeById,
-  useCreateRecord: useCreateEmployee,
-  useUpdateRecord: useUpdateEmployee,
-  useDeleteRecord: useDeleteEmployee
-} = EmployeesHooks;
+  useTable: useTeamMembers,
+  useRecordById: useTeamMemberById,
+  useCreateRecord: useCreateTeamMember,
+  useUpdateRecord: useUpdateTeamMember,
+  useDeleteRecord: useDeleteTeamMember,
+  useAllAirtableRecords: useAllTeamMembers
+} = TeamMembersHooks;
 
 // Create hooks for Pipeline Stages table
-export const PipelineStagesHooks = createTableHooks<Pipeline_StagesRecord>('Pipeline%20Stages');
+export const PipelineStagesHooks = createTableHooks<PipelineStagesRecord>(CRMTablesIds.PipelineStages);
 export const {
-  useTable: usePipelineStagesBase,
+  useTable: usePipelineStages,
   useRecordById: usePipelineStageById,
   useCreateRecord: useCreatePipelineStage,
   useUpdateRecord: useUpdatePipelineStage,
-  useDeleteRecord: useDeletePipelineStage
+  useDeleteRecord: useDeletePipelineStage,
+  useAllAirtableRecords: useAllPipelineStages
 } = PipelineStagesHooks;
-
-// Custom hook that returns sorted pipeline stages
-export const usePipelineStages = (options: TableQueryOptions = {}) => {
-  const result = usePipelineStagesBase(options);
   
-  // Sort the stages by ID if data is available
-  const sortedRecords = [...result.records].sort((a, b) => {
-    const aId = a['Stage ID'] || '';
-    const bId = b['Stage ID'] || '';
-    return aId.localeCompare(bId);
-  });
-  
-  return {
-    ...result,
-    records: sortedRecords
-  };
-};
 
-// Create hooks for Stage Explanation table
-export const StageExplanationHooks = createTableHooks<Stage_ExplanationRecord>('Stage%20Explanation');
+// Create hooks for Stage ActivityLog table
+export const PipelineStageActivitiesHooks = createTableHooks<PipelineStageActivitiesRecord>(CRMTablesIds.PipelineStageActivities);
 export const {
-  useTable: useStageExplanations,
-  useRecordById: useStageExplanationById,
-  useCreateRecord: useCreateStageExplanation,
-  useUpdateRecord: useUpdateStageExplanation,
-  useDeleteRecord: useDeleteStageExplanation
-} = StageExplanationHooks;
+  useTable: usePipelineStageActivities,
+  useRecordById: usePipelineStageActivityById,
+  useCreateRecord: useCreateStageActivityLog,
+  useUpdateRecord: useUpdateStageActivityLog,
+  useDeleteRecord: useDeleteStageActivityLog,
+  useAllAirtableRecords: useAllPipelineStageActivities
+} = PipelineStageActivitiesHooks;
+
+// Create hooks for Surveys table
+export const SurveysHooks = createTableHooks<SurveysRecord>(CRMTablesIds.Surveys);
+export const {
+  useTable: useSurveys,
+  useManualTable: useManualSurveys,
+  useRecordById: useSurveyById,
+  useCreateRecord: useCreateSurvey,
+  useUpdateRecord: useUpdateSurvey,
+  useDeleteRecord: useDeleteSurvey,
+  useAllAirtableRecords: useAllSurveys
+} = SurveysHooks;
+
+// Create hooks for Survey Questions table
+export const SurveyQuestionsHooks = createTableHooks<SurveyQuestionsRecord>(CRMTablesIds.SurveyQuestions);
+export const {
+  useTable: useSurveyQuestions,
+  useManualTable: useManualSurveyQuestions,
+  useRecordById: useSurveyQuestionById,
+  useCreateRecord: useCreateSurveyQuestion,
+  useUpdateRecord: useUpdateSurveyQuestion,
+  useDeleteRecord: useDeleteSurveyQuestion,
+  useAllAirtableRecords: useAllSurveyQuestions
+} = SurveyQuestionsHooks;
+
+// Create hooks for Survey Responses table
+export const SurveyResponsesHooks = createTableHooks<SurveyResponsesRecord>(CRMTablesIds.SurveyResponses);
+export const {
+  useTable: useSurveyResponses,
+  useManualTable: useManualSurveyResponses,
+  useRecordById: useSurveyResponseById,
+  useCreateRecord: useCreateSurveyResponse,
+  useUpdateRecord: useUpdateSurveyResponse,
+  useDeleteRecord: useDeleteSurveyResponse,
+  useAllAirtableRecords: useAllSurveyResponses
+} = SurveyResponsesHooks;
+
+// Create hooks for Contacts table
+export const ContactsHooks = createTableHooks<ContactsRecord>(CRMTablesIds.Contacts);
+export const {
+  useTable: useContacts,
+  useRecordById: useContactById,
+  useCreateRecord: useCreateContact,
+  useUpdateRecord: useUpdateContact,
+  useDeleteRecord: useDeleteContact,
+  useAllAirtableRecords: useAllContacts
+} = ContactsHooks;
+
+// Create hooks for Accounts table
+export const AccountsHooks = createTableHooks<AccountsRecord>(CRMTablesIds.Accounts);
+export const {
+  useTable: useAccounts,
+  useRecordById: useAccountById,
+  useCreateRecord: useCreateAccount,
+  useUpdateRecord: useUpdateAccount,
+  useDeleteRecord: useDeleteAccount,
+  useAllAirtableRecords: useAllAccounts
+} = AccountsHooks;
+
+// Create hooks for Playbooks table
+export const PlaybookHooks = createTableHooks<PlaybookRecord>(CRMTablesIds.Playbook);
+export const {
+  useTable: usePlaybook,
+  useRecordById: usePlaybookById,
+  useCreateRecord: useCreatePlaybook,
+  useUpdateRecord: useUpdatePlaybook,
+  useDeleteRecord: useDeletePlaybook,
+  useAllAirtableRecords: useAllPlaybook
+} = PlaybookHooks;
 
 // Generic function to create hooks for any table dynamically
 export function getTableHooks<T>(tableId: string) {
   return createTableHooks<T>(tableId);
-} 
+}

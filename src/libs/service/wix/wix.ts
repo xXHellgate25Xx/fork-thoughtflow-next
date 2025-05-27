@@ -53,6 +53,36 @@ export interface WixUploadRequest {
 //   error?: any;
 // }
 
+export interface ListWixDraftPostResponse {
+  draftPost?: {
+    id: string;
+    title: string;
+    featured: boolean;
+    categoryIds: string[];
+    memberId: string;
+    status: string;
+    url: {
+      base: string;
+      path: string;
+    };
+    seoSlug: string;
+    seoData?: {
+      tags?: Tags[];
+    };
+    minutesToRead: number;
+    firstPublishedDate: string;
+    editedDate: string;
+    hasUnpublishedChanges: boolean;
+  }[];
+  error?: any;
+}
+
+export interface ValidateWixChannelReq {
+  wix_account_id: string,
+  wix_site_id: string,
+  wix_api_key: string,
+}
+
 export interface WixDraftPostResponse {
   draftPost?: {
     id: string;
@@ -85,6 +115,7 @@ export interface WixCreatePublishPostRequest {
   seo_slug?: string;
   seo_title_tag?: Tags | null;
   seo_meta_description?: Tags | null;
+  pillar_id: string | null;
 }
 
 export const WixApi = createApi({
@@ -128,6 +159,16 @@ export const WixApi = createApi({
         body: CreatePublishReq,
       }),
     }),
+    ValidateWix: builder.mutation<
+      ListWixDraftPostResponse,
+      { ValidateWix: ValidateWixChannelReq }
+    >({
+      query: ({ ValidateWix }) => ({
+        url: `functions/v1/api/integrations/wix/validate/post`,
+        method: 'POST',
+        body: ValidateWix,
+      }),
+    }),
   }),
 });
 
@@ -135,4 +176,5 @@ export const WixApi = createApi({
 export const { 
   useUploadToWixMutation,
   useUploadToSupabaseMutation,
-  useCreatePublishToWixMutation } = WixApi;
+  useCreatePublishToWixMutation,
+  useValidateWixMutation } = WixApi;

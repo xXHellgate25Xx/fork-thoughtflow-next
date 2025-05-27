@@ -13,12 +13,12 @@ import {
     Select,
     TextField,
     Tooltip,
-    Typography,
     useTheme
 } from '@mui/material';
 import { format as formatDate, parseISO } from 'date-fns';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { Combobox, ComboboxOption } from 'src/components/ui/combobox';
 import type { FieldDef, FormRecord } from './types';
 
 // Custom hook for handling resize
@@ -28,7 +28,6 @@ const useResize = (initialWidth: number | string) => {
     const [startX, setStartX] = useState(0);
     const [startWidth, setStartWidth] = useState(0);
     const [resizeFromLeft, setResizeFromLeft] = useState(false);
-
     const handleMouseDown = useCallback((e: React.MouseEvent, fromLeft: boolean = false) => {
         setIsResizing(true);
         setStartX(e.clientX);
@@ -77,9 +76,11 @@ export interface EditDrawerProps<T extends FormRecord> {
     customContent?: ReactNode;
     submitLoading?: boolean;
     hideCloseIcon?: boolean;
+    searchOptions?: Record<string, ComboboxOption[]>;
+    onFieldChange?: (field: keyof T, value: any, record: Partial<T>) => void;
 }
 
-export default function EditDrawer<T extends FormRecord>({
+export const EditDrawer = <T extends FormRecord>({
     open,
     onClose,
     title,
@@ -91,7 +92,9 @@ export default function EditDrawer<T extends FormRecord>({
     customContent,
     submitLoading = false,
     hideCloseIcon = false,
-}: EditDrawerProps<T>) {
+    searchOptions = {},
+    onFieldChange,
+}: EditDrawerProps<T>) => {
     const [record, setRecord] = useState<Partial<T>>(initialRecord);
     const [errors, setErrors] = useState<Record<keyof T | string, string>>({} as Record<keyof T | string, string>);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,14 +108,33 @@ export default function EditDrawer<T extends FormRecord>({
             setErrors({} as Record<keyof T | string, string>);
         }
     }, [open, initialRecord]);
-
+    useEffect(() => {
+        if (!fields) return;
+        setRecord(prev => {
+            let updated = { ...prev };
+            fields.forEach(field => {
+                if (field.type === 'search') {
+                    const options = searchOptions[field.name as string] || [];
+                    const value: string = Array.isArray(prev[field.name]) ? prev[field.name][0] : prev[field.name];
+                    // If value is not in new options, set to undefined
+                    if (value && !options.some(opt => opt.value === value)) {
+                        console.log(field.name, value, options);
+                        updated = {
+                            ...updated, [field.name]: options[0]?.value ?? undefined
+                        }
+                    }
+                }
+            });
+            return updated;
+        });
+    }, [searchOptions]);
     const handleInputChange = (field: keyof T, value: any) => {
         const fieldDef = fields?.find(f => f.name === field);
 
         // Handle percentage fields
         if (fieldDef?.type === 'percentage') {
             if (value === '' || Number.isNaN(value)) {
-                value = 0;
+                value = null;
             } else {
                 value = parseFloat(value) / 100;
             }
@@ -123,17 +145,23 @@ export default function EditDrawer<T extends FormRecord>({
         }
         // Handle empty values for number fields
         else if (fieldDef?.type === 'number' || fieldDef?.type === 'currency') {
-            if (value === '' || Number.isNaN(value)) {
-                value = 0;
-            } else {
+            if (value === '') {
+                value = null;
+            } else if (!Number.isNaN(Number(value))) {
                 value = parseFloat(value);
             }
         }
-
-        setRecord(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setRecord(prev => {
+            const updated = {
+                ...prev,
+                [field]: value
+            };
+            // Fire callback after state update
+            if (onFieldChange) {
+                onFieldChange(field, value, updated);
+            }
+            return updated;
+        });
         // Clear error for the changed field
         setErrors(prev => ({
             ...prev,
@@ -204,7 +232,14 @@ export default function EditDrawer<T extends FormRecord>({
             // Return the actual value from record if it exists, otherwise return empty string
             return record[field.name] !== undefined ? record[field.name] : '';
         }
-        if (record[field.name] !== undefined) {
+        if (field.type === 'search') {
+            const value = record[field.name];
+            if (Array.isArray(value)) {
+                return value[0] || '';
+            }
+            return value || '';
+        }
+        if (record[field.name] !== undefined && record[field.name] !== null) {
             return record[field.name];
         }
         return field.defaultValue || '';
@@ -212,6 +247,7 @@ export default function EditDrawer<T extends FormRecord>({
 
     return (
         <Dialog
+            key={JSON.stringify(initialRecord)}
             open={open}
             onClose={onClose}
             maxWidth="sm"
@@ -315,79 +351,162 @@ export default function EditDrawer<T extends FormRecord>({
                                     {field.renderField ? (
                                         field.renderField(getFieldValue(field), (value) => handleInputChange(field.name, value))
                                     ) : field.type === 'textarea' ? (
-                                        <TextField
-                                            fullWidth
-                                            label={field.label}
-                                            value={getFieldValue(field)}
-                                            onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                            multiline
-                                            disabled={field.disabled}
-                                            rows={field.rows || 4}
-                                            variant="outlined"
-                                            error={!!errors[field.name]}
-                                            helperText={errors[field.name] || field.helperText}
-                                        />
+                                        <>
+                                            <TextField
+                                                fullWidth
+                                                label={field.label}
+                                                value={getFieldValue(field)}
+                                                onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                                multiline
+                                                disabled={field.disabled}
+                                                rows={field.rows || 4}
+                                                variant="outlined"
+                                                error={!!errors[field.name]}
+                                            />
+                                            {(errors[field.name] || field.helperText) && (
+                                                <div
+                                                    className={
+                                                        errors[field.name]
+                                                            ? 'text-xs font-light text-red-600 mt-2 block'
+                                                            : 'text-xs font-light text-gray-500 mt-2 block'
+                                                    }
+                                                >
+                                                    {errors[field.name] || field.helperText}
+                                                </div>
+                                            )}
+                                        </>
                                     ) : field.type === 'select' ? (
-                                        <FormControl fullWidth variant="outlined" disabled={field.disabled}>
-                                            <InputLabel>{field.label}</InputLabel>
-                                            <Select
+                                        <>
+                                            <FormControl fullWidth variant="outlined" disabled={field.disabled} error={!!errors[field.name]}>
+                                                <InputLabel>{field.label}</InputLabel>
+                                                <Select
+                                                    value={String(getFieldValue(field) || '')}
+                                                    onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                                    label={field.label}
+                                                >
+                                                    {
+                                                        field.options && Object.entries(field.options).map(([value, label]) => (
+                                                            <MenuItem key={value} value={value}>
+                                                                {label}
+                                                            </MenuItem>
+                                                        ))
+                                                    }
+                                                </Select>
+                                            </FormControl>
+                                            {(errors[field.name] || field.helperText) && (
+                                                <div
+                                                    className={
+                                                        errors[field.name]
+                                                            ? 'text-xs font-light text-red-600 mt-2 block'
+                                                            : 'text-xs font-light text-gray-500 mt-2 block'
+                                                    }
+                                                >
+                                                    {errors[field.name] || field.helperText}
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : field.type === 'number' || field.type === 'currency' || field.type === 'percentage' ? (
+                                        <>
+                                            <TextField
+                                                fullWidth
+                                                disabled={field.disabled}
+                                                label={field.label}
+                                                type="number"
+                                                value={getFieldValue(field)}
+                                                onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                                onWheel={(e) => e.currentTarget.getElementsByTagName('input')[0]?.blur()}
+                                                variant="outlined"
+                                                error={!!errors[field.name]}
+                                                InputProps={field.type === 'currency' ? {
+                                                    startAdornment: <span style={{ marginRight: 8 }}>$</span>
+                                                } : field.type === 'percentage' ? {
+                                                    endAdornment: <span style={{ marginLeft: 8 }}>%</span>
+                                                } : undefined}
+                                            />
+                                            {(errors[field.name] || field.helperText) && (
+                                                <div
+                                                    className={
+                                                        errors[field.name]
+                                                            ? 'text-xs font-light text-red-600 mt-2 block'
+                                                            : 'text-xs font-light text-gray-500 mt-2 block'
+                                                    }
+                                                >
+                                                    {errors[field.name] || field.helperText}
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : field.type === 'date' ? (
+                                        <>
+                                            <TextField
+                                                fullWidth
+                                                disabled={field.disabled}
+                                                label={field.label}
+                                                type="date"
+                                                value={getFieldValue(field)}
+                                                onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                                variant="outlined"
+                                                error={!!errors[field.name]}
+                                            />
+                                            {(errors[field.name] || field.helperText) && (
+                                                <div
+                                                    className={
+                                                        errors[field.name]
+                                                            ? 'text-xs font-light text-red-600 mt-2 block'
+                                                            : 'text-xs font-light text-gray-500 mt-2 block'
+                                                    }
+                                                >
+                                                    {errors[field.name] || field.helperText}
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : field.type === 'search' ? (
+                                        <>
+                                            <div style={{ marginBottom: 4, marginLeft: 2, fontSize: '0.85rem', fontWeight: 400, color: theme.palette.text.secondary }}>
+                                                {field.label}
+                                            </div>
+                                            <Combobox
+                                                options={searchOptions[field.name as string] as ComboboxOption[] || []}
+                                                value={getFieldValue(field)}
+                                                onChange={val => handleInputChange(field.name, val)}
+                                                placeholder={field.label}
+                                                width="100%"
+                                                disabled={field.disabled}
+                                            />
+                                            {(errors[field.name] || field.helperText) && (
+                                                <div
+                                                    className={
+                                                        errors[field.name]
+                                                            ? 'text-xs font-light text-red-600 mt-2 block'
+                                                            : 'text-xs font-light text-gray-500 mt-2 block'
+                                                    }
+                                                >
+                                                    {errors[field.name] || field.helperText}
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <TextField
+                                                fullWidth
+                                                disabled={field.disabled}
+                                                label={field.label}
                                                 value={String(getFieldValue(field) || '')}
                                                 onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                                label={field.label}
+                                                variant="outlined"
                                                 error={!!errors[field.name]}
-                                            >
-                                                {field.options?.map((option) => (
-                                                    <MenuItem key={String(option.value)} value={String(option.value)}>
-                                                        {option.label}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
+                                            />
                                             {(errors[field.name] || field.helperText) && (
-                                                <Typography variant="caption" color={errors[field.name] ? "error" : "textSecondary"} sx={{ mt: 1 }}>
+                                                <div
+                                                    className={
+                                                        errors[field.name]
+                                                            ? 'text-xs font-light text-red-600 mt-2 block'
+                                                            : 'text-xs font-light text-gray-500 mt-2 block'
+                                                    }
+                                                >
                                                     {errors[field.name] || field.helperText}
-                                                </Typography>
+                                                </div>
                                             )}
-                                        </FormControl>
-                                    ) : field.type === 'number' || field.type === 'currency' || field.type === 'percentage' ? (
-                                        <TextField
-                                            fullWidth
-                                            disabled={field.disabled}
-                                            label={field.label}
-                                            type="number"
-                                            value={getFieldValue(field)}
-                                            onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                            variant="outlined"
-                                            error={!!errors[field.name]}
-                                            helperText={errors[field.name] || field.helperText}
-                                            InputProps={field.type === 'currency' ? {
-                                                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
-                                            } : field.type === 'percentage' ? {
-                                                endAdornment: <Typography sx={{ ml: 1 }}>%</Typography>
-                                            } : undefined}
-                                        />
-                                    ) : field.type === 'date' ? (
-                                        <TextField
-                                            fullWidth
-                                            disabled={field.disabled}
-                                            label={field.label}
-                                            type="date"
-                                            value={getFieldValue(field)}
-                                            onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                            variant="outlined"
-                                            error={!!errors[field.name]}
-                                            helperText={errors[field.name] || field.helperText}
-                                        />
-                                    ) : (
-                                        <TextField
-                                            fullWidth
-                                            disabled={field.disabled}
-                                            label={field.label}
-                                            value={String(getFieldValue(field) || '')}
-                                            onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                            variant="outlined"
-                                            error={!!errors[field.name]}
-                                            helperText={errors[field.name] || field.helperText}
-                                        />
+                                        </>
                                     )}
                                 </Box>
                             ))}

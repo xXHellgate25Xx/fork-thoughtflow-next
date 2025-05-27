@@ -1,70 +1,184 @@
 import { Box, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Button as MuiButton, Select, TextField } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
-import type { EmployeesRecord, OpportunitiesRecord } from 'src/types/airtableTypes';
-import { ActivityLogRecord } from 'src/types/supabase';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFetchStageQuestions } from 'src/hooks/useSurveys';
+import { formatSurveyResponses } from 'src/libs/utils/surveyResponseUtil';
+import type { ActivityLogRecord, OpportunitiesRecord, PipelineStageActivitiesRecord, SurveyQuestionsRecord, TeamMembersRecord } from 'src/types/mapAirtableTypes';
+import SurveySection from '../Surveys/SurveySection';
 
 interface ActivityLogModalProps {
     open: boolean;
     onClose: () => void;
     selectedOpportunity: Partial<OpportunitiesRecord> | null;
-    statusLabels: Record<string, string>;
-    stageExplanationLabels: Record<string, Record<string, string>>;
-    onSubmit: (formValues: Partial<ActivityLogRecord>) => Promise<void>;
+    stageLabels: Record<string, string>;
+    stageActivitiesLabels: Record<string, Record<string, string>>;
+    stageActivityIds: Record<string, string>;
+    stageActivities: Partial<PipelineStageActivitiesRecord>[];
+    onSubmit: (formValues: Partial<ActivityLogRecord & {
+        surveyId?: string;
+        surveyResponses?: string;
+    }>) => Promise<void>;
     isLoading: boolean;
-    employees: Partial<EmployeesRecord>[];
+    owners: Partial<TeamMembersRecord>[];
 }
 
 const ActivityLogModal = ({
     open,
     onClose,
     selectedOpportunity,
-    statusLabels,
-    stageExplanationLabels,
+    stageLabels,
+    stageActivitiesLabels,
+    stageActivityIds,
+    stageActivities,
     onSubmit,
     isLoading,
-    employees
+    owners
 }: ActivityLogModalProps) => {
     // Local state for the form values
     const [localFormValues, setLocalFormValues] = useState<Partial<ActivityLogRecord>>(() => ({
-        prospectId: selectedOpportunity?.id || '',
-        logDate: new Date().toISOString().split('T')[0],
-        currentStage: selectedOpportunity?.['Current Stage']?.[0] || '',
-        newStage: '',
-        nextContactDate: '',
-        closeProbability: selectedOpportunity?.['Close Probability'] || '',
-        note: '',
-        explanation: '',
-        assignedTo: selectedOpportunity?.Salesperson?.[0] || '',
+        Opportunity: selectedOpportunity?.id || '',
+        "Created": new Date().toISOString().split('T')[0],
+        "Current Stage": selectedOpportunity?.Stage?.[0] || '',
+        "New Stage": '',
+        "Next Contact Date": '',
+        "Close Probability by Salesperson": 0,
+        "Notes": '',
+        "Stage Activity": '',
+        "Assigned To": selectedOpportunity?.Owner?.[0] || '',
     }));
 
     // Reset form values when modal opens with different opportunity
+    const { fetchStageQuestions, isLoading: isLoadingQuestions, error: questionsError } = useFetchStageQuestions();
+    const [surveyState, setSurveyState] = useState({
+        questions: [] as Partial<SurveyQuestionsRecord>[],
+        hasAnySurvey: false,
+        surveyId: undefined as string | undefined,
+        responses: {} as Record<string, string>
+    });
+
+    // Remove individual loading states
+    const [isApplyingChanges, setIsApplyingChanges] = useState(false);
+
+    // Cache for survey questions by stage
+    const [questionCache, setQuestionCache] = useState<Record<string, {
+        questions: Partial<SurveyQuestionsRecord>[];
+        hasAnySurvey: boolean;
+        surveyId: string | undefined;
+        timestamp: number;
+    }>>({});
+
+    const stageActivitiesById = useMemo(() => stageActivities.reduce((acc, activity) => {
+        if (activity.id) {
+            acc[activity.id] = activity;
+        }
+        return acc;
+    }, {} as Record<string, Partial<PipelineStageActivitiesRecord>>), [stageActivities]);
+
+    // Cache expiration time (5 minutes)
+    const CACHE_EXPIRATION = 5 * 60 * 1000;
+
+    const fetchAndCacheQuestions = useCallback(async (activityStageId: string) => {
+        // Check cache first
+        const cachedData = questionCache[activityStageId];
+        const now = Date.now();
+
+        if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRATION) {
+            setSurveyState(prev => ({
+                ...prev,
+                questions: cachedData.questions,
+                hasAnySurvey: cachedData.hasAnySurvey,
+                surveyId: cachedData.surveyId
+            }));
+            return;
+        }
+
+        try {
+            const result = await fetchStageQuestions(stageActivityIds[activityStageId]);
+            // Update cache
+            setQuestionCache(prev => ({
+                ...prev,
+                [activityStageId]: {
+                    ...result,
+                    timestamp: now
+                }
+            }));
+
+            setSurveyState(prev => ({
+                ...prev,
+                questions: result.questions,
+                hasAnySurvey: result.hasAnySurvey,
+                surveyId: result.surveyId
+            }));
+        } catch (error) {
+            console.error('❌ Failed to fetch survey questions:', error);
+        }
+    }, [fetchStageQuestions, stageLabels, questionCache, CACHE_EXPIRATION]);
+
     useEffect(() => {
         if (open) {
             setLocalFormValues({
-                prospectId: selectedOpportunity?.id || '',
-                logDate: new Date().toISOString().split('T')[0],
-                currentStage: selectedOpportunity?.['Current Stage']?.[0] || '',
-                newStage: '',
-                nextContactDate: '',
-                closeProbability: selectedOpportunity?.['Close Probability'] || '',
-                note: '',
-                explanation: '',
-                assignedTo: selectedOpportunity?.Salesperson?.[0] || '',
+                Opportunity: selectedOpportunity?.id || '',
+                "Created": new Date().toISOString().split('T')[0],
+                "Current Stage": selectedOpportunity?.Stage?.[0] || '',
+                "New Stage": '',
+                "Next Contact Date": '',
+                "Close Probability by Salesperson": 0,
+                "Notes": '',
+                "Stage Activity": '',
+                "Assigned To": selectedOpportunity?.Owner?.[0] || '',
             });
-            // Clear any previous errors
+            // Clear any previous errors and survey state
             setErrors({});
+            setSurveyState({
+                questions: [],
+                hasAnySurvey: false,
+                surveyId: undefined,
+                responses: {}
+            });
         }
     }, [open, selectedOpportunity]);
 
     // Validation state
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    // Add a ref to store the trigger element
+    const triggerRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+        if (open) {
+            // Store the currently focused element as the trigger
+            triggerRef.current = document.activeElement as HTMLElement;
+        }
+    }, [open]);
+
+    // Custom close handler to return focus
+    const handleCloseWithFocus = useCallback(() => {
+        // Return focus to the trigger element BEFORE closing the modal
+        if (triggerRef.current) {
+            triggerRef.current.focus();
+        }
+        onClose();
+    }, [onClose]);
+
     // Local handlers
-    const handleLocalInputChange = (field: string, value: any) => {
+    const handleLocalInputChange = async (field: keyof typeof localFormValues, value: any) => {
+
+        if (field === 'New Stage') {
+            setLocalFormValues(prev => ({
+                ...prev,
+                "Stage Activity": ''
+            }));
+        }
         setLocalFormValues(prev => ({
             ...prev,
             [field]: value
         }));
+
+
+        // Clear survey responses and fetch new questions when stage changes
+        if (field === 'Stage Activity') {
+            setSurveyState(prev => ({ ...prev, responses: {} }));
+            await fetchAndCacheQuestions(value);
+        }
 
         // Clear error for the field being changed
         setErrors(prev => ({
@@ -73,22 +187,33 @@ const ActivityLogModal = ({
         }));
     };
 
+    const handleSurveyResponse = async (questionId: string | undefined, label: string, response: string) => {
+        if (!questionId) return;
+
+        setIsApplyingChanges(true);
+
+        setSurveyState(prev => ({
+            ...prev,
+            responses: { ...prev.responses, [questionId]: `${response}` }
+        }));
+
+        setIsApplyingChanges(false);
+    };
+
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!localFormValues.newStage) {
-            newErrors.newStage = 'New Stage is required';
+        if (!localFormValues["New Stage"]) {
+            newErrors["New Stage"] = 'New Stage is required';
         }
-        if (!localFormValues.closeProbability) {
-            newErrors.closeProbability = 'Close Probability is required';
+        if (!localFormValues["Assigned To"]) {
+            newErrors["Assigned To"] = 'Assigned To is required';
         }
-        if (!localFormValues.assignedTo) {
-            newErrors.assignedTo = 'Assigned To is required';
+        if (!localFormValues["Stage Activity"]) {
+            newErrors["Stage Activity"] = 'Stage Activity is required';
         }
-        // Require explanation for all stages
-        if (!localFormValues.explanation) {
-            newErrors.explanation = 'Explanation is required';
-        }
+
+        // Remove survey validation since questions are optional
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -107,6 +232,15 @@ const ActivityLogModal = ({
                 }
                 return acc;
             }, {} as Record<string, any>);
+            filteredFormValues.surveyId = surveyState.surveyId;
+
+            // Only add survey responses if there are questions and at least one response
+            if (surveyState.questions.length > 0 && surveyState.surveyId && Object.keys(surveyState.responses).length > 0) {
+                const formattedResponses = formatSurveyResponses(surveyState.questions, surveyState.responses);
+                if (formattedResponses) {
+                    filteredFormValues.surveyResponses = formattedResponses;
+                }
+            }
 
             await onSubmit(filteredFormValues);
         } catch (err) {
@@ -114,21 +248,20 @@ const ActivityLogModal = ({
         }
     };
 
-    // Get available explanations for the selected stage
-    const availableExplanations = useMemo(() => {
-        const explanations = localFormValues.newStage ? stageExplanationLabels[localFormValues.newStage] || {} : {};
-        if (Object.keys(explanations).length === 1) {
-            handleLocalInputChange('explanation', Object.keys(explanations)[0]);
+    // Get available stage activities for the selected stage
+    const availableStageActivities = useMemo(() => {
+        const filteredStageActivities = localFormValues["New Stage"] ? stageActivitiesLabels[localFormValues["New Stage"]] || {} : {};
+        if (Object.keys(filteredStageActivities).length === 1) {
+            handleLocalInputChange('Stage Activity', Object.keys(filteredStageActivities)[0]);
         }
-        return explanations;
-    }, [localFormValues.newStage, stageExplanationLabels]
-    );
+        return filteredStageActivities;
+    }, [localFormValues["New Stage"], stageActivitiesLabels]);
 
     return (
         <Dialog
             open={open}
-            onClose={onClose}
-            maxWidth="sm"
+            onClose={handleCloseWithFocus}
+            maxWidth="md"
             fullWidth
         >
             <DialogTitle>Create New Activity</DialogTitle>
@@ -143,7 +276,7 @@ const ActivityLogModal = ({
                 >
                     <TextField
                         label="Current Stage"
-                        value={statusLabels[selectedOpportunity?.['Current Stage']?.[0] || ''] || ''}
+                        value={stageLabels[selectedOpportunity?.Stage?.[0] || ''] || ''}
                         disabled
                         fullWidth
                         InputLabelProps={{
@@ -154,73 +287,85 @@ const ActivityLogModal = ({
                     <FormControl fullWidth>
                         <InputLabel shrink>New Stage *</InputLabel>
                         <Select
-                            value={localFormValues.newStage || ''}
-                            onChange={(e) => handleLocalInputChange('newStage', e.target.value)}
+                            value={localFormValues["New Stage"] || ''}
+                            onChange={(e) => handleLocalInputChange('New Stage', e.target.value)}
                             displayEmpty
                             label="New Stage"
                             inputProps={{ 'aria-label': 'New Stage' }}
-                            error={!!errors.newStage}
+                            error={!!errors["New Stage"]}
                         >
-                            {Object.entries(statusLabels)
+                            {Object.entries(stageLabels)
                                 .map(([value, label]) => (
                                     <MenuItem key={value} value={value}>
                                         {label}
                                     </MenuItem>
                                 ))}
                         </Select>
-                        {errors.newStage && (
-                            <div className="text-red-500 text-xs mt-1">{errors.newStage}</div>
+                        {errors["New Stage"] && (
+                            <div className="text-red-500 text-xs mt-1">{errors["New Stage"]}</div>
                         )}
                     </FormControl>
 
+
                     <FormControl fullWidth>
-                        <InputLabel shrink>Explanation *</InputLabel>
+                        <InputLabel shrink>Stage Activity *</InputLabel>
                         <Select
-                            value={localFormValues.explanation || ''}
-                            onChange={(e) => handleLocalInputChange('explanation', e.target.value)}
+                            value={localFormValues["Stage Activity"] || ''}
+                            onChange={(e) => handleLocalInputChange('Stage Activity', e.target.value)}
                             displayEmpty
-                            label="Explanation"
-                            inputProps={{ 'aria-label': 'Explanation' }}
-                            disabled={!localFormValues.newStage}
+                            label="Stage Activity"
+                            inputProps={{ 'aria-label': 'Stage Activity' }}
+                            disabled={!localFormValues["New Stage"]}
                             required
                         >
-                            {Object.entries(availableExplanations).map(([id, text]) => (
+                            {Object.entries(availableStageActivities).map(([id, text]) => (
                                 <MenuItem key={id} value={id}>
                                     {text}
+                                    {stageActivitiesById[id]?.Automated && <span className="text-xs mx-2 border border-green-800 bg-green-100 text-green-800  px-2 rounded-sm uppercase">Automated</span>}
                                 </MenuItem>
                             ))}
                         </Select>
-                        {errors.explanation && (
-                            <div className="text-red-500 text-xs mt-1">{errors.explanation}</div>
+                        {errors["Stage Activity"] && (
+                            <div className="text-red-500 text-xs mt-1">{errors["Stage Activity"]}</div>
                         )}
                     </FormControl>
 
+                    <SurveySection
+                        newStage={localFormValues["New Stage"]}
+                        stageLabels={stageLabels}
+                        isLoadingQuestions={isLoadingQuestions}
+                        questionsError={questionsError}
+                        surveyState={surveyState}
+                        errors={errors}
+                        onSurveyResponse={handleSurveyResponse}
+                        isApplyingChanges={isApplyingChanges}
+                    />
                     <FormControl fullWidth>
                         <InputLabel shrink>Assigned To *</InputLabel>
                         <Select
-                            value={localFormValues.assignedTo || ''}
-                            onChange={(e) => handleLocalInputChange('assignedTo', e.target.value)}
+                            value={localFormValues["Assigned To"] || ''}
+                            onChange={(e) => handleLocalInputChange('Assigned To', e.target.value)}
                             displayEmpty
                             label="Assigned To"
                             inputProps={{ 'aria-label': 'Assigned To' }}
                             required
                         >
-                            {employees.map((employee) => (
-                                <MenuItem key={employee.id} value={employee.id}>
-                                    {employee.Name}
+                            {owners.map((owner) => (
+                                <MenuItem key={owner.id} value={owner.id}>
+                                    {owner['Full Name']}
                                 </MenuItem>
                             ))}
                         </Select>
-                        {errors.assignedTo && (
-                            <div className="text-red-500 text-xs mt-1">{errors.assignedTo}</div>
+                        {errors["Assigned To"] && (
+                            <div className="text-red-500 text-xs mt-1">{errors["Assigned To"]}</div>
                         )}
                     </FormControl>
 
                     <FormControl fullWidth>
                         <InputLabel shrink>Close Probability (%)</InputLabel>
                         <Select
-                            value={localFormValues.closeProbability || ''}
-                            onChange={(e) => handleLocalInputChange('closeProbability', e.target.value)}
+                            value={localFormValues["Close Probability by Salesperson"] || ''}
+                            onChange={(e) => handleLocalInputChange('Close Probability by Salesperson', e.target.value)}
                             displayEmpty
                             label="Close Probability (%)"
                             inputProps={{ 'aria-label': 'Close Probability' }}
@@ -231,8 +376,8 @@ const ActivityLogModal = ({
                                 </MenuItem>
                             ))}
                         </Select>
-                        {errors.closeProbability && (
-                            <div className="text-red-500 text-xs mt-1">{errors.closeProbability}</div>
+                        {errors["Close Probability by Salesperson"] && (
+                            <div className="text-red-500 text-xs mt-1">{errors["Close Probability by Salesperson"]}</div>
                         )}
                     </FormControl>
 
@@ -240,32 +385,32 @@ const ActivityLogModal = ({
                         label="Next Contact Date"
                         type="date"
                         fullWidth
-                        value={localFormValues.nextContactDate || ''}
-                        onChange={(e) => handleLocalInputChange('nextContactDate', e.target.value)}
+                        value={localFormValues["Next Contact Date"] || ''}
+                        onChange={(e) => handleLocalInputChange('Next Contact Date', e.target.value)}
                         InputLabelProps={{
                             shrink: true,
                         }}
-                        error={!!errors.nextContactDate}
-                        helperText={errors.nextContactDate}
+                        error={!!errors["Next Contact Date"]}
+                        helperText={errors["Next Contact Date"]}
                     />
 
                     <TextField
-                        label="Note"
+                        label="Notes"
                         multiline
                         rows={4}
                         fullWidth
-                        required={['rec2LE93oDi5jf8ei', 'recJswG7wMvNozrvm'].includes(localFormValues.newStage)}
-                        value={localFormValues.note || ''}
-                        onChange={(e) => handleLocalInputChange('note', e.target.value)}
-                        error={!!errors.note}
-                        helperText={errors.note || (['rec2LE93oDi5jf8ei', 'recJswG7wMvNozrvm'].includes(localFormValues.newStage) ? 'Note is required for this new stage' : '')}
+                        required={['rec2LE93oDi5jf8ei', 'recJswG7wMvNozrvm'].includes(localFormValues["New Stage"])}
+                        value={localFormValues.Notes || ''}
+                        onChange={(e) => handleLocalInputChange('Notes', e.target.value)}
+                        error={!!errors.Notes}
+                        helperText={errors.Notes}
                     />
 
                     <TextField
-                        label="Log Date"
+                        label="Created"
                         type="date"
                         fullWidth
-                        value={localFormValues.logDate || ''}
+                        value={localFormValues.Created || ''}
                         disabled
                         InputLabelProps={{
                             shrink: true,
@@ -274,8 +419,14 @@ const ActivityLogModal = ({
                 </Box>
             </DialogContent>
             <DialogActions>
-                <MuiButton variant="text" onClick={onClose}>Cancel</MuiButton>
-                <MuiButton variant="contained" color="primary" onClick={handleLocalSave} disabled={isLoading}>
+                <MuiButton onClick={(e) => {
+                    e.preventDefault();
+                    handleCloseWithFocus();
+                }}>Cancel</MuiButton>
+                <MuiButton variant="contained" color="primary" onClick={(e) => {
+                    e.preventDefault();
+                    handleLocalSave();
+                }} disabled={isLoading}>
                     {isLoading ? 'Saving...' : 'Save Activity'}
                 </MuiButton>
             </DialogActions>
@@ -283,4 +434,4 @@ const ActivityLogModal = ({
     );
 };
 
-export default ActivityLogModal; 
+export default ActivityLogModal;

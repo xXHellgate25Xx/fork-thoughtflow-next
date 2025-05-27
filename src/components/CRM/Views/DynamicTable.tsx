@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import React, { useCallback } from 'react';
 
 
+import type { SortCondition } from 'src/types/airtableTypes';
 import { Iconify } from '../../iconify';
 import { Button } from '../../ui/button';
 import {
@@ -24,7 +25,6 @@ export interface ColumnDef<T> {
     sortDirection?: 'asc' | 'desc';
     renderCell?: (row: T) => ReactNode;
     renderHeader?: () => ReactNode;
-    onHeaderClick?: () => void;
     align?: 'left' | 'right' | 'center';
 }
 
@@ -44,6 +44,8 @@ export interface DynamicTableProps<T> {
     onRowActionSelect?: (action: string, row: T) => void;
     rowActions?: string[];
     onSort?: (field: string, direction: 'asc' | 'desc') => void;
+    sortCondition?: SortCondition;
+    selectedRowId?: string | number;
 }
 
 export default function DynamicTable<T extends Record<string, any>>({
@@ -60,7 +62,9 @@ export default function DynamicTable<T extends Record<string, any>>({
     onRowActionSelect,
     rowActions = ['Edit', 'Delete'],
     bottomComponent = null,
-    onSort
+    onSort,
+    sortCondition,
+    selectedRowId
 }: DynamicTableProps<T>) {
 
     const handleActionSelect = useCallback((action: string, row: T) => {
@@ -68,18 +72,6 @@ export default function DynamicTable<T extends Record<string, any>>({
             onRowActionSelect(action, row);
         }
     }, [onRowActionSelect]);
-
-    // Helper function to get text alignment based on the column's align property
-    const getTextAlign = useCallback((align?: string) => {
-        switch (align) {
-            case 'right':
-                return 'text-right';
-            case 'center':
-                return 'text-center';
-            default:
-                return 'text-left';
-        }
-    }, []);
 
     // Helper function to render cell content with appropriate styling based on field value
     const renderCellContent = useCallback((row: T, column: ColumnDef<T>) => {
@@ -136,118 +128,84 @@ export default function DynamicTable<T extends Record<string, any>>({
     }, []);
 
 
+    const renderHeaderClick = useCallback((column: ColumnDef<T>): void => {
+        if (!column.sortable || !onSort) return;
+        let newDirection: 'asc' | 'desc' = 'asc';
+        if (sortCondition && sortCondition.field === column.field) {
+            newDirection = sortCondition.direction === 'asc' ? 'desc' : 'asc';
+        }
+        onSort(column.field, newDirection);
+    }, [onSort, sortCondition]);
+
+
     // Render error state
     if (isError) {
         return (
             <div className="flex justify-center p-6 border border-red-200 bg-white">
                 <div className="flex items-center gap-2">
                     <Iconify icon="lucide:alert-circle" width={20} className="text-red-500" />
-                    <span className="text-sm text-red-500 font-medium">
+                    <span className="text-xs text-red-500 font-medium">
                         {errorMessage}: {error?.toString()}
                     </span>
                 </div>
             </div>
         );
     }
-
     return (
-        <div className="w-full h-full border border-gray-200 rounded-md overflow-auto relative">
+        <div className="w-full h-full overflow-auto relative text-xs">
             <table className="w-full border-collapse table-fixed">
                 <thead className="sticky top-0 z-10">
                     <tr>
                         {columns.map((column, index) => (
                             <th
                                 key={index}
-                                className={`${getTextAlign(column.align)} bg-gray-100 text-xs font-bold text-gray-700 capitalize py-3 px-4 border-b border-r border-gray-200 truncate relative group hover:bg-gray-200 transition-colors duration-150 ${column.sortable ? 'cursor-pointer' : ''}`}
+                                className={`text-left bg-white text-xs font-semibold text-gray-700 pt-5 pb-3 px-4 truncate relative group transition-colors duration-150 border-b border-gray-200 ${column.sortable ? 'cursor-pointer' : ''}`}
                                 style={{
                                     width: `var(--col-${index}-width, ${column.width || 100}px)`,
                                     maxWidth: `var(--col-${index}-width, ${column.width || 200}px)`,
-                                    padding: `var(--col-${index}-padding, 10px 8px)`,
+                                    padding: `var(--col-${index}-padding, 20px 16px 12px 16px)`,
                                 }}
-                                onClick={() => {
-                                    if (column.onHeaderClick) {
-                                        column.onHeaderClick();
-                                    }
-                                }}
+                                onClick={() => renderHeaderClick(column)}
                             >
                                 {column.renderHeader ? (
                                     column.renderHeader()
                                 ) : (
-                                    <div className="flex items-center overflow-hidden whitespace-nowrap border-r border-gray-200">
+                                    <div className="flex items-center overflow-hidden whitespace-nowrap">
                                         <span className="truncate">{column.headerName}</span>
-                                        {column.sortable && column.sortDirection && (
-                                            <Iconify
-                                                icon={column.sortDirection === 'asc'
-                                                    ? 'lucide:arrow-up'
-                                                    : 'lucide:arrow-down'}
-                                                width={14}
-                                                height={14}
-                                                className="ml-1 text-blue-600 flex-shrink-0"
-                                            />
+                                        {column.sortable && (
+                                            <span className="ml-1">
+                                                {sortCondition && sortCondition.field === column.field ? (
+                                                    <Iconify
+                                                        icon={sortCondition.direction === 'asc'
+                                                            ? 'lucide:arrow-up'
+                                                            : 'lucide:arrow-down'}
+                                                        width={12}
+                                                        height={12}
+                                                        className="text-blue-600 flex-shrink-0"
+                                                    />
+                                                ) : (
+                                                    <Iconify
+                                                        icon="lucide:chevron-down"
+                                                        width={12}
+                                                        height={12}
+                                                        className="text-gray-400 flex-shrink-0 opacity-0 group-hover:opacity-100"
+                                                    />
+                                                )}
+                                            </span>
                                         )}
                                     </div>
                                 )}
                             </th>
                         ))}
                         {showRowActions && (
-                            <th className="text-right bg-gray-100 text-[10px] font-medium text-gray-500 uppercase py-3 px-2 border-b border-gray-200 w-[80px]">
+                            <th className="text-left bg-white text-xs font-semibold text-gray-700 pt-5 pb-3 px-4 w-[80px] border-b border-gray-200">
                                 Actions
                             </th>
                         )}
                     </tr>
                 </thead>
                 <tbody>
-                    {data.map((row, rowIndex) => (
-                        <tr
-                            key={getRowId(row) || rowIndex}
-                            onClick={onRowClick ? () => onRowClick(row) : undefined}
-                            className={`${onRowClick ? 'cursor-pointer' : ''} ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors duration-150`}
-                        >
-                            {columns.map((column, cellIndex) => (
-                                <td
-                                    key={cellIndex}
-                                    className={`${getTextAlign(column.align)} py-2 px-2 border-b border-r border-gray-200 overflow-hidden`}
-                                    style={{
-                                        width: `var(--col-${cellIndex}-width, ${column.width || 150}px)`,
-                                        maxWidth: `var(--col-${cellIndex}-width, ${column.width || 150}px)`,
-                                    }}
-                                >
-                                    {renderCellContent(row, column)}
-                                </td>
-                            ))}
-                            {showRowActions && (
-                                <td className="text-right py-3 px-2 border-b border-gray-200 w-[80px]">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                                <Iconify icon="lucide:more-horizontal" className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            {rowActions.map((action, i) => (
-                                                <React.Fragment key={action}>
-                                                    <DropdownMenuItem onClick={() => handleActionSelect(action, row)}>
-                                                        <Iconify
-                                                            icon={action.toLowerCase() === 'edit'
-                                                                ? 'lucide:pencil'
-                                                                : action.toLowerCase() === 'delete'
-                                                                    ? 'lucide:trash-2'
-                                                                    : 'lucide:more-horizontal'}
-                                                            className="mr-2 h-4 w-4"
-                                                        />
-                                                        <span>{action}</span>
-                                                    </DropdownMenuItem>
-                                                    {i < rowActions.length - 1 && <DropdownMenuSeparator />}
-                                                </React.Fragment>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </td>
-                            )}
-                        </tr>
-                    ))}
-
-                    {data.length === 0 && !isLoading && !isError && (
+                    {data.length === 0 && !isLoading && !isError ? (
                         <tr>
                             <td colSpan={columns.length + (showRowActions ? 1 : 0)} className="py-12">
                                 <div className="flex flex-col items-center justify-center text-center px-4">
@@ -265,6 +223,62 @@ export default function DynamicTable<T extends Record<string, any>>({
                                 </div>
                             </td>
                         </tr>
+                    ) : (
+                        data.map((row, rowIndex) => {
+                            const rowId = getRowId(row);
+                            const isSelected = selectedRowId && rowId === selectedRowId;
+
+                            return (
+                                <tr
+                                    key={rowId || rowIndex}
+                                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                                    className={`
+                                        ${onRowClick ? 'cursor-pointer' : ''} 
+                                        ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} 
+                                        hover:bg-blue-50 transition-colors duration-150
+                                        ${isSelected ? 'ring-2 ring-blue-500 relative z-10' : ''}
+                                    `}
+                                >
+                                    {columns.map((column, cellIndex) => (
+                                        <td
+                                            key={cellIndex}
+                                            className="text-left py-3 px-4 overflow-hidden text-xs"
+                                        >
+                                            {renderCellContent(row, column)}
+                                        </td>
+                                    ))}
+                                    {showRowActions && (
+                                        <td className="text-left py-3 px-4 w-[80px]">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 p-0">
+                                                        <Iconify icon="lucide:more-horizontal" className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="text-xs">
+                                                    {rowActions.map((action, i) => (
+                                                        <React.Fragment key={action}>
+                                                            <DropdownMenuItem onClick={() => handleActionSelect(action, row)}>
+                                                                <Iconify
+                                                                    icon={action.toLowerCase() === 'edit'
+                                                                        ? 'lucide:pencil'
+                                                                        : action.toLowerCase() === 'delete'
+                                                                            ? 'lucide:trash-2'
+                                                                            : 'lucide:more-horizontal'}
+                                                                    className="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                <span>{action}</span>
+                                                            </DropdownMenuItem>
+                                                            {i < rowActions.length - 1 && <DropdownMenuSeparator />}
+                                                        </React.Fragment>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </td>
+                                    )}
+                                </tr>
+                            );
+                        })
                     )}
                     {bottomComponent}
                 </tbody>

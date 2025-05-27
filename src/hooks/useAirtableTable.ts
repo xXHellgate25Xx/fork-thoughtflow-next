@@ -1,26 +1,18 @@
+import { useEffect, useState } from 'react';
 import {
   useCreateRecordMutation,
   useDeleteRecordMutation,
   useGetRecordByIdQuery,
+  useLazyQueryTableQuery,
   useUpdateRecordMutation
 } from '../libs/service/airtable/generalService';
 import { useAirtableInfinite } from './useAirtableInfinite';
 
 import type {
   AirtableRecord,
-  FilterCondition,
-  SortCondition
+  QueryOptions
 } from '../types/airtableTypes';
 
-
-// Interface for table hook options
-export interface TableQueryOptions {
-  filters?: FilterCondition[];
-  sort?: SortCondition[];
-  limit?: number;
-  offset?: string;
-  view?: string;
-}
 
 // Interface for table hook results
 export interface TableQueryResult<T> {
@@ -30,7 +22,7 @@ export interface TableQueryResult<T> {
   error: any;
   refetch: () => void;
   hasMore: boolean;
-  loadMore: () => Promise<void>;
+  loadMore: () => void;
   resetRecords: ( ) => void;
 }
 
@@ -66,6 +58,18 @@ export interface DeleteMutationHookResult {
   error: any;
 }
 
+// Interface for manual table query results
+export interface ManualTableQueryResult<T> {
+  records: Partial<T>[];
+  isLoading: boolean;
+  isError: boolean;
+  error: any;
+  query: (options?: Omit<QueryOptions, 'tableId'>) => Promise<Partial<T>[]>;
+  hasMore: boolean;
+  loadMore: () => Promise<void>;
+  resetRecords: () => void;
+}
+
 /**
  * Creates a set of hooks for interacting with an Airtable table
  * @param tableId The Airtable table ID to create hooks for
@@ -84,7 +88,7 @@ export function createTableHooks<T>(tableId: string) {
    * @param options Query options including filters, sort, pagination
    * @returns Object containing records data and status
    */
-  const useTable = (opts: TableQueryOptions = {}): TableQueryResult<T> =>useAirtableInfinite<T>(tableId, opts);
+  const useTable = (opts: Omit<QueryOptions, 'tableId'> = {}): TableQueryResult<T> =>useAirtableInfinite<T>(tableId, opts);
 
   /**
    * Hook to fetch a single record by ID
@@ -192,12 +196,111 @@ export function createTableHooks<T>(tableId: string) {
     };
   };
 
+  /**
+   * Custom hook for manual table querying with sort and filters
+   * @param initialOptions Initial query options including filters and sort
+   * @returns Object containing query function and data state
+   */
+  const useManualTable = (initialOptions: Omit<QueryOptions, 'tableId'> = {}): ManualTableQueryResult<T> => {
+    const [allRecords, setAllRecords] = useState<Partial<T>[]>([]);
+    const [hasMore, setHasMore] = useState(false);
+    const [options, setOptions] = useState<Omit<QueryOptions, 'tableId'>>(initialOptions);
+    
+    const [fetchData, { isLoading, isError, error }] = useLazyQueryTableQuery();
+
+    const query = async (newOptions?: Omit<QueryOptions, 'tableId'>) : Promise<Partial<T>[]> => {
+      try {
+        setAllRecords([]);
+        setHasMore(false);
+        
+        const queryOptions = newOptions || options;
+        setOptions(queryOptions);
+
+        const response = await fetchData({ 
+          ...queryOptions,
+          tableId,
+          offset: "" 
+        }).unwrap();
+
+        const newRecords = response?.records ? response.records.map(convertToTypedRecord) : [];
+        setAllRecords(newRecords);
+        setHasMore(!!response?.offset);
+        setOptions(prev => ({ ...prev, offset: response?.offset || "" }));
+        
+        return newRecords;
+      } catch (err) {
+        console.error(`Failed to query ${tableId} records:`, err);
+        throw err;
+      }
+    }
+
+    const resetRecords = () => {
+      setAllRecords([]);
+      setHasMore(false);
+      setOptions(initialOptions);
+    };
+
+    const loadMore = async () => {
+      if (!hasMore) return;
+      await query(options);
+    };
+
+    return {
+      records: allRecords,
+      isLoading,
+      isError,
+      error,
+      query,
+      hasMore,
+      loadMore,
+      resetRecords
+    };
+  };
+
+  // Hook to fetch all records from a table, handling offset pagination automatically
+  const useAllAirtableRecords = (opts: Omit<QueryOptions, 'tableId' | 'limit'> = {}, batchSize = 1000, isSkip: boolean = false) => {
+    const {
+      records,
+      isLoading,
+      isError,
+      error,
+      hasMore,
+      loadMore,
+      refetch,
+      resetRecords,
+      currentOffset,
+    } = useAirtableInfinite<T>(tableId, { ...opts, limit: batchSize }, isSkip);
+
+    // Automatically load all data
+    useEffect(() => {
+      if (!isSkip && hasMore && !isLoading) {
+        loadMore();
+      }
+    }, [hasMore, isLoading, loadMore]);
+
+    // Reset records if tableId or opts change
+    useEffect(() => {
+      resetRecords();
+    }, [tableId, JSON.stringify(opts)]);
+
+    return {
+      records,
+      isLoading: isLoading && !isSkip,
+      isError: isError && !isSkip,
+      error,
+      refetch,
+      hasMore,
+    };
+  };
+
   // Return all the hooks for this table
   return {
     useTable,
+    useManualTable,
     useRecordById,
     useCreateRecord,
     useUpdateRecord,
-    useDeleteRecord
+    useDeleteRecord,
+    useAllAirtableRecords
   };
 } 

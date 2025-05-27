@@ -26,8 +26,6 @@ export function DynamicKanban({
     // Memoize the column generation logic
     const generateColumns = useCallback(() => {
         if (items && items.length > 0) {
-            console.log('items', items);
-            console.log('config', config);
             const generatedColumns = groupItemsIntoColumns(items, {
                 groupByField: config.groupByField,
                 maxColumns: config.maxColumns,

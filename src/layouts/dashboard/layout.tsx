@@ -13,10 +13,10 @@ import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 
 import { Iconify } from 'src/components/iconify';
 
+import { useNavbar } from 'src/routes/hooks/useNavbar';
 import { layoutClasses } from '../classes';
 import { AccountPopover } from '../components/account-popover';
 import { MenuButton } from '../components/menu-button';
-import { navData } from '../config-nav-dashboard';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
 import { Main } from './main';
@@ -39,7 +39,7 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
   const [allAccount, setAllAccount] = useState<{ id: string; name: string }[]>([]);
   const location = useLocation();
   const state = location.state || {}; // Handle undefined state
-
+  const navData = useNavbar();
   const layoutQuery: Breakpoint = 'lg';
   const router = useRouter();
 

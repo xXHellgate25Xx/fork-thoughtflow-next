@@ -129,6 +129,18 @@ interface ResetPasswordRequest {
   password: string;
 }
 
+interface SignInWithOAuthRequest {
+  provider: string;
+}
+
+interface SignInWithOAuthResponse {
+  data: {
+    provider: string;
+    url: string;
+  };
+  error: null;
+}
+
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery, // Use your custom baseQuery
@@ -152,6 +164,13 @@ export const authApi = createApi({
           email,
           password,
         },
+      }),
+    }),
+    signInWithOAuth: builder.mutation<SignInWithOAuthResponse, SignInWithOAuthRequest>({
+      query: ({ provider }) => ({
+        url: 'functions/v1/api/auth/signInWithOAuth',
+        method: 'POST',
+        body: { provider },
       }),
     }),
     sendOtp: builder.mutation<void, SendOtpRequest>({
@@ -198,6 +217,7 @@ export const authApi = createApi({
 export const {
   useSignUpWithEmailAndPasswordMutation,
   useSignInWithEmailAndPasswordMutation,
+  useSignInWithOAuthMutation,
   useSendOtpMutation,
   useVerifyOtpMutation,
   useRequestResetPasswordMutation,

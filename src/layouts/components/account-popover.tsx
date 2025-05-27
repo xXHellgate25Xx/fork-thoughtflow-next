@@ -1,27 +1,23 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
-import Popover from '@mui/material/Popover';
 import Divider from '@mui/material/Divider';
-import MenuList from '@mui/material/MenuList';
-import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import Popover from '@mui/material/Popover';
+import Typography from '@mui/material/Typography';
 
-import { useRouter, usePathname } from 'src/routes/hooks';
+import { usePathname, useRouter } from 'src/routes/hooks';
 
-import { removeToken, removeAccountId } from 'src/utils/auth';
+import { removeAccountId, removeToken } from 'src/utils/auth';
+import { resetAllApiStates } from 'src/utils/resetStore';
 
-import store from 'src/libs/stores';
-import { HomePageApi } from 'src/libs/service/pillar/home';
-import { ChannelApi } from 'src/libs/service/channel/channel';
-import { ContentPageApi } from 'src/libs/service/content/content';
 import { useGetProfileQuery } from 'src/libs/service/profile/profile';
-import { AnalyticsPageApi } from 'src/libs/service/analytics/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -77,17 +73,13 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
   );
 
   const handleLogout = useCallback(() => {
-
-    store.dispatch(HomePageApi.util.resetApiState());
-    store.dispatch(ContentPageApi.util.resetApiState());
-    store.dispatch(ChannelApi.util.resetApiState());
-    store.dispatch(AnalyticsPageApi.util.resetApiState());
+    resetAllApiStates();
     removeToken();
     removeAccountId();
     sessionStorage.clear();
     localStorage.clear()
     router.push('/sign-in')
-  }, []);
+  }, [router]);
 
   return (
     <>

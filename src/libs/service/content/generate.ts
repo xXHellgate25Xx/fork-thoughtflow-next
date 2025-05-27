@@ -10,6 +10,7 @@ interface GenContentReq {
     keyword?: string,
     feedback?: string | undefined;
     content?: string | undefined;
+    model: string;
 }
 
 interface GenContentRes {

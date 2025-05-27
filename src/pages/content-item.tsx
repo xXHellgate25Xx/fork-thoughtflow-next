@@ -1,55 +1,55 @@
 import { Icon } from '@iconify/react';
+import { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
-import { useRef, useState, useEffect } from 'react';
 
 // @wix/ricos imports
 import type { RichContent } from '@wix/ricos';
 import { fromPlainText, toHtml } from '@wix/ricos';
 //
 
-import { Box, Card, Link, List, Button, Checkbox, ListItem, Typography, FormControlLabel } from '@mui/material';
+import { Box, Button, Card, Checkbox, FormControlLabel, Link, List, ListItem, Typography } from '@mui/material';
 
 import { useRouter } from 'src/routes/hooks';
 
 import { fDateTime } from 'src/utils/format-time';
+import { htmlToMd } from 'src/utils/md-html';
 import { deepCloneAs } from 'src/utils/object-utils';
 import { checkSEO, handleKeyDown, handleSeoSlugChange } from 'src/utils/seo';
-import { htmlToMd} from 'src/utils/md-html';
 
 import { CONFIG } from 'src/config-global';
+import { createMetaDescriptionTag, createTitleTag } from 'src/interfaces/seoData-interface';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { channelIcons } from 'src/theme/icons/channel-icons';
-import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
 import { useGetAllAccountsQuery } from 'src/libs/service/account/account';
 import {
-  useCreateIdeaContentMutation
-} from 'src/libs/service/idea/idea';
+  useGetAllChannelsOfUserQuery,
+  useGetChannelByIDQuery
+} from 'src/libs/service/channel/channel';
 import {
-  useGetPillarByIdQuery
-} from 'src/libs/service/pillar/pillar-item';
-import {
-  useRepurposeContentMutation
-} from 'src/libs/service/idea/repurpose';
-import { createTitleTag, createMetaDescriptionTag } from 'src/interfaces/seoData-interface';
+  useGetContentQuery,
+  useGetContentViewCountQuery,
+  useUpdateContentMutation,
+} from 'src/libs/service/content/content';
 import {
   useGenerateContentWithFeedbackMutation
 } from 'src/libs/service/content/generate';
 import {
-  useGetChannelByIDQuery,
-  useGetAllChannelsOfUserQuery
-} from 'src/libs/service/channel/channel';
+  useCreateIdeaContentMutation
+} from 'src/libs/service/idea/idea';
 import {
-  useGetContentQuery,
-  useUpdateContentMutation,
-  useGetContentViewCountQuery,
-} from 'src/libs/service/content/content';
+  useRepurposeContentMutation
+} from 'src/libs/service/idea/repurpose';
+import {
+  useGetPillarByIdQuery
+} from 'src/libs/service/pillar/pillar-item';
+import { useCreatePublishToWixMutation } from 'src/libs/service/wix/wix';
+import { channelIcons } from 'src/theme/icons/channel-icons';
 
 import Editor from 'src/components/editor/Editor';
 import Viewer from 'src/components/editor/Viewer';
-import TextField from 'src/components/text-field/text-field';
-import { RepurposeForm } from 'src/components/repurpose/repurpose';
 import { PublishForm } from 'src/components/publish_message/publish_message';
+import { RepurposeForm } from 'src/components/repurpose/repurpose';
+import TextField from 'src/components/text-field/text-field';
 
 import { RepurposeSelect } from 'src/sections/repurpose/repurpose-select';
 // ----------------------------------------------------------------------
@@ -74,7 +74,6 @@ export default function Page() {
     refetch: contentRefetch,
   } = useGetContentQuery({ contentId: contentId || '' });
   const content = contentData?.data?.[0];
-  // console.log(`Content: ${JSON.stringify(content)}`);
   const channel_id = content?.channel_id;
 
   const {
@@ -114,7 +113,6 @@ export default function Page() {
   const [publishedAt, setPublishedAt] = useState('Loading...');
   const [views, setViews] = useState('Loading...');
   const [channelType, setChannelType] = useState<string | null>('');
-  // const [richContent, setRichContent] = useState(toDraft(fromPlainText('Loading...')));
   const [richContent, setRichContent] = useState(fromPlainText('Loading...'));
   const [editorRichContent, setEditorRichContent] = useState<RichContent>(fromPlainText('Loading...'));
   const [isInitRichContent, setIisInitRichContent] = useState(true);
@@ -168,7 +166,7 @@ export default function Page() {
     "Add focus keyword to URL slug",
   ];
 
-  const check_list_explanation = [
+  const check_list_activityLog = [
     "The title tag includes the focus keyword and is now optimized for searches.",
     "The H1 (post's title) includes the focus keyword and is now optimized for search engines.",
     "This post has visual content, which can drive more traffic and engagement.",
@@ -196,7 +194,6 @@ export default function Page() {
     }
   }, [content, accounts_data])
 
-  // console.log(createdAt);
   useEffect(() => {
     if (content && channel && pillar) {
       setCreatedAt(fDateTime(content.created_at, 'DD MMM YYYY h:mm a') || 'N/A');
@@ -284,10 +281,6 @@ export default function Page() {
     channelIdRepRef.current = channelRepId;
   }, [channelRepId]);
 
-  // useEffect(() => {
-  //   console.log(checkedItems);
-  // }, [checkedItems]);
-
   const router = useRouter();
   // Function to handle go back button
   const handleGoBack = () => {
@@ -319,6 +312,7 @@ export default function Page() {
             seo_meta_description: content.seo_meta_description
               ? createMetaDescriptionTag(content.seo_meta_description)
               : null,
+            pillar_id: content.pillar_id,
           },
         })
         if (publishError) {
@@ -406,7 +400,8 @@ export default function Page() {
       ideaId: content?.idea_id || "",
       payload: {
         channel_id: channelRep?.id || "",
-        content_body: content?.content_body || ""
+        content_body: content?.content_body || "",
+        model: "anthropic/claude-3.7-sonnet"
       }
     })
     // Create the new content
@@ -453,11 +448,6 @@ export default function Page() {
     }, 0); // Runs after state update
   };
 
-  // const handleSEOChecklistItemClick = (item: any) => {
-  //   setCheckedItems((prev) =>
-  //     prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-  //   );
-  // };
   // Function to handle feedback submission
   const handleFeedbackSubmit = async () => {
     if (feedback.trim() && channel_id && content) {
@@ -470,11 +460,10 @@ export default function Page() {
           gen_content: {
             idea: content.idea_id, // Make sure to include the idea ID
             feedback,
-            content: plaintext
+            content: plaintext,
+            model: "anthropic/claude-3.7-sonnet"
           }
         });
-
-        console.log('Received feedback response:', feedbackResponse);
 
         if (feedbackResponse) {
 
@@ -888,7 +877,7 @@ export default function Page() {
                           }
                         />
                       </Box>
-                      {/* Hover explanation directly under the item */}
+                      {/* Hover activityLog directly under the item */}
                       {seoCheckListHoveredIndex === index && (
                         <Typography
                           sx={{
@@ -901,7 +890,7 @@ export default function Page() {
                             color: "#555"
                           }}
                         >
-                          {check_list_explanation[index]}
+                          {check_list_activityLog[index]}
                         </Typography>
                       )}
                     </ListItem>

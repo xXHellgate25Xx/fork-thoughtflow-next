@@ -1,0 +1,12 @@
+{
+  "5b7a773e-6095-4257-aff0-34ba1a99fe24": {
+    "isEnableAccount": false,
+    "isEnableOpportunities": true,
+    "isEnableContacts": true
+  },
+  "cd65c956-5d2d-45d7-aea8-f5e0e29cad8d": {
+    "isEnableAccount": true,
+    "isEnableOpportunities": true,
+    "isEnableContacts": true
+  }
+} 

@@ -150,7 +150,7 @@ export function OverviewAnalyticsView() {
               { value: 'facebook', label: 'Facebook', total: 323234 },
               { value: 'google', label: 'Google', total: 341212 },
               { value: 'linkedin', label: 'Linkedin', total: 411213 },
-              { value: 'twitter', label: 'Twitter', total: 443232 },
+              { value: 'x', label: 'X', total: 443232 },
             ]}
           />
         </Grid>

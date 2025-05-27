@@ -1,24 +1,24 @@
 import type { LabelColor } from 'src/components/label';
 
 import { Icon } from '@iconify/react';
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import Box from '@mui/material/Box';
-import Popover from '@mui/material/Popover';
-import TableRow from '@mui/material/TableRow';
-import MenuList from '@mui/material/MenuList';
-import TableCell from '@mui/material/TableCell';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import Popover from '@mui/material/Popover';
+import TableCell from '@mui/material/TableCell';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 
 import { useRouter } from 'src/routes/hooks';
 
 import { channelIcons } from 'src/theme/icons/channel-icons';
 
-import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { Label } from 'src/components/label';
 
 // ----------------------------------------------------------------------
 
@@ -41,9 +41,9 @@ type ContentTableRowProps = {
 };
 
 const labelColors: { [key: string]: LabelColor } = {
-    published: 'success',
-    draft: 'info',
-    archived: 'default',
+  published: 'success',
+  draft: 'info',
+  archived: 'default',
 }
 
 export function ContentTableRow({ row, onClickRow, onDeleteRow, isDeleting }: ContentTableRowProps) {
@@ -59,7 +59,6 @@ export function ContentTableRow({ row, onClickRow, onDeleteRow, isDeleting }: Co
 
   const handleRoute = (id: string) => {
     setOpenPopover(null);
-    console.log(id);
     router.replace(`/content/${id}`);
   };
 
@@ -93,10 +92,10 @@ export function ContentTableRow({ row, onClickRow, onDeleteRow, isDeleting }: Co
       >
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
-          <Typography 
-              variant="body2" 
+            <Typography
+              variant="body2"
               // noWrap 
-              sx={{ 
+              sx={{
                 maxWidth: 300,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
@@ -107,29 +106,29 @@ export function ContentTableRow({ row, onClickRow, onDeleteRow, isDeleting }: Co
           </Box>
         </TableCell>
         <TableCell>
-          <Icon 
+          <Icon
             icon={row.channelType && channelIcons[row.channelType] ? channelIcons[row.channelType] : 'No Channel'}
-            width={30} 
-            height={30} 
+            width={30}
+            height={30}
           />
         </TableCell>
         <TableCell>{row.pillar}</TableCell>
         <TableCell>
-            <Label
+          <Label
             color={labelColors[row.status]}
-            >
+          >
             {row.status.toUpperCase()}
-            </Label>
+          </Label>
         </TableCell>
         <TableCell>{row.views ?? 0}</TableCell>
         <TableCell>{row.updatedAtFormatted}</TableCell>
 
-        <TableCell 
+        <TableCell
           onClick={(event) => {
             event.stopPropagation(); // This prevents the click from bubbling up to the row
           }}
           align="right"
-          sx={{ 
+          sx={{
             cursor: 'default',
             '&:hover': {
               backgroundColor: 'transparent !important'
@@ -175,7 +174,7 @@ export function ContentTableRow({ row, onClickRow, onDeleteRow, isDeleting }: Co
             Edit
           </MenuItem>
 
-          <MenuItem 
+          <MenuItem
             disabled={isDeleting}
             onClick={handleRowDelete}
           >
